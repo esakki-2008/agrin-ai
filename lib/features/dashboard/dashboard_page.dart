@@ -137,10 +137,10 @@ class DashboardPage extends StatelessWidget {
 
   Widget _metrics(bool wide) {
     final items = [
-      ('24°', 'Current temperature', Icons.thermostat_rounded),
-      ('72%', 'Soil moisture', Icons.water_drop_rounded),
-      ('Good', 'Crop health', Icons.spa_rounded),
-      ('Low', 'Climate risk', Icons.shield_outlined),
+      ('LIVE', 'Weather • Open-Meteo', Icons.thermostat_rounded),
+      ('MODEL', 'Soil • SoilGrids', Icons.layers_outlined),
+      ('LIVE', 'Satellite • Sentinel-2', Icons.satellite_alt_rounded),
+      ('AI', 'Advisory • Evidence grounded', Icons.auto_awesome_rounded),
     ];
     return GridView.builder(
       shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: items.length,
@@ -179,7 +179,15 @@ class DashboardPage extends StatelessWidget {
         return Material(
           color: Colors.white, borderRadius: BorderRadius.circular(24),
           child: InkWell(
-            onTap: () {},
+            onTap: () {
+              if (c.$1 == 'Farm Intelligence') {
+                context.push('/farm-intelligence');
+              } else if (c.$1 == 'Crop Doctor') {
+                context.push('/crop-doctor');
+              } else if (c.$1 == 'Regenerative Farming') {
+                context.push('/regenerative-farming');
+              }
+            },
             borderRadius: BorderRadius.circular(24),
             child: Container(
               padding: const EdgeInsets.all(22),
