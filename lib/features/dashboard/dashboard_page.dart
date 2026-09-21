@@ -198,6 +198,8 @@ class DashboardPage extends StatelessWidget {
             onTap: () {
               if (c.$1 == 'Farm Intelligence') {
                 context.push('/farm-intelligence');
+              } else if (c.$1 == 'AI Agro-Advisory') {
+                context.push('/farm-intelligence');
               } else if (c.$1 == 'Crop Doctor') {
                 context.push('/crop-doctor');
               } else if (c.$1 == 'Regenerative Farming') {
