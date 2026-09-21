@@ -7,6 +7,7 @@ import rasterio
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from regenerative import router as regenerative_router
 
 app = FastAPI(title="AgriN AI Data API", version="0.2.1")
 
@@ -17,6 +18,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(regenerative_router)
 
 
 class SoilRequest(BaseModel):
