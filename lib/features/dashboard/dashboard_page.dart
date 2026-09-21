@@ -33,7 +33,7 @@ class DashboardPage extends StatelessWidget {
                         const SizedBox(height: 24),
                         _intelligenceGrid(wide),
                         const SizedBox(height: 24),
-                        _bricsBanner(wide),
+                        _bricsBanner(context, wide),
                         const SizedBox(height: 36),
                         const Center(child: Text('AgriN AI • Built for resilient farming across India and beyond', style: TextStyle(color: muted, fontSize: 12))),
                       ],
@@ -64,7 +64,7 @@ class DashboardPage extends StatelessWidget {
           _navItem('Dashboard', true),
           _navItem('Farm Intelligence', false),
           _navItem('Crop Doctor', false),
-          _navItem('BRICS Network', false),
+          InkWell(onTap: () => GoRouter.of(context).push('/brics-network'), child: _navItem('BRICS Network', false)),
           const SizedBox(width: 20),
         ],
         IconButton(onPressed: () {}, icon: const Icon(Icons.language_rounded)),
@@ -214,7 +214,7 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _bricsBanner(bool wide) {
+  Widget _bricsBanner(BuildContext context, bool wide) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(wide ? 30 : 24),
@@ -227,7 +227,7 @@ class DashboardPage extends StatelessWidget {
           SizedBox(height: 5),
           Text('A shared architecture for sovereign data, models and climate-resilient farming knowledge.', style: TextStyle(color: Color(0xFFAAB7AE), fontSize: 12, height: 1.45)),
         ])),
-        if (wide) const Icon(Icons.arrow_forward_rounded, color: Colors.white54),
+        if (wide) IconButton(onPressed: () => GoRouter.of(context).push('/brics-network'), icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white54)),
       ]),
     ).animate().fadeIn(duration: 700.ms).slideX(begin: .04, end: 0);
   }
