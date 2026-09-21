@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../services/weather_service.dart';
 
 class FarmIntelligencePage extends StatefulWidget {
   const FarmIntelligencePage({super.key});
@@ -10,6 +11,8 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   static const green=Color(0xFF2E6B43), dark=Color(0xFF102318), muted=Color(0xFF66736A);
   final location=TextEditingController(), size=TextEditingController();
   String crop='Rice'; DateTime? date; bool analyzing=false, showResults=false;
+  WeatherData? weather;
+  String? error;
 
   @override void dispose(){location.dispose();size.dispose();super.dispose();}
 
@@ -23,9 +26,14 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Please complete your farm details first.'))); return;
     }
     setState(()=>analyzing=true);
-    await Future.delayed(const Duration(milliseconds:1400));
+    try {
+      final liveWeather=await WeatherService().fetch(location.text.trim());
+      if(mounted)setState(()=>weather=liveWeather);
+    } catch(e) {
+      if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+    }
     if(mounted)setState(()=>analyzing=false);
-    if(mounted)setState(()=>showResults=true);
+    if(mounted && weather!=null)setState(()=>showResults=true);
   }
 
   InputDecoration decoration(String label,IconData icon)=>InputDecoration(
@@ -90,12 +98,13 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     const SizedBox(height:20),
     GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:wide?4:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:1.5,
       children:[
-        _metric('24°C','Temperature',Icons.thermostat_rounded),
-        _metric('72%','Soil moisture',Icons.water_drop_rounded),
-        _metric('0.68','Vegetation index',Icons.spa_rounded),
-        _metric('Low','Climate risk',Icons.shield_outlined),
+        _metric(weather==null?'—':'${weather!.temperature.toStringAsFixed(1)}°C','Live temperature',Icons.thermostat_rounded),
+        _metric(weather==null?'—':'${weather!.humidity.toStringAsFixed(0)}%','Live humidity',Icons.water_drop_rounded),
+        _metric(weather==null?'—':'${weather!.windSpeed.toStringAsFixed(1)} km/h','Live wind',Icons.air_rounded),
+        _metric(weather==null?'—':'${weather!.precipitation.toStringAsFixed(1)} mm','Current precipitation',Icons.umbrella_rounded),
       ]),
     const SizedBox(height:20),
+    if(error!=null) _errorCard(),
     _advisory(),
     const SizedBox(height:16),
     _signalCard('Next data connections','Weather API • SoilGrids • Sentinel/Landsat • Gemini AI',Icons.hub_rounded),
@@ -106,13 +115,14 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       Icon(icon,color:green,size:22),const SizedBox(height:12),Text(value,style:const TextStyle(fontSize:22,fontWeight:FontWeight.w800,color:dark)),Text(label,style:const TextStyle(fontSize:11,color:muted)),
     ]));
 
+  Widget _errorCard()=>Container(width:double.infinity,padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:const Color(0xFFFFF3F0),borderRadius:BorderRadius.circular(18)),child:Row(children:[const Icon(Icons.error_outline,color:Colors.deepOrange),const SizedBox(width:10),Expanded(child:Text(error??'Unable to fetch live data.',style:const TextStyle(color:dark)))]));
   Widget _advisory()=>Container(width:double.infinity,padding:const EdgeInsets.all(22),decoration:BoxDecoration(color:dark,borderRadius:BorderRadius.circular(24)),
     child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       Row(children:[Icon(Icons.auto_awesome_rounded,color:Colors.white),SizedBox(width:10),Text('AI Agro-Advisory',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w800))]),
       SizedBox(height:16),
       Text('Your farm profile is ready. AgriN will combine live environmental signals with crop context to recommend irrigation, crop-care and climate-resilience actions.',style:TextStyle(color:Color(0xFFD4DDD7),height:1.55)),
       SizedBox(height:14),
-      Text('Prototype signal • Replace with live data before production',style:TextStyle(color:Color(0xFF9FB0A4),fontSize:11)),
+      Text('Live weather source: Open-Meteo • Location resolved from your input',style:TextStyle(color:Color(0xFF9FB0A4),fontSize:11)),
     ]));
 
   Widget _signalCard(String title, String text, IconData icon) {
