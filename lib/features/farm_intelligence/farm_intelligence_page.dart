@@ -130,14 +130,41 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   }
 
   Widget _errorCard()=>Container(width:double.infinity,padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:const Color(0xFFFFF3F0),borderRadius:BorderRadius.circular(18)),child:Row(children:[const Icon(Icons.error_outline,color:Colors.deepOrange),const SizedBox(width:10),Expanded(child:Text(error??'Unable to fetch live data.',style:const TextStyle(color:dark)))]));
-  Widget _advisory()=>Container(width:double.infinity,padding:const EdgeInsets.all(22),decoration:BoxDecoration(color:dark,borderRadius:BorderRadius.circular(24)),
-    child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Row(children:[Icon(Icons.auto_awesome_rounded,color:Colors.white),SizedBox(width:10),Text('AI Agro-Advisory',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w800))]),
-      SizedBox(height:16),
-      Text('Your farm profile is ready. AgriN will combine live environmental signals with crop context to recommend irrigation, crop-care and climate-resilience actions.',style:TextStyle(color:Color(0xFFD4DDD7),height:1.55)),
-      SizedBox(height:14),
-      Text('${_condition(weather?.weatherCode)} • Live weather source: Open-Meteo • Location resolved from your input',style:const TextStyle(color:Color(0xFF9FB0A4),fontSize:11)),
-    ]));
+  Widget _advisory() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: dark,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.auto_awesome_rounded, color: Colors.white),
+              SizedBox(width: 10),
+              Text(
+                'AI Agro-Advisory',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Your farm profile is ready. AgriN will combine live environmental signals with crop context to recommend irrigation, crop-care and climate-resilience actions.',
+            style: TextStyle(color: Color(0xFFD4DDD7), height: 1.55),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            '${_condition(weather?.weatherCode)} • Live weather source: Open-Meteo • Location resolved from your input',
+            style: const TextStyle(color: Color(0xFF9FB0A4), fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _signalCard(String title, String text, IconData icon) {
     return Container(
