@@ -25,7 +25,7 @@ class DashboardPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _nav(wide),
+                        _nav(context, wide),
                         const SizedBox(height: 32),
                         _hero(context, wide),
                         const SizedBox(height: 24),
@@ -48,7 +48,7 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _nav(bool wide) {
+  Widget _nav(BuildContext context, bool wide) {
     return Row(
       children: [
         Container(
