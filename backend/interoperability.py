@@ -42,6 +42,34 @@ async def interoperability_profile():
     }
 
 
+@router.post("/export")
+async def export_observation(observation: FarmObservation):
+    country = observation.country_code.upper()
+    valid_country_code = country.isalpha() and len(country) in (2, 3)
+    valid_coordinates = -90 <= observation.latitude <= 90 and -180 <= observation.longitude <= 180
+    valid_timestamp = bool(observation.observed_at.strip())
+    valid = valid_country_code and valid_coordinates and valid_timestamp
+
+    if not valid:
+        return {
+            "exported": False,
+            "standard": "AgriN Open Agricultural Observation Profile",
+            "version": "1.0",
+            "reason": "Observation failed country, coordinate, or timestamp validation.",
+        }
+
+    data = observation.model_dump()
+    data["country_code"] = country
+    return {
+        "exported": True,
+        "standard": "AgriN Open Agricultural Observation Profile",
+        "version": "1.0",
+        "content_type": "application/json",
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "observation": data,
+    }
+
+
 @router.post("/validate")
 async def validate_observation(observation: FarmObservation):
     country = observation.country_code.upper()
