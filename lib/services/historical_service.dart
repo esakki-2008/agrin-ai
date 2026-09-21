@@ -40,6 +40,41 @@ class HistoricalSatellite {
   const HistoricalSatellite({required this.source, required this.count, required this.scenes});
 }
 
+
+class HistoricalNdviObservation {
+  final String sceneId;
+  final String? date;
+  final double cloudCover;
+  final double redReflectance;
+  final double nirReflectance;
+  final double ndvi;
+
+  const HistoricalNdviObservation({
+    required this.sceneId,
+    required this.date,
+    required this.cloudCover,
+    required this.redReflectance,
+    required this.nirReflectance,
+    required this.ndvi,
+  });
+}
+
+class HistoricalNdvi {
+  final bool available;
+  final String source;
+  final int count;
+  final List<HistoricalNdviObservation> observations;
+  final String? message;
+
+  const HistoricalNdvi({
+    required this.available,
+    required this.source,
+    required this.count,
+    required this.observations,
+    required this.message,
+  });
+}
+
 class HistoricalService {
   static const baseUrl = 'http://127.0.0.1:8000';
 
@@ -96,6 +131,37 @@ class HistoricalService {
         datetime: x['datetime']?.toString(),
         cloudCover: (x['cloud_cover_percent'] as num?)?.toDouble(),
       )).toList(),
+    );
+  }
+
+  Future<HistoricalNdvi> satelliteNdvi({required double latitude, required double longitude, int days = 90}) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/historical/satellite-ndvi'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'latitude': latitude, 'longitude': longitude, 'days': days}),
+    ).timeout(const Duration(seconds: 120));
+
+    if (response.statusCode != 200) throw Exception(_detail(response));
+
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final observations = (body['observations'] as List)
+        .cast<Map<String, dynamic>>()
+        .map((x) => HistoricalNdviObservation(
+              sceneId: x['scene_id'].toString(),
+              date: x['date']?.toString(),
+              cloudCover: (x['cloud_cover_percent'] as num).toDouble(),
+              redReflectance: (x['red_reflectance'] as num).toDouble(),
+              nirReflectance: (x['nir_reflectance'] as num).toDouble(),
+              ndvi: (x['ndvi'] as num).toDouble(),
+            ))
+        .toList();
+
+    return HistoricalNdvi(
+      available: body['available'] == true,
+      source: body['source'].toString(),
+      count: (body['count'] as num).toInt(),
+      observations: observations,
+      message: body['message']?.toString(),
     );
   }
 
