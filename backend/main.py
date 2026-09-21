@@ -286,7 +286,14 @@ async def satellite_ndvi(request: SatelliteRequest):
     def sample_cog(href: str) -> float:
         try:
             with rasterio.open(href) as dataset:
-                row, col = dataset.index(request.longitude, request.latitude)
+                from rasterio.warp import transform
+                xs, ys = transform(
+                    "EPSG:4326",
+                    dataset.crs,
+                    [request.longitude],
+                    [request.latitude],
+                )
+                row, col = dataset.index(xs[0], ys[0])
                 half = 2
                 window = rasterio.windows.Window(
                     max(0, col - half),
