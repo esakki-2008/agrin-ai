@@ -101,7 +101,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
         _metric(weather==null?'—':'${weather!.temperature.toStringAsFixed(1)}°C','Live temperature',Icons.thermostat_rounded),
         _metric(weather==null?'—':'${weather!.humidity.toStringAsFixed(0)}%','Live humidity',Icons.water_drop_rounded),
         _metric(weather==null?'—':'${weather!.windSpeed.toStringAsFixed(1)} km/h','Live wind',Icons.air_rounded),
-        _metric(weather==null?'—':'${weather!.precipitation.toStringAsFixed(1)} mm','Current precipitation',Icons.umbrella_rounded),
+        _metric(weather==null?'—':'${weather!.rainProbability}%','Rain probability',Icons.umbrella_rounded),
       ]),
     const SizedBox(height:20),
     if(error!=null) _errorCard(),
@@ -115,6 +115,20 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       Icon(icon,color:green,size:22),const SizedBox(height:12),Text(value,style:const TextStyle(fontSize:22,fontWeight:FontWeight.w800,color:dark)),Text(label,style:const TextStyle(fontSize:11,color:muted)),
     ]));
 
+  String _condition(int? code) {
+    if (code == null) return 'Weather condition unavailable';
+    if (code == 0) return 'Clear sky';
+    if (code == 1 || code == 2 || code == 3) return 'Partly cloudy';
+    if (code == 45 || code == 48) return 'Fog';
+    if (code >= 51 && code <= 57) return 'Drizzle';
+    if (code >= 61 && code <= 67) return 'Rain';
+    if (code >= 71 && code <= 77) return 'Snow';
+    if (code >= 80 && code <= 82) return 'Rain showers';
+    if (code >= 85 && code <= 86) return 'Snow showers';
+    if (code >= 95 && code <= 99) return 'Thunderstorm';
+    return 'Variable conditions';
+  }
+
   Widget _errorCard()=>Container(width:double.infinity,padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:const Color(0xFFFFF3F0),borderRadius:BorderRadius.circular(18)),child:Row(children:[const Icon(Icons.error_outline,color:Colors.deepOrange),const SizedBox(width:10),Expanded(child:Text(error??'Unable to fetch live data.',style:const TextStyle(color:dark)))]));
   Widget _advisory()=>Container(width:double.infinity,padding:const EdgeInsets.all(22),decoration:BoxDecoration(color:dark,borderRadius:BorderRadius.circular(24)),
     child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
@@ -122,7 +136,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       SizedBox(height:16),
       Text('Your farm profile is ready. AgriN will combine live environmental signals with crop context to recommend irrigation, crop-care and climate-resilience actions.',style:TextStyle(color:Color(0xFFD4DDD7),height:1.55)),
       SizedBox(height:14),
-      Text('Live weather source: Open-Meteo • Location resolved from your input',style:TextStyle(color:Color(0xFF9FB0A4),fontSize:11)),
+      Text('${_condition(weather?.weatherCode)} • Live weather source: Open-Meteo • Location resolved from your input',style:TextStyle(color:Color(0xFF9FB0A4),fontSize:11)),
     ]));
 
   Widget _signalCard(String title, String text, IconData icon) {
