@@ -154,7 +154,17 @@ class DashboardPage extends StatelessWidget {
             Container(width: 42, height: 42, decoration: BoxDecoration(color: const Color(0xFFEAF4EC), borderRadius: BorderRadius.circular(13)), child: Icon(item.$3, color: green, size: 21)),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-              Text(item.$1, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: dark)),
+              Row(
+                children: [
+                  if (item.$1 == 'LIVE')
+                    Container(
+                      width: 7, height: 7,
+                      margin: const EdgeInsets.only(right: 6),
+                      decoration: const BoxDecoration(color: Color(0xFF3F8F52), shape: BoxShape.circle),
+                    ).animate(onPlay: (c) => c.repeat(reverse: true)).fade(begin: .35, end: 1, duration: 900.ms),
+                  Text(item.$1, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: dark)),
+                ],
+              ),
               const SizedBox(height: 3),
               Text(
                 item.$2,
@@ -209,7 +219,10 @@ class DashboardPage extends StatelessWidget {
               ]),
             ),
           ),
-        ).animate(delay: (120 * i).ms).fadeIn(duration: 500.ms).slideY(begin: .08, end: 0);
+        ).animate(delay: (120 * i).ms)
+            .fadeIn(duration: 500.ms)
+            .slideY(begin: .08, end: 0)
+            .shimmer(delay: (700 + 120 * i).ms, duration: 1400.ms, color: const Color(0x183F8F52));
       },
     );
   }
@@ -229,6 +242,6 @@ class DashboardPage extends StatelessWidget {
         ])),
         if (wide) IconButton(onPressed: () => GoRouter.of(context).push('/brics-network'), icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white54)),
       ]),
-    ).animate().fadeIn(duration: 700.ms).slideX(begin: .04, end: 0);
+    ).animate().fadeIn(duration: 700.ms).slideX(begin: .04, end: 0).shimmer(delay: 900.ms, duration: 1800.ms, color: const Color(0x184B8E59));
   }
 }
