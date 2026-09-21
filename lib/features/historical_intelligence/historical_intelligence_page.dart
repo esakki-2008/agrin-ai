@@ -1,0 +1,261 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../services/weather_service.dart';
+import '../../services/historical_service.dart';
+
+class HistoricalIntelligencePage extends StatefulWidget {
+  const HistoricalIntelligencePage({super.key});
+  @override State<HistoricalIntelligencePage> createState() => _HistoricalIntelligencePageState();
+}
+
+class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage> {
+  static const green = Color(0xFF2E6B43);
+  static const dark = Color(0xFF102318);
+  static const muted = Color(0xFF66736A);
+
+  final location = TextEditingController();
+  int days = 30;
+  bool loading = false;
+  String? error;
+  HistoricalWeather? history;
+  HistoricalSatellite? satellite;
+
+  @override
+  void dispose() { location.dispose(); super.dispose(); }
+
+  Future<void> analyze() async {
+    if (location.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a village, district, or location first.')));
+      return;
+    }
+    setState(() { loading = true; error = null; history = null; satellite = null; });
+    try {
+      final live = await WeatherService().fetch(location.text.trim());
+      final service = HistoricalService();
+      final h = await service.weather(latitude: live.latitude, longitude: live.longitude, days: days);
+      HistoricalSatellite? s;
+      try {
+        s = await service.satelliteScenes(latitude: live.latitude, longitude: live.longitude, days: days);
+      } catch (_) {}
+      if (!mounted) return;
+      setState(() { history = h; satellite = s; });
+    } catch (e) {
+      if (mounted) setState(() => error = e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Historical Intelligence', style: TextStyle(fontWeight: FontWeight.w800))),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(wide ? 48 : 20),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1100),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _hero(),
+                  const SizedBox(height: 20),
+                  if (history == null) _form() else _results(wide),
+                  if (error != null) ...[const SizedBox(height: 18), _error()],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _hero() => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(28),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(colors: [Color(0xFF173B26), Color(0xFF3F7D4C)]),
+      borderRadius: BorderRadius.circular(28),
+    ),
+    child: const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.history_rounded, color: Colors.white, size: 34),
+        SizedBox(height: 14),
+        Text('See what changed over time', style: TextStyle(color: Colors.white, fontSize: 27, fontWeight: FontWeight.w800)),
+        SizedBox(height: 8),
+        Text('Use real historical weather and Sentinel-2 observations to understand recent farm conditions and trends.', style: TextStyle(color: Color(0xCCDDE9DF), height: 1.5)),
+      ],
+    ),
+  ).animate().fadeIn(duration: 600.ms).slideY(begin: .06, end: 0);
+
+  Widget _form() => _card(
+    'Historical window',
+    Column(
+      children: [
+        TextField(controller: location, decoration: _decoration('Village / district / location', Icons.location_on_outlined)),
+        const SizedBox(height: 15),
+        DropdownButtonFormField<int>(
+          value: days,
+          decoration: _decoration('Period', Icons.date_range_rounded),
+          items: const [30, 60, 90].map((x) => DropdownMenuItem(value: x, child: Text('$x days'))).toList(),
+          onChanged: (x) => setState(() => days = x ?? days),
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: loading ? null : analyze,
+            icon: loading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.timeline_rounded),
+            label: Padding(padding: const EdgeInsets.symmetric(vertical: 15), child: Text(loading ? 'Loading history...' : 'Analyze history')),
+            style: ElevatedButton.styleFrom(backgroundColor: green, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+          ),
+        ),
+      ],
+    ),
+  ).animate().fadeIn(duration: 550.ms).slideX(begin: -.04, end: 0);
+
+  Widget _results(bool wide) {
+    final h = history!;
+    final s = satellite;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Historical farm intelligence', style: TextStyle(fontSize: wide ? 32 : 27, fontWeight: FontWeight.w800, color: dark)),
+        const SizedBox(height: 6),
+        Text(h.startDate + ' → ' + h.endDate, style: const TextStyle(color: muted)),
+        const SizedBox(height: 18),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: wide ? 4 : 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.45,
+          children: [
+            _metric(h.summary.averageTemperature == null ? 'Unavailable' : h.summary.averageTemperature!.toStringAsFixed(1) + '°C', 'Average temperature'),
+            _metric(h.summary.totalPrecipitation == null ? 'Unavailable' : h.summary.totalPrecipitation!.toStringAsFixed(1) + ' mm', 'Total precipitation'),
+            _metric(h.summary.averageEt0 == null ? 'Unavailable' : h.summary.averageEt0!.toStringAsFixed(1) + ' mm', 'Average daily ET₀'),
+            _metric(h.summary.temperatureTrend, 'Temperature trend'),
+          ],
+        ),
+        const SizedBox(height: 22),
+        _sectionTitle('Recent daily observations'),
+        const SizedBox(height: 10),
+        _dailyList(h.daily),
+        const SizedBox(height: 22),
+        _sectionTitle('Sentinel-2 observation history'),
+        const SizedBox(height: 10),
+        if (s == null || s.scenes.isEmpty)
+          _empty('No Sentinel-2 scenes were returned for this period.')
+        else ...[
+          Text(s.count.toString() + ' scenes found • ' + s.source, style: const TextStyle(fontSize: 11, color: muted)),
+          const SizedBox(height: 10),
+          ...s.scenes.take(8).map(_scene),
+        ],
+        const SizedBox(height: 18),
+        _limitations(),
+      ],
+    ).animate().fadeIn(duration: 650.ms).slideY(begin: .05, end: 0);
+  }
+
+  Widget _dailyList(List<HistoricalDay> rows) {
+    final recent = rows.reversed.take(7).toList();
+    return Column(
+      children: recent.map((x) => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE5EAE5))),
+        child: Row(
+          children: [
+            SizedBox(width: 92, child: Text(x.date, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: dark))),
+            Expanded(child: Text(x.temperature == null ? 'Temperature unavailable' : x.temperature!.toStringAsFixed(1) + '°C', style: const TextStyle(fontSize: 12, color: muted))),
+            Text(x.precipitation == null ? 'Rain unavailable' : x.precipitation!.toStringAsFixed(1) + ' mm', style: const TextStyle(fontSize: 12, color: muted)),
+          ],
+        ),
+      )).toList(),
+    );
+  }
+
+  Widget _scene(HistoricalScene x) => Container(
+    margin: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.all(15),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE5EAE5))),
+    child: Row(
+      children: [
+        const Icon(Icons.satellite_alt_rounded, color: green),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(x.datetime == null ? 'Observation date unavailable' : x.datetime!.substring(0, 10), style: const TextStyle(fontWeight: FontWeight.w700, color: dark)),
+            const SizedBox(height: 4),
+            Text(x.id ?? 'Scene ID unavailable', style: const TextStyle(fontSize: 10, color: muted)),
+          ]),
+        ),
+        Text(x.cloudCover == null ? 'Cloud unavailable' : x.cloudCover!.toStringAsFixed(1) + '%', style: const TextStyle(fontSize: 11, color: muted)),
+      ],
+    ),
+  );
+
+  Widget _metric(String value, String label) => Container(
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), border: Border.all(color: const Color(0xFFE5EAE5))),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+      Text(value, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: dark)),
+      const SizedBox(height: 5),
+      Text(label, style: const TextStyle(fontSize: 11, color: muted)),
+    ]),
+  );
+
+  Widget _limitations() => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(color: dark, borderRadius: BorderRadius.circular(20)),
+    child: const Text(
+      'Historical weather is sourced from Open-Meteo archive data. Sentinel-2 entries are scene metadata; scene count and cloud cover are not crop-health scores. Historical satellite NDVI trend analysis is the next layer.',
+      style: TextStyle(color: Color(0xFFD4DDD7), fontSize: 11, height: 1.5),
+    ),
+  );
+
+  Widget _empty(String text) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFE5EAE5))),
+    child: Text(text, style: const TextStyle(color: muted)),
+  );
+
+  Widget _error() => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(color: const Color(0xFFFFF3F0), borderRadius: BorderRadius.circular(18)),
+    child: Row(children: [
+      const Icon(Icons.error_outline, color: Colors.deepOrange),
+      const SizedBox(width: 10),
+      Expanded(child: Text(error!, style: const TextStyle(color: dark))),
+    ]),
+  );
+
+  InputDecoration _decoration(String label, IconData icon) => InputDecoration(
+    labelText: label,
+    prefixIcon: Icon(icon, color: green),
+    filled: true,
+    fillColor: const Color(0xFFF7F9F5),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+  );
+
+  Widget _sectionTitle(String text) => Text(text, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: dark));
+
+  Widget _card(String title, Widget child) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(22),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFE5EAE5))),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: dark)),
+      const SizedBox(height: 18),
+      child,
+    ]),
+  );
+}
