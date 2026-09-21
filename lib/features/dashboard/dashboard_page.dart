@@ -156,7 +156,12 @@ class DashboardPage extends StatelessWidget {
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
               Text(item.$1, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: dark)),
               const SizedBox(height: 3),
-              Text(item.$2, style: const TextStyle(fontSize: 11, color: muted)),
+              Text(
+                item.$2,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10, color: muted, height: 1.25),
+              ),
             ])),
           ]),
         ).animate(delay: (100 * index).ms).fadeIn(duration: 500.ms).slideY(begin: .12, end: 0);
