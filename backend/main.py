@@ -423,6 +423,9 @@ If a value is null, explicitly say that it is unavailable and do not infer it.
 NDVI is a satellite-derived sample observation, not automatically a whole-farm health score.
 SoilGrids is model-derived soil information, not a laboratory soil test.
 Do not diagnose a disease from these measurements.
+Do not classify a soil nutrient as low, high, deficient, sufficient, optimal, or excessive unless an explicit validated reference range is supplied in the input. A raw SoilGrids concentration by itself is not enough to make that classification.
+Do not infer crop growth stage from the sowing date alone unless a validated crop-calendar rule is supplied.
+Use cautious language when evidence is insufficient: describe the measured value, explain what it can and cannot establish, and recommend an appropriate field or laboratory check where needed.
 
 Return ONLY valid JSON with exactly these fields:
 {
