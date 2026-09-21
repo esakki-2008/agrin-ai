@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-app = FastAPI(title="AgriN AI Data API", version="0.2.0")
+app = FastAPI(title="AgriN AI Data API", version="0.2.1")
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,7 +33,6 @@ class SatelliteRequest(BaseModel):
 def wcs_url(property_name: str, coverage: str, lon: float, lat: float):
     delta = 0.05
     url = "https://maps.isric.org/mapserv"
-
     params = [
         ("map", f"/map/{property_name}.map"),
         ("SERVICE", "WCS"),
@@ -51,18 +50,13 @@ def wcs_url(property_name: str, coverage: str, lon: float, lat: float):
 
 async def sample(property_name: str, coverage: str, lon: float, lat: float) -> float:
     url, params = wcs_url(property_name, coverage, lon, lat)
-
     async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
         response = await client.get(url, params=params)
 
     if response.status_code != 200:
-        raise HTTPException(
-            status_code=502,
-            detail=f"SoilGrids WCS returned HTTP {response.status_code}.",
-        )
+        raise HTTPException(status_code=502, detail=f"SoilGrids WCS returned HTTP {response.status_code}.")
 
     content_type = response.headers.get("content-type", "").lower()
-
     if (
         "tiff" not in content_type
         and "image/" not in content_type
@@ -71,11 +65,7 @@ async def sample(property_name: str, coverage: str, lon: float, lat: float) -> f
     ):
         raise HTTPException(
             status_code=502,
-            detail=(
-                "SoilGrids did not return a GeoTIFF. "
-                f"Content-Type: {content_type}. "
-                f"Response: {response.text[:500]}"
-            ),
+            detail=f"SoilGrids did not return a GeoTIFF. Content-Type: {content_type}. Response: {response.text[:500]}",
         )
 
     try:
@@ -83,18 +73,13 @@ async def sample(property_name: str, coverage: str, lon: float, lat: float) -> f
             values = dataset.read(1, masked=True)
             data = values.compressed()
             data = data[data > 0]
-
             if len(data) == 0:
                 raise ValueError("No valid SoilGrids pixels found for this location.")
-
             return float(data.mean())
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Unable to read SoilGrids GeoTIFF: {exc}",
-        ) from exc
+        raise HTTPException(status_code=502, detail=f"Unable to read SoilGrids GeoTIFF: {exc}") from exc
 
 
 @app.get("/health")
@@ -112,7 +97,6 @@ async def soil(request: SoilRequest):
         soc_raw = await sample("soc", "soc_0-5cm_Q0.5", request.longitude, request.latitude)
         nitrogen_raw = await sample("nitrogen", "nitrogen_0-5cm_Q0.5", request.longitude, request.latitude)
         clay_raw = await sample("clay", "clay_0-5cm_Q0.5", request.longitude, request.latitude)
-
         return {
             "source": "ISRIC SoilGrids 2.0",
             "resolution_m": 250,
@@ -137,22 +121,20 @@ async def satellite_search(request: SatelliteRequest):
     if not (0 <= request.max_cloud_cover <= 100):
         raise HTTPException(status_code=400, detail="max_cloud_cover must be between 0 and 100.")
 
-    # Earth Search STAC is public; no AWS credentials are required.
     stac_url = "https://earth-search.aws.element84.com/v1/search"
     now = datetime.now(timezone.utc)
     start = now - timedelta(days=request.days)
 
+    # Use the current Collection 1 L2A catalog. Do not use the server-side
+    # eo:cloud_cover query because Earth Search has had query-extension issues.
     payload = {
-        "collections": ["sentinel-2-l2a"],
+        "collections": ["sentinel-2-c1-l2a"],
         "datetime": f"{start.isoformat().replace('+00:00', 'Z')}/{now.isoformat().replace('+00:00', 'Z')}",
         "intersects": {
             "type": "Point",
             "coordinates": [request.longitude, request.latitude],
         },
-        "limit": 10,
-        "query": {
-            "eo:cloud_cover": {"lte": request.max_cloud_cover},
-        },
+        "limit": 50,
     }
 
     try:
@@ -162,38 +144,33 @@ async def satellite_search(request: SatelliteRequest):
         raise HTTPException(status_code=502, detail=f"Satellite catalog request failed: {exc}") from exc
 
     if response.status_code != 200:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Satellite catalog returned HTTP {response.status_code}.",
-        )
+        raise HTTPException(status_code=502, detail=f"Satellite catalog returned HTTP {response.status_code}.")
 
     try:
         catalog = response.json()
     except ValueError as exc:
         raise HTTPException(status_code=502, detail="Satellite catalog returned invalid JSON.") from exc
 
-    features = catalog.get("features", [])
     results = []
-
-    for feature in features:
+    for feature in catalog.get("features", []):
         properties = feature.get("properties", {})
-        results.append(
-            {
+        cloud = properties.get("eo:cloud_cover")
+        if cloud is None or float(cloud) <= request.max_cloud_cover:
+            results.append({
                 "id": feature.get("id"),
                 "datetime": properties.get("datetime"),
-                "cloud_cover": properties.get("eo:cloud_cover"),
+                "cloud_cover": cloud,
                 "collection": feature.get("collection"),
                 "assets": sorted(feature.get("assets", {}).keys()),
-            }
-        )
+            })
+
+    results.sort(key=lambda item: item.get("datetime") or "", reverse=True)
+    results = results[:10]
 
     return {
         "source": "AWS Open Data / Earth Search STAC",
-        "collection": "sentinel-2-l2a",
-        "coordinates": {
-            "latitude": request.latitude,
-            "longitude": request.longitude,
-        },
+        "collection": "sentinel-2-c1-l2a",
+        "coordinates": {"latitude": request.latitude, "longitude": request.longitude},
         "days_searched": request.days,
         "max_cloud_cover_percent": request.max_cloud_cover,
         "count": len(results),
