@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/weather_service.dart';
+import '../../services/soil_service.dart';
 
 class FarmIntelligencePage extends StatefulWidget {
   const FarmIntelligencePage({super.key});
@@ -12,6 +13,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   final location=TextEditingController(), size=TextEditingController();
   String crop='Rice'; DateTime? date; bool analyzing=false, showResults=false;
   WeatherData? weather;
+  SoilData? soil;
   String? error;
 
   @override void dispose(){location.dispose();size.dispose();super.dispose();}
@@ -25,10 +27,12 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     if(location.text.trim().isEmpty||size.text.trim().isEmpty||date==null){
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Please complete your farm details first.'))); return;
     }
-    setState(()=>analyzing=true);
+    setState(() { analyzing=true; error=null; weather=null; soil=null; showResults=false; });
     try {
       final liveWeather=await WeatherService().fetch(location.text.trim());
       if(mounted)setState(()=>weather=liveWeather);
+      final liveSoil=await SoilService().fetch(latitude:liveWeather.latitude, longitude:liveWeather.longitude);
+      if(mounted)setState(()=>soil=liveSoil);
     } catch(e) {
       if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
     }
@@ -98,17 +102,36 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     const SizedBox(height:20),
     GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:wide?4:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:1.5,
       children:[
-        _metric(weather==null?'—':'${weather!.temperature.toStringAsFixed(1)}°C','Live temperature',Icons.thermostat_rounded),
-        _metric(weather==null?'—':'${weather!.humidity.toStringAsFixed(0)}%','Live humidity',Icons.water_drop_rounded),
-        _metric(weather==null?'—':'${weather!.windSpeed.toStringAsFixed(1)} km/h','Live wind',Icons.air_rounded),
-        _metric(weather==null?'—':'${weather!.rainProbability}%','Rain probability',Icons.umbrella_rounded),
+        _metric('${weather!.temperature.toStringAsFixed(1)}°C','Live temperature',Icons.thermostat_rounded),
+        _metric('${weather!.humidity.toStringAsFixed(0)}%','Live humidity',Icons.water_drop_rounded),
+        _metric('${weather!.windSpeed.toStringAsFixed(1)} km/h','Live wind',Icons.air_rounded),
+        _metric('${weather!.rainProbability}%','Rain probability',Icons.umbrella_rounded),
       ]),
+    const SizedBox(height:20),
+    if(soil!=null) _soilSection(soil!,wide),
     const SizedBox(height:20),
     if(error!=null) _errorCard(),
     _advisory(),
     const SizedBox(height:16),
     _signalCard('Next data connections','Weather API • SoilGrids • Sentinel/Landsat • Gemini AI',Icons.hub_rounded),
   ]).animate().fadeIn(duration:650.ms).slideY(begin:.06,end:0);
+
+  Widget _soilSection(SoilData data, bool wide)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Row(children:[
+      const Expanded(child:Text('Soil intelligence',style:TextStyle(fontSize:21,fontWeight:FontWeight.w800,color:dark))),
+      Text(data.depth,style:const TextStyle(fontSize:11,color:muted)),
+    ]),
+    const SizedBox(height:10),
+    Text('${data.source} • ${data.resolution} m model resolution',style:const TextStyle(fontSize:11,color:muted)),
+    const SizedBox(height:12),
+    GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:wide?4:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:1.5,children:[
+      _metric(data.ph.toStringAsFixed(2),'Soil pH',Icons.science_outlined),
+      _metric('${data.organicCarbon.toStringAsFixed(1)} g/kg','Organic carbon',Icons.eco_outlined),
+      _metric('${data.nitrogen.toStringAsFixed(3)} g/kg','Total nitrogen',Icons.grass_outlined),
+      _metric('${data.clay.toStringAsFixed(1)}%','Clay content',Icons.layers_outlined),
+    ]),
+    const SizedBox(height:20),
+  ]);
 
   Widget _metric(String value,String label,IconData icon)=>Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(22),border:Border.all(color:const Color(0xFFE5EAE5))),
     child:Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisAlignment:MainAxisAlignment.center,children:[
