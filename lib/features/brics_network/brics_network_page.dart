@@ -188,7 +188,7 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
       color: dark,
       borderRadius: BorderRadius.circular(28),
     ),
-    child: const Column(
+    child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(Icons.public_rounded, color: Colors.white, size: 36)
