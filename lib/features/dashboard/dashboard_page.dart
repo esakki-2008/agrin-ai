@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -111,7 +112,7 @@ class DashboardPage extends StatelessWidget {
           const SizedBox(height: 28),
           Wrap(spacing: 12, runSpacing: 12, children: [
             ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () => context.push('/farm-intelligence'),
               icon: const Icon(Icons.auto_awesome_rounded, size: 18),
               label: const Text('Analyze my farm'),
               style: ElevatedButton.styleFrom(foregroundColor: dark, backgroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
