@@ -3,118 +3,121 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 class FarmIntelligencePage extends StatefulWidget {
   const FarmIntelligencePage({super.key});
-  @override
-  State<FarmIntelligencePage> createState() => _FarmIntelligencePageState();
+  @override State<FarmIntelligencePage> createState() => _FarmIntelligencePageState();
 }
 
 class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
-  static const green = Color(0xFF2E6B43);
-  static const dark = Color(0xFF102318);
-  final location = TextEditingController();
-  final size = TextEditingController();
-  String crop = 'Rice';
-  DateTime? date;
+  static const green=Color(0xFF2E6B43), dark=Color(0xFF102318), muted=Color(0xFF66736A);
+  final location=TextEditingController(), size=TextEditingController();
+  String crop='Rice'; DateTime? date; bool analyzing=false, showResults=false;
 
-  @override
-  void dispose() { location.dispose(); size.dispose(); super.dispose(); }
+  @override void dispose(){location.dispose();size.dispose();super.dispose();}
 
   Future<void> pickDate() async {
-    final d = await showDatePicker(
-      context: context, firstDate: DateTime(2020), lastDate: DateTime.now(),
-      initialDate: date ?? DateTime.now(),
-    );
-    if (d != null) setState(() => date = d);
+    final d=await showDatePicker(context:context,firstDate:DateTime(2020),lastDate:DateTime.now(),initialDate:date??DateTime.now());
+    if(d!=null)setState(()=>date=d);
   }
 
-  void continueFarm() {
-    if (location.text.trim().isEmpty || size.text.trim().isEmpty || date == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please complete your farm details first.')));
-      return;
+  Future<void> analyze() async {
+    if(location.text.trim().isEmpty||size.text.trim().isEmpty||date==null){
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Please complete your farm details first.'))); return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Farm profile saved. Intelligence analysis comes next.')));
+    setState(()=>analyzing=true);
+    await Future.delayed(const Duration(milliseconds:1400));
+    if(mounted)setState(()=>analyzing=false);
+    if(mounted)setState(()=>showResults=true);
   }
 
-  InputDecoration decoration(String label, IconData icon) => InputDecoration(
-    labelText: label, prefixIcon: Icon(icon, color: green), filled: true,
-    fillColor: const Color(0xFFF7F9F5),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: green, width: 1.4)),
+  InputDecoration decoration(String label,IconData icon)=>InputDecoration(
+    labelText:label,prefixIcon:Icon(icon,color:green),filled:true,fillColor:const Color(0xFFF7F9F5),
+    border:OutlineInputBorder(borderRadius:BorderRadius.circular(16),borderSide:BorderSide.none),
+    focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(16),borderSide:const BorderSide(color:green,width:1.4)),
   );
 
-  @override
-  Widget build(BuildContext context) {
-    final wide = MediaQuery.sizeOf(context).width >= 900;
+  @override Widget build(BuildContext context){
+    final wide=MediaQuery.sizeOf(context).width>=900;
     return Scaffold(
-      appBar: AppBar(title: const Text('Farm Intelligence', style: TextStyle(fontWeight: FontWeight.w800))),
-      body: SafeArea(child: SingleChildScrollView(
-        padding: EdgeInsets.all(wide ? 48 : 20),
-        child: Center(child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Container(
-              width: double.infinity, padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF173B26), Color(0xFF3F7D4C)]),
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Icon(Icons.satellite_alt_rounded, color: Colors.white, size: 34),
-                SizedBox(height: 14),
-                Text('Let’s understand your farm', style: TextStyle(color: Colors.white, fontSize: 27, fontWeight: FontWeight.w800)),
-                SizedBox(height: 8),
-                Text('Tell AgriN where and what you grow. This becomes the context for localized weather, soil and crop intelligence.',
-                  style: TextStyle(color: Color(0xCCDDE9DF), height: 1.5)),
-              ]),
-            ).animate().fadeIn(duration: 600.ms).slideY(begin: .06, end: 0),
-            const SizedBox(height: 22),
-            wide ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(child: formCard()), const SizedBox(width: 20), Expanded(child: previewCard()),
-            ]) : Column(children: [formCard(), const SizedBox(height: 20), previewCard()]),
-          ]),
-        )),
-      )),
+      appBar:AppBar(title:const Text('Farm Intelligence',style:TextStyle(fontWeight:FontWeight.w800))),
+      body:SafeArea(child:SingleChildScrollView(padding:EdgeInsets.all(wide?48:20),child:Center(child:ConstrainedBox(
+        constraints:const BoxConstraints(maxWidth:1100),
+        child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          _header(),const SizedBox(height:22),
+          if(!showResults) ...[
+            wide?Row(crossAxisAlignment:CrossAxisAlignment.start,children:[Expanded(child:_form()),const SizedBox(width:20),Expanded(child:_preview())])
+              :Column(children:[_form(),const SizedBox(height:20),_preview()]),
+          ] else _results(wide),
+        ]),
+      )))),
     );
   }
 
-  Widget formCard() => card('Farm profile', Column(children: [
-    TextField(controller: location, decoration: decoration('Village / district / location', Icons.location_on_outlined)),
-    const SizedBox(height: 15),
-    DropdownButtonFormField<String>(
-      value: crop, decoration: decoration('Primary crop', Icons.grass_rounded),
-      items: const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x) => DropdownMenuItem(value:x, child:Text(x))).toList(),
-      onChanged: (x) => setState(() => crop = x ?? crop),
-    ),
-    const SizedBox(height: 15),
-    TextField(controller: size, keyboardType: const TextInputType.numberWithOptions(decimal:true),
-      decoration: decoration('Farm size (acres)', Icons.straighten_rounded)),
-    const SizedBox(height: 15),
-    InkWell(
-      onTap: pickDate, child: InputDecorator(
-        decoration: decoration('Sowing date', Icons.calendar_month_outlined),
-        child: Text(date == null ? 'Select sowing date' : date!.day.toString().padLeft(2,'0') + '/' + date!.month.toString().padLeft(2,'0') + '/' + date!.year.toString()),
-      ),
-    ),
-    const SizedBox(height: 20),
-    SizedBox(width: double.infinity, child: ElevatedButton.icon(
-      onPressed: continueFarm, icon: const Icon(Icons.arrow_forward_rounded),
-      label: const Padding(padding: EdgeInsets.symmetric(vertical:15), child: Text('Continue to farm analysis')),
-      style: ElevatedButton.styleFrom(backgroundColor: green, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-    )),
-  ]));
+  Widget _header()=>Container(width:double.infinity,padding:const EdgeInsets.all(28),decoration:BoxDecoration(
+    gradient:const LinearGradient(colors:[Color(0xFF173B26),Color(0xFF3F7D4C)]),borderRadius:BorderRadius.circular(28)),
+    child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Icon(Icons.satellite_alt_rounded,color:Colors.white,size:34),SizedBox(height:14),
+      Text('Let’s understand your farm',style:TextStyle(color:Colors.white,fontSize:27,fontWeight:FontWeight.w800)),
+      SizedBox(height:8),Text('Build a localized intelligence profile from your farm details.',style:TextStyle(color:Color(0xCCDDE9DF),height:1.5)),
+    ])).animate().fadeIn(duration:600.ms).slideY(begin:.06,end:0);
 
-  Widget previewCard() => card('What AgriN will analyze', const Column(children: [
-    ListTile(leading: Icon(Icons.cloud_outlined, color: green), title: Text('Weather'), subtitle: Text('Forecast and climate-risk signals')),
-    ListTile(leading: Icon(Icons.water_drop_outlined, color: green), title: Text('Soil'), subtitle: Text('Moisture and soil-health indicators')),
-    ListTile(leading: Icon(Icons.satellite_alt_outlined, color: green), title: Text('Satellite'), subtitle: Text('Vegetation and water-stress signals')),
-    ListTile(leading: Icon(Icons.auto_awesome_rounded, color: green), title: Text('AI Advisory'), subtitle: Text('Localized actions explained simply')),
-  ]));
+  Widget _form()=>_card('Farm profile',Column(children:[
+    TextField(controller:location,decoration:decoration('Village / district / location',Icons.location_on_outlined)),
+    const SizedBox(height:15),
+    DropdownButtonFormField<String>(value:crop,decoration:decoration('Primary crop',Icons.grass_rounded),
+      items:const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),
+      onChanged:(x)=>setState(()=>crop=x??crop)),
+    const SizedBox(height:15),
+    TextField(controller:size,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:decoration('Farm size (acres)',Icons.straighten_rounded)),
+    const SizedBox(height:15),
+    InkWell(onTap:pickDate,child:InputDecorator(decoration:decoration('Sowing date',Icons.calendar_month_outlined),
+      child:Text(date==null?'Select sowing date':date!.day.toString().padLeft(2,'0')+'/'+date!.month.toString().padLeft(2,'0')+'/'+date!.year.toString()))),
+    const SizedBox(height:20),
+    SizedBox(width:double.infinity,child:ElevatedButton.icon(onPressed:analyzing?null:analyze,icon:analyzing?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.auto_awesome_rounded),
+      label:Padding(padding:const EdgeInsets.symmetric(vertical:15),child:Text(analyzing?'Analyzing farm signals...':'Analyze my farm')),
+      style:ElevatedButton.styleFrom(backgroundColor:green,foregroundColor:Colors.white,shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(15))))),
+  ])).animate().fadeIn(duration:550.ms).slideX(begin:-.04,end:0);
 
-  Widget card(String title, Widget child) => Container(
-    width: double.infinity, padding: const EdgeInsets.all(22),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFE5EAE5))),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(title, style: const TextStyle(fontSize:19, fontWeight:FontWeight.w800, color:dark)),
-      const SizedBox(height:18), child,
-    ]),
-  );
+  Widget _preview()=>_card('Intelligence layers',const Column(children:[
+    ListTile(leading:Icon(Icons.cloud_outlined,color:green),title:Text('Weather'),subtitle:Text('Forecast and climate-risk signals')),
+    ListTile(leading:Icon(Icons.water_drop_outlined,color:green),title:Text('Soil'),subtitle:Text('Moisture and soil-health indicators')),
+    ListTile(leading:Icon(Icons.satellite_alt_outlined,color:green),title:Text('Satellite'),subtitle:Text('Vegetation and water-stress signals')),
+    ListTile(leading:Icon(Icons.auto_awesome_rounded,color:green),title:Text('AI Advisory'),subtitle:Text('Localized actions explained simply')),
+  ])).animate(delay:150.ms).fadeIn(duration:550.ms).slideX(begin:.04,end:0);
+
+  Widget _results(bool wide)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Text('Farm intelligence',style:TextStyle(fontSize:wide?32:27,fontWeight:FontWeight.w800,color:dark)),
+    const SizedBox(height:6),
+    Text(location.text+' • '+crop+' • '+size.text+' acres',style:const TextStyle(color:muted)),
+    const SizedBox(height:20),
+    GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:wide?4:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:1.5,
+      children:[
+        _metric('24°C','Temperature',Icons.thermostat_rounded),
+        _metric('72%','Soil moisture',Icons.water_drop_rounded),
+        _metric('0.68','Vegetation index',Icons.spa_rounded),
+        _metric('Low','Climate risk',Icons.shield_outlined),
+      ]),
+    const SizedBox(height:20),
+    _advisory(),
+    const SizedBox(height:16),
+    _signalCard('Next data connections','Weather API • SoilGrids • Sentinel/Landsat • Gemini AI',Icons.hub_rounded),
+  ]).animate().fadeIn(duration:650.ms).slideY(begin:.06,end:0);
+
+  Widget _metric(String value,String label,IconData icon)=>Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(22),border:Border.all(color:const Color(0xFFE5EAE5))),
+    child:Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisAlignment:MainAxisAlignment.center,children:[
+      Icon(icon,color:green,size:22),const SizedBox(height:12),Text(value,style:const TextStyle(fontSize:22,fontWeight:FontWeight.w800,color:dark)),Text(label,style:const TextStyle(fontSize:11,color:muted)),
+    ]));
+
+  Widget _advisory()=>Container(width:double.infinity,padding:const EdgeInsets.all(22),decoration:BoxDecoration(color:dark,borderRadius:BorderRadius.circular(24)),
+    child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Row(children:[Icon(Icons.auto_awesome_rounded,color:Colors.white),SizedBox(width:10),Text('AI Agro-Advisory',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w800))]),
+      SizedBox(height:16),
+      Text('Your farm profile is ready. AgriN will combine live environmental signals with crop context to recommend irrigation, crop-care and climate-resilience actions.',style:TextStyle(color:Color(0xFFD4DDD7),height:1.55)),
+      SizedBox(height:14),
+      Text('Prototype signal • Replace with live data before production',style:TextStyle(color:Color(0xFF9FB0A4),fontSize:11)),
+    ]));
+
+  Widget _signalCard(String title,String text,IconData icon)=>Container(width:double.infinity,padding:const EdgeInsets.all(20),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(22),border:Border.all(color:const Color(0xFFE5EAE5))),
+    child:Row(children:[Container(width:44,height:44,decoration:BoxDecoration(color:const Color(0xFFEAF4EC),borderRadius:BorderRadius.circular(13)),child:Icon(icon,color:green)),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(fontWeight:FontWeight.w700,color:dark)),const SizedBox(height:4),Text(text,style:const TextStyle(fontSize:12,color:muted))]))]);
+
+  Widget _card(String title,Widget child)=>Container(width:double.infinity,padding:const EdgeInsets.all(22),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(24),border:Border.all(color:const Color(0xFFE5EAE5))),
+    child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(fontSize:19,fontWeight:FontWeight.w800,color:dark)),const SizedBox(height:18),child]);
 }
