@@ -42,6 +42,39 @@ class InteroperabilityService {
     );
   }
 
+  Future<Map<String, dynamic>> export({
+    required String countryCode,
+    required String locationName,
+    required double latitude,
+    required double longitude,
+    required String observedAt,
+    Map<String, dynamic>? weather,
+    Map<String, dynamic>? soil,
+    Map<String, dynamic>? satellite,
+    String? crop,
+  }) async {
+    final response = await http.post(
+      Uri.parse(baseUrl + '/interoperability/export'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'country_code': countryCode,
+        'location_name': locationName,
+        'latitude': latitude,
+        'longitude': longitude,
+        'observed_at': observedAt,
+        'weather': weather,
+        'soil': soil,
+        'satellite': satellite,
+        'crop': crop,
+      }),
+    ).timeout(const Duration(seconds: 60));
+
+    if (response.statusCode != 200) {
+      throw Exception('Observation export failed (' + response.statusCode.toString() + ').');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
   Future<Map<String, dynamic>> validate({
     required String countryCode,
     required String locationName,
