@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from regenerative import router as regenerative_router
+from historical import router as historical_router
 
 app = FastAPI(title="AgriN AI Data API", version="0.2.1")
 
@@ -20,6 +21,7 @@ app.add_middleware(
 )
 
 app.include_router(regenerative_router)
+app.include_router(historical_router)
 
 
 class SoilRequest(BaseModel):
