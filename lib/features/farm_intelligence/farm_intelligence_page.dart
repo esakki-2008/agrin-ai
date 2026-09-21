@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/weather_service.dart';
 import '../../services/soil_service.dart';
+import '../../services/satellite_service.dart';
 
 class FarmIntelligencePage extends StatefulWidget {
   const FarmIntelligencePage({super.key});
@@ -14,6 +15,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   String crop='Rice'; DateTime? date; bool analyzing=false, showResults=false;
   WeatherData? weather;
   SoilData? soil;
+  SatelliteData? satellite;
   String? error;
 
   @override void dispose(){location.dispose();size.dispose();super.dispose();}
@@ -27,12 +29,18 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     if(location.text.trim().isEmpty||size.text.trim().isEmpty||date==null){
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Please complete your farm details first.'))); return;
     }
-    setState(() { analyzing=true; error=null; weather=null; soil=null; showResults=false; });
+    setState(() { analyzing=true; error=null; weather=null; soil=null; satellite=null; showResults=false; });
     try {
       final liveWeather=await WeatherService().fetch(location.text.trim());
       if(mounted)setState(()=>weather=liveWeather);
       final liveSoil=await SoilService().fetch(latitude:liveWeather.latitude, longitude:liveWeather.longitude);
       if(mounted)setState(()=>soil=liveSoil);
+      try {
+        final liveSatellite=await SatelliteService().fetch(latitude:liveWeather.latitude, longitude:liveWeather.longitude);
+        if(mounted)setState(()=>satellite=liveSatellite);
+      } catch(e) {
+        if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+      }
     } catch(e) {
       if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
     }
@@ -109,11 +117,12 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       ]),
     const SizedBox(height:20),
     if(soil!=null) _soilSection(soil!,wide),
+    if(satellite!=null) _satelliteSection(satellite!,wide),
     const SizedBox(height:20),
     if(error!=null) _errorCard(),
     _advisory(),
     const SizedBox(height:16),
-    _signalCard('Next data connections','Weather API • SoilGrids • Sentinel/Landsat • Gemini AI',Icons.hub_rounded),
+    _signalCard('Connected live sources','Open-Meteo • ISRIC SoilGrids • Sentinel-2',Icons.hub_rounded),
   ]).animate().fadeIn(duration:650.ms).slideY(begin:.06,end:0);
 
   Widget _soilSection(SoilData data, bool wide)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
@@ -130,6 +139,24 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       _metric('${data.nitrogen.toStringAsFixed(3)} g/kg','Total nitrogen',Icons.grass_outlined),
       _metric('${data.clay.toStringAsFixed(1)}%','Clay content',Icons.layers_outlined),
     ]),
+    const SizedBox(height:20),
+  ]);
+
+  Widget _satelliteSection(SatelliteData data, bool wide)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Row(children:[
+      const Expanded(child:Text('Satellite vegetation',style:TextStyle(fontSize:21,fontWeight:FontWeight.w800,color:dark))),
+      const Icon(Icons.satellite_alt_rounded,color:green,size:22),
+    ]),
+    const SizedBox(height:8),
+    Text(data.source,style:const TextStyle(fontSize:11,color:muted)),
+    const SizedBox(height:12),
+    GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:wide?3:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:1.5,children:[
+      _metric(data.ndvi==null?'Unavailable':data.ndvi!.toStringAsFixed(3),'NDVI',Icons.eco_rounded),
+      _metric(data.cloudCover==null?'Unavailable':'${data.cloudCover!.toStringAsFixed(1)}%','Scene cloud cover',Icons.cloud_outlined),
+      _metric(data.observationDate==null?'Unavailable':data.observationDate!.substring(0,10),'Observation date',Icons.calendar_today_outlined),
+    ]),
+    const SizedBox(height:8),
+    Text(data.sceneId==null?'Scene ID unavailable':'Scene: ${data.sceneId}',style:const TextStyle(fontSize:10,color:muted)),
     const SizedBox(height:20),
   ]);
 
