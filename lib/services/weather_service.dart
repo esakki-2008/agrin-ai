@@ -10,10 +10,10 @@ class WeatherData {
   final int rainProbability;
   final int weatherCode;
   final String time;
-  const WeatherData({required this.location,required this.temperature,required this.humidity,required this.windSpeed,required this.precipitation,required this.weatherCode,required this.time});
+  const WeatherData({required this.location,required this.temperature,required this.humidity,required this.windSpeed,required this.precipitation,required this.rainProbability,required this.weatherCode,required this.time});
   factory WeatherData.fromJson(Map<String,dynamic> json,String location) {
     final current=json['current'] as Map<String,dynamic>;
-    return WeatherData(location:location,temperature:(current['temperature_2m'] as num).toDouble(),humidity:(current['relative_humidity_2m'] as num).toDouble(),windSpeed:(current['wind_speed_10m'] as num).toDouble(),precipitation:(current['precipitation'] as num).toDouble(),weatherCode:(current['weather_code'] as num).toInt(),time:current['time'].toString());
+    return WeatherData(location:location,temperature:(current['temperature_2m'] as num).toDouble(),humidity:(current['relative_humidity_2m'] as num).toDouble(),windSpeed:(current['wind_speed_10m'] as num).toDouble(),precipitation:(current['precipitation'] as num).toDouble(),rainProbability:(((json['hourly'] as Map<String,dynamic>)['precipitation_probability'] as List).first as num).toInt(),weatherCode:(current['weather_code'] as num).toInt(),time:current['time'].toString());
   }
 }
 class WeatherService {
