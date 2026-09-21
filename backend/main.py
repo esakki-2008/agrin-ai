@@ -347,3 +347,147 @@ async def satellite_ndvi(request: SatelliteRequest):
             "longitude": request.longitude,
         },
     }
+
+
+
+class AdvisoryRequest(BaseModel):
+    location: str
+    crop: str
+    farm_size_acres: float
+    sowing_date: str
+    temperature_c: float
+    humidity_percent: float
+    wind_kmh: float
+    rain_probability_percent: float
+    weather_condition: str
+    soil_ph: float | None = None
+    organic_carbon_g_kg: float | None = None
+    nitrogen_g_kg: float | None = None
+    clay_percent: float | None = None
+    soil_source: str | None = None
+    ndvi: float | None = None
+    satellite_date: str | None = None
+    satellite_cloud_cover_percent: float | None = None
+    satellite_source: str | None = None
+
+
+@app.post("/advisory")
+async def advisory(request: AdvisoryRequest):
+    import os
+    import json
+
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="GEMINI_API_KEY is not configured on the backend.",
+        )
+
+    measured = {
+        "location": request.location,
+        "crop": request.crop,
+        "farm_size_acres": request.farm_size_acres,
+        "sowing_date": request.sowing_date,
+        "weather": {
+            "temperature_c": request.temperature_c,
+            "humidity_percent": request.humidity_percent,
+            "wind_kmh": request.wind_kmh,
+            "rain_probability_percent": request.rain_probability_percent,
+            "condition": request.weather_condition,
+        },
+        "soil": {
+            "ph": request.soil_ph,
+            "organic_carbon_g_kg": request.organic_carbon_g_kg,
+            "nitrogen_g_kg": request.nitrogen_g_kg,
+            "clay_percent": request.clay_percent,
+            "source": request.soil_source,
+        },
+        "satellite": {
+            "ndvi": request.ndvi,
+            "observation_date": request.satellite_date,
+            "cloud_cover_percent": request.satellite_cloud_cover_percent,
+            "source": request.satellite_source,
+        },
+    }
+
+    prompt = """
+You are AgriN AI's agricultural decision-support assistant.
+
+Use ONLY the measured values supplied in the JSON below. Never invent missing measurements,
+weather forecasts, soil values, crop stage, disease presence, irrigation amounts, fertilizer
+rates, pesticide doses, prices, or yield predictions.
+
+Create a practical advisory for the farmer. Distinguish measured facts from recommendations.
+If a value is null, explicitly say that it is unavailable and do not infer it.
+
+NDVI is a satellite-derived sample observation, not automatically a whole-farm health score.
+SoilGrids is model-derived soil information, not a laboratory soil test.
+Do not diagnose a disease from these measurements.
+
+Return ONLY valid JSON with exactly these fields:
+{
+  "summary": "short factual summary",
+  "observations": ["measured observation", "..."],
+  "actions": [
+    {
+      "title": "action title",
+      "reason": "why this action is relevant to the measured data",
+      "priority": "high|medium|low",
+      "confidence": "high|medium|low"
+    }
+  ],
+  "watch_items": ["what the farmer should monitor next"],
+  "data_limits": ["important limitation", "..."]
+}
+
+Keep the answer concise and farmer-friendly. Do not give chemical pesticide or fertilizer dosage.
+For irrigation, recommend checking field soil moisture before deciding an irrigation amount unless
+a measured soil-moisture value is actually provided.
+
+Measured farm data:
+""" + json.dumps(measured, ensure_ascii=False)
+
+    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.2,
+            "responseMimeType": "application/json",
+        },
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=45, follow_redirects=True) as client:
+            response = await client.post(
+                endpoint,
+                headers={
+                    "x-goog-api-key": api_key,
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"Gemini request failed: {exc}") from exc
+
+    if response.status_code != 200:
+        detail = "Gemini API request failed."
+        try:
+            error_json = response.json()
+            detail = error_json.get("error", {}).get("message", detail)
+        except ValueError:
+            pass
+        raise HTTPException(status_code=502, detail=detail)
+
+    try:
+        body = response.json()
+        text = body["candidates"][0]["content"]["parts"][0]["text"]
+        result = json.loads(text)
+    except (KeyError, IndexError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail="Gemini returned an invalid advisory response.") from exc
+
+    return {
+        "source": "Google Gemini API",
+        "model": "gemini-2.5-flash",
+        "advisory": result,
+    }
