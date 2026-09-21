@@ -80,6 +80,22 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
       ],),
     ).animate().fadeIn(duration: 550.ms).slideY(begin: .05, end: 0);
   }
+  Widget _crop() {
+    return DropdownButtonFormField<String>(
+      value: crop,
+      decoration: dec('Crop', Icons.grass_rounded),
+      items: const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
+      onChanged: (x) => setState(() => crop = x ?? crop),
+    );
+  }
+
+  Widget _acres() {
+    return TextField(
+      controller: acres,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: dec('Farm size (acres)', Icons.straighten_rounded),
+    );
+  }
   Widget _result(AdvisoryData a)=>Container(width:double.infinity,padding:const EdgeInsets.all(24),decoration:BoxDecoration(color:dark,borderRadius:BorderRadius.circular(24)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Row(children:[Icon(Icons.auto_awesome_rounded,color:Colors.white),SizedBox(width:10),Text('Generated advisory',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w800))]),const SizedBox(height:16),Text(a.summary,style:const TextStyle(color:Color(0xFFD4DDD7),height:1.55)),if(a.observations.isNotEmpty)...[const SizedBox(height:18),const Text('Observed signals',style:TextStyle(color:Colors.white,fontWeight:FontWeight.w700)),const SizedBox(height:8),...a.observations.map((x)=>Text('• '+x,style:const TextStyle(color:Color(0xFFD4DDD7),fontSize:12,height:1.5)))],if(a.actions.isNotEmpty)...[const SizedBox(height:18),...a.actions.map((x)=>Container(margin:const EdgeInsets.only(bottom:10),padding:const EdgeInsets.all(15),decoration:BoxDecoration(color:const Color(0xFF1C3325),borderRadius:BorderRadius.circular(15)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(x.title,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w700)),const SizedBox(height:5),Text(x.reason,style:const TextStyle(color:Color(0xFFD4DDD7),fontSize:12,height:1.45)),const SizedBox(height:6),Text('Priority: '+x.priority+' • Confidence: '+x.confidence,style:const TextStyle(color:Color(0xFF9FB0A4),fontSize:10))])))],if(a.watchItems.isNotEmpty)...[const SizedBox(height:8),const Text('Watch next',style:TextStyle(color:Colors.white,fontWeight:FontWeight.w700)),const SizedBox(height:7),...a.watchItems.map((x)=>Text('• '+x,style:const TextStyle(color:Color(0xFFD4DDD7),fontSize:12,height:1.5)))],if(a.dataLimits.isNotEmpty)...[const SizedBox(height:14),Text('Data limits: '+a.dataLimits.join(' • '),style:const TextStyle(color:Color(0xFF9FB0A4),fontSize:10,height:1.4))],const SizedBox(height:14),Text(a.source+' • '+a.model,style:const TextStyle(color:Color(0xFF9FB0A4),fontSize:10))])).animate().fadeIn(duration:600.ms).slideY(begin:.05,end:0);
   Widget _error()=>Container(width:double.infinity,padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:const Color(0xFFFFF3F0),borderRadius:BorderRadius.circular(16)),child:Row(children:[const Icon(Icons.error_outline,color:Colors.deepOrange),const SizedBox(width:10),Expanded(child:Text(error??'Unable to generate advisory.',style:const TextStyle(color:dark)))]));
 }
