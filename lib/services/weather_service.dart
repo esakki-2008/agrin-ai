@@ -7,6 +7,7 @@ class WeatherData {
   final double humidity;
   final double windSpeed;
   final double precipitation;
+  final int rainProbability;
   final int weatherCode;
   final String time;
   const WeatherData({required this.location,required this.temperature,required this.humidity,required this.windSpeed,required this.precipitation,required this.weatherCode,required this.time});
@@ -28,7 +29,7 @@ class WeatherService {
     final resolved=[item['name'],item['admin1'],item['country']].where((x)=>x!=null&&x.toString().isNotEmpty).join(', ');
     final weatherUri=Uri.https('api.open-meteo.com','/v1/forecast',{
       'latitude':lat.toString(),'longitude':lon.toString(),
-      'current':'temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m','timezone':'auto'
+      'current':'temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m','hourly':'precipitation_probability','forecast_hours':'1','timezone':'auto'
     });
     final weatherResponse=await http.get(weatherUri).timeout(const Duration(seconds:10));
     if(weatherResponse.statusCode!=200) throw Exception('Weather service failed.');
