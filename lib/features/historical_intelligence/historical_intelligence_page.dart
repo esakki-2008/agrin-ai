@@ -82,8 +82,9 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
     width: double.infinity,
     padding: const EdgeInsets.all(28),
     decoration: BoxDecoration(
-      gradient: const LinearGradient(colors: [Color(0xFF173B26), Color(0xFF3F7D4C)]),
+      gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF102318), Color(0xFF3F7D4C)]),
       borderRadius: BorderRadius.circular(28),
+      boxShadow: const [BoxShadow(color: Color(0x22102D1B), blurRadius: 28, offset: Offset(0, 12))],
     ),
     child: const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,7 +102,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
     'Historical window',
     Column(
       children: [
-        TextField(controller: location, decoration: _decoration('Village / district / location', Icons.location_on_outlined)),
+        TextField(controller: location, decoration: _decoration('Village / district / location', Icons.location_on_outlined)).animate().fadeIn(delay: 100.ms, duration: 350.ms),
         const SizedBox(height: 15),
         DropdownButtonFormField<int>(
           value: days,
@@ -207,7 +208,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
         Text(x.cloudCover == null ? 'Cloud unavailable' : x.cloudCover!.toStringAsFixed(1) + '%', style: const TextStyle(fontSize: 11, color: muted)),
       ],
     ),
-  );
+  ).animate().fadeIn(duration: 350.ms).slideX(begin: .02, end: 0);
 
   Widget _metric(String value, String label) => Container(
     padding: const EdgeInsets.all(18),
@@ -217,7 +218,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
       const SizedBox(height: 5),
       Text(label, style: const TextStyle(fontSize: 11, color: muted)),
     ]),
-  );
+  ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(.97, .97), end: const Offset(1, 1));
 
   Widget _ndviSection() {
     final n = ndvi;
