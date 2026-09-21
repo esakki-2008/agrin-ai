@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import io
+import base64
 
 import httpx
 import rasterio
@@ -348,6 +349,125 @@ async def satellite_ndvi(request: SatelliteRequest):
         },
     }
 
+
+
+class DiseaseRequest(BaseModel):
+    image_base64: str
+    mime_type: str = "image/jpeg"
+    crop: str = ""
+    location: str = ""
+
+
+@app.post("/disease/analyze")
+async def disease_analyze(request: DiseaseRequest):
+    import os
+    import json
+
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="GEMINI_API_KEY is not configured on the backend.")
+
+    allowed_types = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
+    if request.mime_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Unsupported image type. Use JPEG, PNG, WebP, HEIC, or HEIF.")
+
+    try:
+        image_bytes = base64.b64decode(request.image_base64, validate=True)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Invalid base64 image data.") from exc
+
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="The uploaded image is empty.")
+    if len(image_bytes) > 12 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Image is too large. Please upload an image under 12 MB.")
+
+    prompt = """
+You are AgriN AI Crop Doctor, an agricultural image-assessment assistant.
+
+Analyze ONLY what is visibly supported by the supplied crop/leaf image and the optional crop/location context.
+Do not invent symptoms, disease names, pests, nutrient deficiencies, crop stage, severity, treatment results, or environmental conditions.
+
+This is visual decision support, not a definitive diagnosis. If the image is blurry, poorly framed,
+shows a non-diagnostic area, or the evidence is insufficient, say so clearly and recommend a clearer
+photo or field/laboratory confirmation.
+
+Do not claim that a disease is confirmed. Use wording such as "possible", "consistent with", or
+"cannot determine" when appropriate. Do not provide chemical pesticide dosage or fertilizer dosage.
+Do not recommend a specific chemical treatment unless the visual evidence is strong; prefer practical
+non-chemical checks and professional/local agronomy confirmation.
+
+Return ONLY valid JSON with exactly these fields:
+{
+  "assessment": "short evidence-aware assessment",
+  "possible_issues": ["possible issue or 'No specific issue can be determined from this image.'"],
+  "observations": ["visible observation"],
+  "actions": [
+    {
+      "title": "next check",
+      "reason": "why it is relevant",
+      "priority": "high|medium|low"
+    }
+  ],
+  "limitations": ["important limitation"]
+}
+
+Keep it concise and farmer-friendly.
+Optional context:
+""" + json.dumps({"crop": request.crop, "location": request.location}, ensure_ascii=False)
+
+    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    payload = {
+        "contents": [{
+            "parts": [
+                {"text": prompt},
+                {
+                    "inline_data": {
+                        "mime_type": request.mime_type,
+                        "data": base64.b64encode(image_bytes).decode("ascii"),
+                    }
+                },
+            ]
+        }],
+        "generationConfig": {
+            "temperature": 0.1,
+            "responseMimeType": "application/json",
+        },
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
+            response = await client.post(
+                endpoint,
+                headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
+                json=payload,
+            )
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"Gemini image request failed: {exc}") from exc
+
+    if response.status_code != 200:
+        detail = "Gemini image analysis failed."
+        try:
+            detail = response.json().get("error", {}).get("message", detail)
+        except ValueError:
+            pass
+        raise HTTPException(status_code=502, detail=detail)
+
+    try:
+        body = response.json()
+        text = body["candidates"][0]["content"]["parts"][0]["text"]
+        result = json.loads(text)
+    except (KeyError, IndexError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail="Gemini returned an invalid crop analysis response.") from exc
+
+    return {
+        "source": "Google Gemini API",
+        "model": "gemini-2.5-flash",
+        "analysis": {
+            **result,
+            "source": "Google Gemini API",
+            "model": "gemini-2.5-flash",
+        },
+    }
 
 
 class AdvisoryRequest(BaseModel):
