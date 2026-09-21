@@ -175,10 +175,11 @@ class DashboardPage extends StatelessWidget {
       ('AI Agro-Advisory', 'Personalized actions for your crop', Icons.auto_awesome_rounded, const Color(0xFFF2EFE4)),
       ('Crop Doctor', 'Detect possible disease from a photo', Icons.local_florist_rounded, const Color(0xFFF0E9E5)),
       ('Regenerative Farming', 'Build soil health and resilience', Icons.eco_rounded, const Color(0xFFE8F1E9)),
+      ('Historical Intelligence', 'Understand weather and satellite change', Icons.history_rounded, const Color(0xFFEAF0E8)),
     ];
     return GridView.builder(
       shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: cards.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: wide ? 4 : 1, crossAxisSpacing: 14, mainAxisSpacing: 14, childAspectRatio: wide ? 1.25 : 2.8),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: wide ? 3 : 1, crossAxisSpacing: 14, mainAxisSpacing: 14, childAspectRatio: wide ? 1.25 : 2.8),
       itemBuilder: (context, i) {
         final c = cards[i];
         return Material(
@@ -191,6 +192,8 @@ class DashboardPage extends StatelessWidget {
                 context.push('/crop-doctor');
               } else if (c.$1 == 'Regenerative Farming') {
                 context.push('/regenerative-farming');
+              } else if (c.$1 == 'Historical Intelligence') {
+                context.push('/historical-intelligence');
               }
             },
             borderRadius: BorderRadius.circular(24),
