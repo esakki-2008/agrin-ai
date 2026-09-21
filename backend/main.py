@@ -5,7 +5,7 @@ import io
 import httpx
 import rasterio
 
-app = FastAPI(title="AgriN AI Data API", version="0.1.1")
+app = FastAPI(title="AgriN AI Data API", version="0.1.2")
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,9 +25,13 @@ def wcs_url(property_name: str, coverage: str, lon: float, lat: float):
     # Request a wider area so the result contains multiple 250 m SoilGrids cells.
     delta = 0.05
 
-    url = f"https://maps.isric.org/mapserv?map=/map/{property_name}.map"
+    # Keep the endpoint query-free. The MapServer map file MUST be passed
+    # together with the other query parameters; otherwise httpx's params=
+    # replaces the query string and MapServer falls back to its default map.
+    url = "https://maps.isric.org/mapserv"
 
     params = [
+        ("map", f"/map/{property_name}.map"),
         ("SERVICE", "WCS"),
         ("VERSION", "2.0.1"),
         ("REQUEST", "GetCoverage"),
