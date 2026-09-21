@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/disease_service.dart';
 
@@ -74,8 +75,9 @@ class _CropDoctorPageState extends State<CropDoctorPage> {
   Widget _header() => Container(
     width: double.infinity, padding: const EdgeInsets.all(28),
     decoration: BoxDecoration(
-      gradient: const LinearGradient(colors: [Color(0xFF173B26), Color(0xFF3F7D4C)]),
+      gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF102318), Color(0xFF3F7D4C)]),
       borderRadius: BorderRadius.circular(28),
+      boxShadow: const [BoxShadow(color: Color(0x22102D1B), blurRadius: 28, offset: Offset(0, 12))],
     ),
     child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Icon(Icons.local_florist_rounded, color: Colors.white, size: 36),
@@ -85,12 +87,12 @@ class _CropDoctorPageState extends State<CropDoctorPage> {
       Text('Upload a crop or leaf photo for an evidence-aware AI assessment.',
         style: TextStyle(color: Color(0xCCDDE9DF), height: 1.5)),
     ]),
-  );
+  ).animate().fadeIn(duration: 600.ms).slideY(begin: .08, end: 0, curve: Curves.easeOutCubic);
 
   Widget _input() => _card('Crop details', Column(children: [
-    TextField(controller: crop, decoration: _dec('Crop name', Icons.grass_rounded)),
+    TextField(controller: crop, decoration: _dec('Crop name', Icons.grass_rounded)).animate().fadeIn(delay: 100.ms, duration: 350.ms),
     const SizedBox(height: 14),
-    TextField(controller: location, decoration: _dec('Location (optional)', Icons.location_on_outlined)),
+    TextField(controller: location, decoration: _dec('Location (optional)', Icons.location_on_outlined)).animate().fadeIn(delay: 160.ms, duration: 350.ms),
     const SizedBox(height: 18),
     Row(children: [
       Expanded(child: OutlinedButton.icon(onPressed: busy ? null : () => choose(ImageSource.gallery),
@@ -118,7 +120,7 @@ class _CropDoctorPageState extends State<CropDoctorPage> {
 
   Widget _result() => Container(
     width: double.infinity, padding: const EdgeInsets.all(22),
-    decoration: BoxDecoration(color: dark, borderRadius: BorderRadius.circular(24)),
+    decoration: BoxDecoration(color: dark, borderRadius: BorderRadius.circular(24), boxShadow: const [BoxShadow(color: Color(0x33102D1B), blurRadius: 30, offset: Offset(0, 14))]),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Row(children: [
         Icon(Icons.health_and_safety_outlined, color: Colors.white),
@@ -153,7 +155,7 @@ class _CropDoctorPageState extends State<CropDoctorPage> {
       Text(result!.source + ' • ' + result!.model,
         style: const TextStyle(color: Color(0xFF9FB0A4), fontSize: 10)),
     ]),
-  );
+  ).animate().fadeIn(duration: 600.ms).slideY(begin: .06, end: 0, curve: Curves.easeOutCubic);
 
   Widget _bullet(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 5),
