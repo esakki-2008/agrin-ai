@@ -27,6 +27,10 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
   String crop = 'Rice';
   Map<String, dynamic>? exportedObservation;
   String? exportError;
+  final importController = TextEditingController();
+  bool validating = false;
+  Map<String, dynamic>? validationResult;
+  String? validationError;
 
   @override
   void initState() {
@@ -54,7 +58,33 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
   @override
   void dispose() {
     locationController.dispose();
+    importController.dispose();
     super.dispose();
+  }
+
+  Future<void> _validateImportedObservation() async {
+    final raw = importController.text.trim();
+    if (raw.isEmpty) {
+      setState(() { validationError = 'Paste a standardized JSON observation first.'; validationResult = null; });
+      return;
+    }
+    setState(() { validating = true; validationError = null; validationResult = null; });
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) throw Exception('The JSON root must be an object.');
+      final observation = decoded['observation'] is Map
+          ? Map<String, dynamic>.from(decoded['observation'] as Map)
+          : decoded;
+      final result = await service.validateObservation(observation);
+      if (!mounted) return;
+      setState(() { validationResult = result; validating = false; });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        validationError = e.toString().replaceFirst('Exception: ', '');
+        validating = false;
+      });
+    }
   }
 
   Future<void> _exportLiveObservation() async {
@@ -202,6 +232,8 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
         const SizedBox(height: 16),
         _exportCard(),
         const SizedBox(height: 16),
+        _importCard(),
+        const SizedBox(height: 16),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(18),
@@ -282,6 +314,81 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
                 style: const TextStyle(fontFamily: 'monospace', fontSize: 11, height: 1.45),
               ),
             ),
+          ),
+        ],
+      ],
+    ),
+  );
+
+  Widget _importCard() => _card(
+    'Validate an external observation',
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Paste a compatible AgriN observation JSON to validate its country code, WGS84 coordinates, timestamp and source-attribution support.',
+          style: TextStyle(color: muted, fontSize: 12, height: 1.5),
+        ),
+        const SizedBox(height: 14),
+        TextField(
+          controller: importController,
+          maxLines: 12,
+          decoration: const InputDecoration(
+            hintText: 'Paste observation JSON here...',
+            alignLabelWithHint: true,
+            border: OutlineInputBorder(),
+          ),
+          style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: validating ? null : _validateImportedObservation,
+            icon: validating
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.verified_outlined),
+            label: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Text(validating ? 'Validating...' : 'Validate observation'),
+            ),
+          ),
+        ),
+        if (validationError != null) ...[
+          const SizedBox(height: 12),
+          Text(validationError!, style: const TextStyle(color: Colors.deepOrange, fontSize: 12)),
+        ],
+        if (validationResult != null) ...[
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: validationResult!['valid'] == true ? const Color(0xFFEAF3EC) : const Color(0xFFFFF3F0),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  validationResult!['valid'] == true ? Icons.check_circle : Icons.error,
+                  color: validationResult!['valid'] == true ? green : Colors.deepOrange,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    validationResult!['valid'] == true
+                        ? 'Observation accepted by the AgriN validation contract.'
+                        : 'Observation failed validation.',
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: dark),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          SelectableText(
+            const JsonEncoder.withIndent('  ').convert(validationResult),
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 11, height: 1.45),
           ),
         ],
       ],
