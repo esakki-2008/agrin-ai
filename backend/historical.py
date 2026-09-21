@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta, timezone
 
 import httpx
+import rasterio
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
