@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:convert';
 import '../../services/interoperability_service.dart';
+import '../../services/weather_service.dart';
+import '../../services/soil_service.dart';
+import '../../services/satellite_service.dart';
 
 class BricsNetworkPage extends StatefulWidget {
   const BricsNetworkPage({super.key});
@@ -18,6 +22,11 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
   InteroperabilityProfile? profile;
   String? error;
   bool loading = true;
+  bool exporting = false;
+  final locationController = TextEditingController(text: 'Nashik, Maharashtra');
+  String crop = 'Rice';
+  Map<String, dynamic>? exportedObservation;
+  String? exportError;
 
   @override
   void initState() {
@@ -39,6 +48,66 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
         error = e.toString().replaceFirst('Exception: ', '');
         loading = false;
       });
+    }
+  }
+
+  @override
+  void dispose() {
+    locationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _exportLiveObservation() async {
+    setState(() { exporting = true; exportError = null; exportedObservation = null; });
+    try {
+      final weather = await WeatherService().fetch(locationController.text.trim());
+      final soil = await SoilService().fetch(latitude: weather.latitude, longitude: weather.longitude);
+      SatelliteData? satellite;
+      try {
+        satellite = await SatelliteService().fetch(latitude: weather.latitude, longitude: weather.longitude);
+      } catch (_) {
+        satellite = null;
+      }
+
+      final result = await service.export(
+        countryCode: 'IN',
+        locationName: weather.location,
+        latitude: weather.latitude,
+        longitude: weather.longitude,
+        observedAt: DateTime.now().toUtc().toIso8601String(),
+        weather: {
+          'source': 'Open-Meteo',
+          'temperature_c': weather.temperature,
+          'humidity_percent': weather.humidity,
+          'wind_speed_kmh': weather.windSpeed,
+          'precipitation_mm': weather.precipitation,
+          'rain_probability_percent': weather.rainProbability,
+          'weather_code': weather.weatherCode,
+          'observed_at': weather.time,
+        },
+        soil: {
+          'source': soil.source,
+          'pH': soil.ph,
+          'organic_carbon_g_kg': soil.organicCarbon,
+          'nitrogen_g_kg': soil.nitrogen,
+          'clay_percent': soil.clay,
+          'resolution_m': soil.resolution,
+          'depth': soil.depth,
+        },
+        satellite: satellite == null ? null : {
+          'source': satellite.source,
+          'scene_id': satellite.sceneId,
+          'observation_date': satellite.observationDate,
+          'cloud_cover_percent': satellite.cloudCover,
+          'ndvi': satellite.ndvi,
+        },
+        crop: crop,
+      );
+      if (!mounted) return;
+      setState(() { exportedObservation = result; exporting = false; });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() { exportError = e.toString().replaceFirst('Exception: ', ''); exporting = false; });
     }
   }
 
@@ -131,6 +200,8 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
         const SizedBox(height: 16),
         _section('Privacy controls', p.privacy, Icons.lock_outline_rounded),
         const SizedBox(height: 16),
+        _exportCard(),
+        const SizedBox(height: 16),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(18),
@@ -146,6 +217,76 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
       ],
     ).animate().fadeIn(duration: 600.ms);
   }
+
+  Widget _exportCard() => _card(
+    'Create a live standardized observation',
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Build an interoperable JSON observation from the same live weather, soil and satellite sources used by AgriN.',
+          style: TextStyle(color: muted, fontSize: 12, height: 1.5),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: locationController,
+          decoration: const InputDecoration(
+            labelText: 'Location',
+            prefixIcon: Icon(Icons.location_on_outlined, color: green),
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          value: crop,
+          decoration: const InputDecoration(
+            labelText: 'Crop',
+            prefixIcon: Icon(Icons.grass_outlined, color: green),
+            border: OutlineInputBorder(),
+          ),
+          items: const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other']
+              .map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
+          onChanged: exporting ? null : (x) => setState(() => crop = x ?? crop),
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: exporting ? null : _exportLiveObservation,
+            icon: exporting
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.file_upload_outlined),
+            label: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Text(exporting ? 'Building live observation...' : 'Build & export observation'),
+            ),
+          ),
+        ),
+        if (exportError != null) ...[
+          const SizedBox(height: 12),
+          Text(exportError!, style: const TextStyle(color: Colors.deepOrange, fontSize: 12)),
+        ],
+        if (exportedObservation != null) ...[
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(maxHeight: 420),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F7F4),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: SingleChildScrollView(
+              child: SelectableText(
+                const JsonEncoder.withIndent('  ').convert(exportedObservation),
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 11, height: 1.45),
+              ),
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
 
   Widget _section(String title, List<String> items, IconData icon) => _card(
     title,
