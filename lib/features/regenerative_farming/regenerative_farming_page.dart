@@ -30,17 +30,40 @@ class _RegenerativeFarmingPageState extends State<RegenerativeFarmingPage> {
 
   InputDecoration decoration(String label,IconData icon)=>InputDecoration(labelText:label,prefixIcon:Icon(icon,color:green),filled:true,fillColor:const Color(0xFFF7F9F5),border:OutlineInputBorder(borderRadius:BorderRadius.circular(16),borderSide:BorderSide.none),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(16),borderSide:const BorderSide(color:green,width:1.4)));
 
-  @override Widget build(BuildContext context){
-    final wide=MediaQuery.sizeOf(context).width>=900;
+  @override
+  Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Regenerative Farming',style:TextStyle(fontWeight:FontWeight.w800)),
+        title: const Text(
+          'Regenerative Farming',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
       ),
-      body: SafeArea(child:SingleChildScrollView(padding:EdgeInsets.all(wide?48:20),child:Center(child:ConstrainedBox(constraints:const BoxConstraints(maxWidth:1100),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-        _hero(),const SizedBox(height:20),
-        if(plan==null)_form() else _results(wide),
-        if(error!=null)...[const SizedBox(height:18),_error()],
-      ]))))); 
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(wide ? 48 : 20),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1100),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _hero(),
+                  const SizedBox(height: 20),
+                  if (plan == null) _form() else _results(wide),
+                  if (error != null) ...[
+                    const SizedBox(height: 18),
+                    _error(),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _hero()=>Container(width:double.infinity,padding:const EdgeInsets.all(28),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF173B26),Color(0xFF4D8256)]),borderRadius:BorderRadius.circular(28)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
