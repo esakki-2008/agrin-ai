@@ -164,6 +164,8 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
         const SizedBox(height: 22),
         _ndviSection(),
         const SizedBox(height: 18),
+        _changeAnalysis(),
+        const SizedBox(height: 18),
         _limitations(),
       ],
     ).animate().fadeIn(duration: 650.ms).slideY(begin: .05, end: 0);
@@ -242,12 +244,91 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
       ],
     );
   }
+  Widget _changeAnalysis() {
+    final n = ndvi;
+    final h = history!;
+    if (n == null || n.observations.length < 2) {
+      return _empty('Historical change analysis is unavailable because fewer than two usable NDVI observations were returned.');
+    }
+
+    final first = n.observations.first;
+    final last = n.observations.last;
+    final change = last.ndvi - first.ndvi;
+    final percent = first.ndvi.abs() > 0.000001 ? (change / first.ndvi.abs()) * 100 : null;
+
+    String direction;
+    if (change > 0.000001) {
+      direction = 'Observed NDVI increased';
+    } else if (change < -0.000001) {
+      direction = 'Observed NDVI decreased';
+    } else {
+      direction = 'Observed NDVI was unchanged';
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F9F5),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE5EAE5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle('Observed historical change'),
+          const SizedBox(height: 8),
+          Text(direction, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: dark)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _changeMetric(first.ndvi.toStringAsFixed(3), first.date == null ? 'First NDVI' : 'First • ${first.date!.substring(0, 10)}')),
+              const SizedBox(width: 10),
+              Expanded(child: _changeMetric(last.ndvi.toStringAsFixed(3), last.date == null ? 'Latest NDVI' : 'Latest • ${last.date!.substring(0, 10)}')),
+              const SizedBox(width: 10),
+              Expanded(child: _changeMetric(change.toStringAsFixed(3), 'Absolute change')),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            percent == null
+                ? 'Relative change is unavailable because the first NDVI observation is zero.'
+                : 'Relative change from the first to the latest usable observation: ${percent.toStringAsFixed(1)}%.',
+            style: const TextStyle(fontSize: 11, color: muted, height: 1.4),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Weather context for this period: ${h.summary.totalPrecipitation?.toStringAsFixed(1) ?? 'Unavailable'} mm total precipitation and ${h.summary.averageTemperature?.toStringAsFixed(1) ?? 'Unavailable'}°C average temperature. These are contextual observations, not a causal diagnosis of crop condition.',
+            style: const TextStyle(fontSize: 11, color: muted, height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _changeMetric(String value, String label) => Container(
+    padding: const EdgeInsets.all(13),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFFE5EAE5)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(value, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: dark)),
+        const SizedBox(height: 4),
+        Text(label, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 9, color: muted)),
+      ],
+    ),
+  );
+
   Widget _limitations() => Container(
     width: double.infinity,
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(color: dark, borderRadius: BorderRadius.circular(20)),
     child: const Text(
-      'Historical weather is sourced from Open-Meteo archive data. Sentinel-2 entries are scene metadata; scene count and cloud cover are not crop-health scores. Historical satellite NDVI trend analysis is the next layer.',
+      'Historical weather is sourced from Open-Meteo archive data. Sentinel-2 entries are scene metadata; scene count and cloud cover are not crop-health scores. Historical NDVI change is calculated only from usable Sentinel-2 observations returned for this point and period. Weather values provide context; they do not establish causation.',
       style: TextStyle(color: Color(0xFFD4DDD7), fontSize: 11, height: 1.5),
     ),
   );
