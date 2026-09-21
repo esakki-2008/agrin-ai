@@ -115,9 +115,49 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       Text('Prototype signal • Replace with live data before production',style:TextStyle(color:Color(0xFF9FB0A4),fontSize:11)),
     ]));
 
-  Widget _signalCard(String title,String text,IconData icon)=>Container(width:double.infinity,padding:const EdgeInsets.all(20),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(22),border:Border.all(color:const Color(0xFFE5EAE5))),
-    child:Row(children:[Container(width:44,height:44,decoration:BoxDecoration(color:const Color(0xFFEAF4EC),borderRadius:BorderRadius.circular(13)),child:Icon(icon,color:green)),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(fontWeight:FontWeight.w700,color:dark)),const SizedBox(height:4),Text(text,style:const TextStyle(fontSize:12,color:muted))]))]);
+  Widget _signalCard(String title, String text, IconData icon) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE5EAE5)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44, height: 44,
+            decoration: BoxDecoration(color: const Color(0xFFEAF4EC), borderRadius: BorderRadius.circular(13)),
+            child: Icon(icon, color: green),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w700, color: dark)),
+              const SizedBox(height: 4),
+              Text(text, style: const TextStyle(fontSize: 12, color: muted)),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _card(String title,Widget child)=>Container(width:double.infinity,padding:const EdgeInsets.all(22),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(24),border:Border.all(color:const Color(0xFFE5EAE5))),
-    child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(fontSize:19,fontWeight:FontWeight.w800,color:dark)),const SizedBox(height:18),child]);
+  Widget _card(String title, Widget child) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE5EAE5)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: dark)),
+        const SizedBox(height: 18),
+        child,
+      ]),
+    );
+  }
 }
