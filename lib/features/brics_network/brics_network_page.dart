@@ -191,7 +191,9 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
     child: const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.public_rounded, color: Colors.white, size: 36),
+        Icon(Icons.public_rounded, color: Colors.white, size: 36)
+            .animate(onPlay: (controller) => controller.repeat(reverse: true))
+            .scale(begin: const Offset(.94, .94), end: const Offset(1.06, 1.06), duration: 1400.ms),
         SizedBox(height: 14),
         Text(
           'Interoperability without vendor lock-in',
@@ -247,7 +249,7 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
           ),
         ),
       ],
-    ).animate().fadeIn(duration: 600.ms);
+    ).animate().fadeIn(duration: 650.ms).slideY(begin: .025, end: 0);
   }
 
   Widget _exportCard() => _card(
@@ -435,6 +437,13 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
       color: Colors.white,
       borderRadius: BorderRadius.circular(22),
       border: Border.all(color: const Color(0xFFE5EAE5)),
+      boxShadow: const [
+        BoxShadow(
+          blurRadius: 18,
+          offset: Offset(0, 8),
+          color: Color(0x0D102318),
+        ),
+      ],
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -444,7 +453,7 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
         child,
       ],
     ),
-  );
+  ).animate().fadeIn(duration: 500.ms).slideY(begin: .035, end: 0);
 
   Widget _error() => Container(
     padding: const EdgeInsets.all(18),
