@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/weather_service.dart';
 import '../../services/soil_service.dart';
 import '../../services/satellite_service.dart';
+import '../../services/advisory_service.dart';
 
 class FarmIntelligencePage extends StatefulWidget {
   const FarmIntelligencePage({super.key});
@@ -16,6 +17,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   WeatherData? weather;
   SoilData? soil;
   SatelliteData? satellite;
+  AdvisoryData? advisory;
   String? error;
 
   @override void dispose(){location.dispose();size.dispose();super.dispose();}
@@ -29,7 +31,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     if(location.text.trim().isEmpty||size.text.trim().isEmpty||date==null){
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Please complete your farm details first.'))); return;
     }
-    setState(() { analyzing=true; error=null; weather=null; soil=null; satellite=null; showResults=false; });
+    setState(() { analyzing=true; error=null; weather=null; soil=null; satellite=null; advisory=null; showResults=false; });
     try {
       final liveWeather=await WeatherService().fetch(location.text.trim());
       if(mounted)setState(()=>weather=liveWeather);
@@ -38,6 +40,14 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       try {
         final liveSatellite=await SatelliteService().fetch(latitude:liveWeather.latitude, longitude:liveWeather.longitude);
         if(mounted)setState(()=>satellite=liveSatellite);
+      } catch(e) {
+        if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+      }
+      try {
+        final acres=double.tryParse(size.text.trim());
+        if(acres==null) throw Exception('Farm size must be a valid number.');
+        final ai=await AdvisoryService().fetch(location:location.text.trim(),crop:crop,farmSizeAcres:acres,sowingDate:date!,weather:liveWeather,soil:soil,satellite:satellite);
+        if(mounted)setState(()=>advisory=ai);
       } catch(e) {
         if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
       }
@@ -120,7 +130,8 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     if(satellite!=null) _satelliteSection(satellite!,wide),
     const SizedBox(height:20),
     if(error!=null) _errorCard(),
-    _advisory(),
+    if(advisory!=null) _aiAdvisory(advisory!),
+    if(advisory==null) _advisory(),
     const SizedBox(height:16),
     _signalCard('Connected live sources','Open-Meteo • ISRIC SoilGrids • Sentinel-2',Icons.hub_rounded),
   ]).animate().fadeIn(duration:650.ms).slideY(begin:.06,end:0);
@@ -180,6 +191,50 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   }
 
   Widget _errorCard()=>Container(width:double.infinity,padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:const Color(0xFFFFF3F0),borderRadius:BorderRadius.circular(18)),child:Row(children:[const Icon(Icons.error_outline,color:Colors.deepOrange),const SizedBox(width:10),Expanded(child:Text(error??'Unable to fetch live data.',style:const TextStyle(color:dark)))]));
+  Widget _aiAdvisory(AdvisoryData data) {
+    return Container(
+      width:double.infinity,
+      padding:const EdgeInsets.all(22),
+      decoration:BoxDecoration(color:dark,borderRadius:BorderRadius.circular(24)),
+      child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        const Row(children:[
+          Icon(Icons.auto_awesome_rounded,color:Colors.white),
+          SizedBox(width:10),
+          Text('AI Agro-Advisory',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w800)),
+        ]),
+        const SizedBox(height:16),
+        Text(data.summary,style:const TextStyle(color:Color(0xFFD4DDD7),height:1.55)),
+        if(data.actions.isNotEmpty) ...[
+          const SizedBox(height:18),
+          ...data.actions.map((a)=>Container(
+            margin:const EdgeInsets.only(bottom:10),
+            padding:const EdgeInsets.all(14),
+            decoration:BoxDecoration(color:const Color(0xFF1C3325),borderRadius:BorderRadius.circular(14)),
+            child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+              Text(a.title,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w700)),
+              const SizedBox(height:5),
+              Text(a.reason,style:const TextStyle(color:Color(0xFFD4DDD7),fontSize:12,height:1.4)),
+              const SizedBox(height:5),
+              Text('Priority: ${a.priority} • Confidence: ${a.confidence}',style:const TextStyle(color:Color(0xFF9FB0A4),fontSize:10)),
+            ]),
+          )),
+        ],
+        if(data.watchItems.isNotEmpty) ...[
+          const SizedBox(height:6),
+          const Text('Watch next',style:TextStyle(color:Colors.white,fontWeight:FontWeight.w700)),
+          const SizedBox(height:7),
+          ...data.watchItems.map((x)=>Padding(padding:const EdgeInsets.only(bottom:5),child:Text('• $x',style:const TextStyle(color:Color(0xFFD4DDD7),fontSize:12)))),
+        ],
+        if(data.dataLimits.isNotEmpty) ...[
+          const SizedBox(height:12),
+          Text('Data limits: ${data.dataLimits.join(' • ')}',style:const TextStyle(color:Color(0xFF9FB0A4),fontSize:10,height:1.4)),
+        ],
+        const SizedBox(height:12),
+        Text('${data.source} • ${data.model}',style:const TextStyle(color:Color(0xFF9FB0A4),fontSize:10)),
+      ]),
+    );
+  }
+
   Widget _advisory() {
     return Container(
       width: double.infinity,
