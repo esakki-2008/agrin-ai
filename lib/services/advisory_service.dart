@@ -47,6 +47,19 @@ class AdvisoryService {
   final String baseUrl;
   const AdvisoryService({this.baseUrl='http://127.0.0.1:8000'});
 
+  String _condition(int code) {
+    if(code==0) return 'Clear sky';
+    if(code==1||code==2||code==3) return 'Cloudy or partly cloudy';
+    if(code==45||code==48) return 'Fog';
+    if(code>=51&&code<=57) return 'Drizzle';
+    if(code>=61&&code<=67) return 'Rain';
+    if(code>=71&&code<=77) return 'Snow';
+    if(code>=80&&code<=82) return 'Rain showers';
+    if(code>=85&&code<=86) return 'Snow showers';
+    if(code>=95&&code<=99) return 'Thunderstorm';
+    return 'Variable conditions';
+  }
+
   Future<AdvisoryData> fetch({
     required String location,
     required String crop,
@@ -68,7 +81,7 @@ class AdvisoryService {
         'humidity_percent':weather.humidity,
         'wind_kmh':weather.windSpeed,
         'rain_probability_percent':weather.rainProbability,
-        'weather_condition':weather.weatherCode,
+        'weather_condition':_condition(weather.weatherCode),
         'soil_ph':soil?.ph,
         'organic_carbon_g_kg':soil?.organicCarbon,
         'nitrogen_g_kg':soil?.nitrogen,
