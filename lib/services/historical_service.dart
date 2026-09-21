@@ -95,7 +95,8 @@ class HistoricalService {
         id: x['id']?.toString(),
         datetime: x['datetime']?.toString(),
         cloudCover: (x['cloud_cover_percent'] as num?)?.toDouble(),
-      )).toList();
+      )).toList(),
+    );
   }
 
   String _detail(http.Response response) {
