@@ -66,14 +66,14 @@ class _RegenerativeFarmingPageState extends State<RegenerativeFarmingPage> {
     );
   }
 
-  Widget _hero()=>Container(width:double.infinity,padding:const EdgeInsets.all(28),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF173B26),Color(0xFF4D8256)]),borderRadius:BorderRadius.circular(28)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+  Widget _hero()=>Container(width:double.infinity,padding:const EdgeInsets.all(28),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF102318),Color(0xFF4D8256)]),borderRadius:BorderRadius.circular(28),boxShadow:const[BoxShadow(color:Color(0x22102D1B),blurRadius:28,offset:Offset(0,12))]),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     Icon(Icons.eco_rounded,color:Colors.white,size:34),SizedBox(height:14),
     Text('Build a regenerative plan',style:TextStyle(color:Colors.white,fontSize:27,fontWeight:FontWeight.w800)),
     SizedBox(height:8),Text('Use live weather and model-derived soil context to organize practical soil, water and biodiversity actions.',style:TextStyle(color:Color(0xCCDDE9DF),height:1.5)),
   ])).animate().fadeIn(duration:600.ms).slideY(begin:.06,end:0);
 
   Widget _form()=>_card('Farm context',Column(children:[
-    TextField(controller:location,decoration:decoration('Village / district / location',Icons.location_on_outlined)),
+    TextField(controller:location,decoration:decoration('Village / district / location',Icons.location_on_outlined)).animate().fadeIn(delay:100.ms,duration:350.ms),
     const SizedBox(height:15),
     DropdownButtonFormField<String>(value:crop,decoration:decoration('Primary crop',Icons.grass_rounded),items:const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:(x)=>setState(()=>crop=x??crop)),
     const SizedBox(height:20),
@@ -101,7 +101,7 @@ class _RegenerativeFarmingPageState extends State<RegenerativeFarmingPage> {
     _metric(soil!.organicCarbon.toStringAsFixed(1),'Soil organic C g/kg'),
   ]);
 
-  Widget _metric(String value,String label)=>Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(22),border:Border.all(color:const Color(0xFFE5EAE5))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisAlignment:MainAxisAlignment.center,children:[Text(value,style:const TextStyle(fontSize:22,fontWeight:FontWeight.w800,color:dark)),const SizedBox(height:4),Text(label,style:const TextStyle(fontSize:11,color:muted))]));
+  Widget _metric(String value,String label)=>Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(22),border:Border.all(color:const Color(0xFFE5EAE5))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisAlignment:MainAxisAlignment.center,children:[Text(value,style:const TextStyle(fontSize:22,fontWeight:FontWeight.w800,color:dark)),const SizedBox(height:4),Text(label,style:const TextStyle(fontSize:11,color:muted))])).animate().fadeIn(duration:350.ms).scale(begin:const Offset(.96,.96),end:const Offset(1,1));
 
   Widget _practice(RegenerativePractice item,int index)=>Container(margin:const EdgeInsets.only(bottom:10),padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(20),border:Border.all(color:const Color(0xFFE5EAE5))),child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
     Container(width:42,height:42,decoration:BoxDecoration(color:const Color(0xFFEAF4EC),borderRadius:BorderRadius.circular(13)),child:const Icon(Icons.eco_outlined,color:green)),
