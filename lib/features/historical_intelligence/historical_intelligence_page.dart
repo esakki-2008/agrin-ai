@@ -19,6 +19,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
   String? error;
   HistoricalWeather? history;
   HistoricalSatellite? satellite;
+  HistoricalNdvi? ndvi;
 
   @override
   void dispose() { location.dispose(); super.dispose(); }
@@ -28,7 +29,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a village, district, or location first.')));
       return;
     }
-    setState(() { loading = true; error = null; history = null; satellite = null; });
+    setState(() { loading = true; error = null; history = null; satellite = null; ndvi = null; });
     try {
       final live = await WeatherService().fetch(location.text.trim());
       final service = HistoricalService();
@@ -37,8 +38,12 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
       try {
         s = await service.satelliteScenes(latitude: live.latitude, longitude: live.longitude, days: days);
       } catch (_) {}
+      HistoricalNdvi? n;
+      try {
+        n = await service.satelliteNdvi(latitude: live.latitude, longitude: live.longitude, days: days);
+      } catch (_) {}
       if (!mounted) return;
-      setState(() { history = h; satellite = s; });
+      setState(() { history = h; satellite = s; ndvi = n; });
     } catch (e) {
       if (mounted) setState(() => error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -156,6 +161,8 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
           const SizedBox(height: 10),
           ...s.scenes.take(8).map(_scene),
         ],
+        const SizedBox(height: 22),
+        _ndviSection(),
         const SizedBox(height: 18),
         _limitations(),
       ],
@@ -210,6 +217,31 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
     ]),
   );
 
+  Widget _ndviSection() {
+    final n = ndvi;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('Historical Sentinel-2 NDVI'),
+        const SizedBox(height: 6),
+        const Text('NDVI calculated from real Red and NIR observations. It is a point sample, not a whole-farm health score.', style: TextStyle(fontSize: 11, color: muted, height: 1.4)),
+        const SizedBox(height: 10),
+        if (n == null || !n.available || n.observations.isEmpty)
+          _empty(n?.message ?? 'Historical NDVI is unavailable.')
+        else
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(12, 18, 18, 12),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), border: Border.all(color: const Color(0xFFE5EAE5))),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              SizedBox(height: 220, child: CustomPaint(painter: _NdviChartPainter(n.observations), child: const SizedBox.expand())),
+              const SizedBox(height: 8),
+              Text(n.count.toString() + ' usable observations • ' + n.source, style: const TextStyle(fontSize: 10, color: muted)),
+            ]),
+          ),
+      ],
+    );
+  }
   Widget _limitations() => Container(
     width: double.infinity,
     padding: const EdgeInsets.all(18),
@@ -258,4 +290,61 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
       child,
     ]),
   );
+}
+
+
+class _NdviChartPainter extends CustomPainter {
+  final List<HistoricalNdviObservation> observations;
+  _NdviChartPainter(this.observations);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (observations.isEmpty) return;
+    final chart = Rect.fromLTWH(42, 12, size.width - 58, size.height - 42);
+    final gridPaint = Paint()..color = const Color(0xFFE5EAE5)..strokeWidth = 1;
+    final linePaint = Paint()..color = const Color(0xFF2E6B43)..strokeWidth = 3..style = PaintingStyle.stroke;
+    final pointPaint = Paint()..color = const Color(0xFF2E6B43)..style = PaintingStyle.fill;
+    const minY = -1.0;
+    const maxY = 1.0;
+
+    for (var i = 0; i <= 4; i++) {
+      final y = chart.top + chart.height * i / 4;
+      canvas.drawLine(Offset(chart.left, y), Offset(chart.right, y), gridPaint);
+      final value = maxY - (maxY - minY) * i / 4;
+      _text(canvas, value.toStringAsFixed(1), Offset(2, y - 7), 10);
+    }
+
+    final path = Path();
+    for (var i = 0; i < observations.length; i++) {
+      final x = observations.length == 1 ? chart.center.dx : chart.left + chart.width * i / (observations.length - 1);
+      final normalized = (observations[i].ndvi - minY) / (maxY - minY);
+      final y = chart.bottom - normalized * chart.height;
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+      canvas.drawCircle(Offset(x, y), 4, pointPaint);
+    }
+    canvas.drawPath(path, linePaint);
+
+    final first = observations.first.date ?? '';
+    final last = observations.last.date ?? '';
+    if (first.isNotEmpty) _text(canvas, first.length >= 10 ? first.substring(0, 10) : first, Offset(chart.left, chart.bottom + 10), 9);
+    if (last.isNotEmpty) {
+      final label = last.length >= 10 ? last.substring(0, 10) : last;
+      _text(canvas, label, Offset(chart.right - 65, chart.bottom + 10), 9);
+    }
+  }
+
+  void _text(Canvas canvas, String text, Offset offset, double size) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: TextStyle(color: const Color(0xFF66736A), fontSize: size)),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    painter.paint(canvas, offset);
+  }
+
+  @override
+  bool shouldRepaint(covariant _NdviChartPainter oldDelegate) => oldDelegate.observations != observations;
 }
