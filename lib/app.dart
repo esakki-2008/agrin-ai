@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'features/dashboard/dashboard_page.dart';
 import 'features/farm_intelligence/farm_intelligence_page.dart';
 import 'features/crop_doctor/crop_doctor_page.dart';
+import 'features/regenerative_farming/regenerative_farming_page.dart';
 
 class AgriNApp extends StatelessWidget {
   const AgriNApp({super.key});
@@ -15,6 +16,7 @@ class AgriNApp extends StatelessWidget {
         GoRoute(path: '/', builder: (context, state) => const DashboardPage()),
         GoRoute(path: '/farm-intelligence', builder: (context, state) => const FarmIntelligencePage()),
         GoRoute(path: '/crop-doctor', builder: (context, state) => const CropDoctorPage()),
+        GoRoute(path: '/regenerative-farming', builder: (context, state) => const RegenerativeFarmingPage()),
       ],
     );
 
