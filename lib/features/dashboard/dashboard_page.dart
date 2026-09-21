@@ -118,7 +118,7 @@ class DashboardPage extends StatelessWidget {
               style: ElevatedButton.styleFrom(foregroundColor: dark, backgroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
             ),
             OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: () => context.push('/crop-doctor'),
               icon: const Icon(Icons.camera_alt_outlined, size: 18),
               label: const Text('Check a crop'),
               style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: BorderSide(color: Colors.white.withValues(alpha: .3)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
