@@ -75,6 +75,20 @@ class InteroperabilityService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> validateObservation(Map<String, dynamic> observation) async {
+    final response = await http.post(
+      Uri.parse(baseUrl + '/interoperability/validate'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(observation),
+    ).timeout(const Duration(seconds: 30));
+
+    if (response.statusCode != 200) {
+      final body = jsonDecode(response.body);
+      throw Exception(body['detail']?.toString() ?? 'Observation validation failed (' + response.statusCode.toString() + ').');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
   Future<Map<String, dynamic>> validate({
     required String countryCode,
     required String locationName,
