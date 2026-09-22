@@ -106,15 +106,35 @@ EVIDENCE:
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"temperature": 0.15, "responseMimeType": "application/json"},
     }
-    try:
-        async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
-            response = await client.post(
-                endpoint,
-                headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
-                json=payload,
-            )
-    except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Gemini request failed: {exc}") from exc
+    response = None
+    last_error = None
+    for attempt in range(3):
+        try:
+            async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
+                response = await client.post(
+                    endpoint,
+                    headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
+                    json=payload,
+                )
+        except httpx.HTTPError as exc:
+            last_error = f"Gemini request failed: {exc}"
+            response = None
+
+        if response is not None and response.status_code == 200:
+            break
+
+        # Gemini can temporarily return 429/503 during demand spikes.
+        # Retry briefly before surfacing the real provider error to the UI.
+        if response is None or response.status_code in (429, 500, 502, 503, 504):
+            if attempt < 2:
+                import asyncio
+                await asyncio.sleep(2 ** attempt)
+                continue
+
+        break
+
+    if response is None:
+        raise HTTPException(status_code=502, detail=last_error or "Gemini request failed.")
 
     if response.status_code != 200:
         detail = "Gemini API request failed."
