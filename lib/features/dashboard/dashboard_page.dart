@@ -1,48 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../theme/agri_n_design.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
-  static const green = Color(0xFF2E6B43);
-  static const dark = Color(0xFF102318);
-  static const muted = Color(0xFF66736A);
-
   @override
   Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+    final pad = wide ? 56.0 : 20.0;
+
     return Scaffold(
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final wide = constraints.maxWidth >= 1000;
-            return SingleChildScrollView(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1440),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: wide ? 48 : 20, vertical: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _nav(context, wide),
-                        const SizedBox(height: 32),
-                        _hero(context, wide),
-                        const SizedBox(height: 24),
-                        _metrics(wide),
-                        const SizedBox(height: 24),
-                        _intelligenceGrid(wide),
-                        const SizedBox(height: 24),
-                        _bricsBanner(context, wide),
-                        const SizedBox(height: 36),
-                        const Center(child: Text('AgriN AI • Built for resilient farming across India and beyond', style: TextStyle(color: muted, fontSize: 12))),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: pad, vertical: 22),
+              sliver: SliverToBoxAdapter(child: _nav(context, wide)),
+            ),
+            SliverToBoxAdapter(child: _hero(wide)),
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: pad),
+              sliver: SliverToBoxAdapter(child: _intro(wide)),
+            ),
+            SliverToBoxAdapter(child: _intelligenceStrip(wide)),
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: pad),
+              sliver: SliverToBoxAdapter(child: _capabilities(context, wide)),
+            ),
+            SliverToBoxAdapter(child: _agentSection(context, wide)),
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: pad),
+              sliver: SliverToBoxAdapter(child: _networkSection(context, wide)),
+            ),
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: pad, vertical: 42),
+              sliver: SliverToBoxAdapter(child: _footer()),
+            ),
+          ],
         ),
       ),
     );
@@ -51,199 +47,231 @@ class DashboardPage extends StatelessWidget {
   Widget _nav(BuildContext context, bool wide) {
     return Row(
       children: [
-        Container(
-          width: 44, height: 44,
-          decoration: BoxDecoration(color: green, borderRadius: BorderRadius.circular(14)),
-          child: const Icon(Icons.eco_rounded, color: Colors.white, size: 25),
-        ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
-        const SizedBox(width: 12),
-        const Text('AgriN', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: dark)),
-        const Text(' AI', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: green)),
+        Text('AGRI N', style: Theme.of(context).textTheme.titleLarge?.copyWith(letterSpacing: 2.8)),
         const Spacer(),
         if (wide) ...[
-          _navItem('Dashboard', true),
-          _navItem('Farm Intelligence', false),
-          _navItem('Crop Doctor', false),
-          InkWell(onTap: () => GoRouter.of(context).push('/brics-network'), child: _navItem('BRICS Network', false)),
-          const SizedBox(width: 20),
+          _link(context, 'FARM', '/farm-intelligence'),
+          _link(context, 'DOCTOR', '/crop-doctor'),
+          _link(context, 'HISTORY', '/historical-intelligence'),
+          _link(context, 'NETWORK', '/brics-network'),
         ],
-        IconButton(onPressed: () {}, icon: const Icon(Icons.language_rounded)),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          decoration: BoxDecoration(color: const Color(0xFFE8F1E9), borderRadius: BorderRadius.circular(14)),
-          child: const Row(children: [Icon(Icons.location_on_outlined, size: 17, color: green), SizedBox(width: 5), Text('India', style: TextStyle(fontWeight: FontWeight.w600))]),
-        ),
+        const SizedBox(width: 16),
+        Text('INDIA', style: Theme.of(context).textTheme.labelSmall),
       ],
     ).animate().fadeIn(duration: 500.ms).slideY(begin: -.12, end: 0);
   }
 
-  Widget _navItem(String label, bool active) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 11),
-    child: Text(label, style: TextStyle(fontSize: 13, fontWeight: active ? FontWeight.w700 : FontWeight.w500, color: active ? green : muted)),
+  Widget _link(BuildContext context, String label, String route) => Padding(
+    padding: const EdgeInsets.only(left: 22),
+    child: InkWell(
+      onTap: () => context.push(route),
+      child: Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AgriNDesign.ink)),
+    ),
   );
 
-  Widget _hero(BuildContext context, bool wide) {
+  Widget _hero(bool wide) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(wide ? 44 : 28),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF173B26), Color(0xFF2E6B43), Color(0xFF4B8E59)]),
-        borderRadius: BorderRadius.circular(32),
+      padding: EdgeInsets.symmetric(horizontal: wide ? 56 : 20, vertical: wide ? 76 : 58),
+      decoration: const BoxDecoration(color: AgriNDesign.paper),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            right: wide ? 90 : -45,
+            top: wide ? -20 : 12,
+            child: MotionOrb(size: wide ? 300 : 190, label: 'LIVING\nLAND'),
+          ),
+          Positioned(
+            right: wide ? 270 : -10,
+            bottom: -70,
+            child: MotionOrb(size: wide ? 170 : 110, label: 'FIELD'),
+          ),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: wide ? 780 : 600),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('AGRICULTURAL\nINTELLIGENCE', style: TextStyle(
+                  fontFamily: 'Cormorant Garamond',
+                  fontSize: wide ? 92 : 58,
+                  height: .82,
+                  fontWeight: FontWeight.w500,
+                  color: AgriNDesign.ink,
+                )).animate().fadeIn(duration: 800.ms).slideX(begin: -.04, end: 0),
+                const SizedBox(height: 28),
+                Text(
+                  'Evidence from weather, soil, satellite and history — brought together for better farm decisions.',
+                  style: TextStyle(fontSize: wide ? 16 : 14, height: 1.6, color: AgriNDesign.muted),
+                ).animate(delay: 180.ms).fadeIn(duration: 650.ms),
+                const SizedBox(height: 28),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _action('ANALYZE FARM', () => GoRouter.of(_navContext!).push('/farm-intelligence')),
+                    _action('CROP DOCTOR', () => GoRouter.of(_navContext!).push('/crop-doctor'), outline: true),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-      child: Stack(children: [
-        Positioned(right: -70, top: -110, child: _orb(240, const Color(0x223B8B4B))),
-        Positioned(right: 100, bottom: -150, child: _orb(280, const Color(0x1828B34E))),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-            decoration: BoxDecoration(color: Colors.white.withValues(alpha: .12), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withValues(alpha: .16))),
-            child: const Text('✦ AI-POWERED AGRICULTURAL INTELLIGENCE', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.1)),
-          ),
-          const SizedBox(height: 22),
-          SizedBox(
-            width: wide ? 680 : double.infinity,
-            child: Text('Better decisions for healthier soil, stronger crops.', style: TextStyle(color: Colors.white, fontSize: wide ? 44 : 32, height: 1.08, fontWeight: FontWeight.w800)),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: wide ? 620 : double.infinity,
-            child: Text('AgriN combines farm, soil, weather and environmental intelligence to deliver localized regenerative farming guidance.', style: TextStyle(color: Colors.white.withValues(alpha: .78), fontSize: 15, height: 1.6)),
-          ),
-          const SizedBox(height: 28),
-          Wrap(spacing: 12, runSpacing: 12, children: [
-            ElevatedButton.icon(
-              onPressed: () => context.push('/farm-intelligence'),
-              icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-              label: const Text('Analyze my farm'),
-              style: ElevatedButton.styleFrom(foregroundColor: dark, backgroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => context.push('/crop-doctor'),
-              icon: const Icon(Icons.camera_alt_outlined, size: 18),
-              label: const Text('Check a crop'),
-              style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: BorderSide(color: Colors.white.withValues(alpha: .3)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-            ),
-          ]),
-        ]),
-      ]),
-    ).animate().fadeIn(duration: 700.ms).slideY(begin: .08, end: 0);
+    ).animate().fadeIn(duration: 700.ms);
   }
 
-  Widget _orb(double size, Color color) {
-    return Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: color))
-        .animate(onPlay: (c) => c.repeat(reverse: true))
-        .scale(begin: const Offset(.92, .92), end: const Offset(1.05, 1.05), duration: 4.seconds);
+  // Set only for the duration of building action widgets; actions are invoked later.
+  static BuildContext? _navContext;
+
+  Widget _action(String label, VoidCallback onTap, {bool outline = false}) {
+    return outline
+        ? OutlinedButton(onPressed: onTap, child: Text(label))
+        : ElevatedButton(onPressed: onTap, child: Text(label));
   }
 
-  Widget _metrics(bool wide) {
+  Widget _intro(bool wide) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const EditorialRule(margin: EdgeInsets.only(top: 16)),
+      const SizedBox(height: 26),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(child: Text('THE FARM / 01', style: TextStyle(fontSize: wide ? 12 : 10, letterSpacing: 2.2, fontWeight: FontWeight.w700, color: AgriNDesign.muted))),
+          Expanded(child: Text('AgriN treats every observation as evidence — with its source, date and limitations kept visible.', style: TextStyle(fontSize: wide ? 15 : 13, height: 1.55, color: AgriNDesign.ink))),
+        ],
+      ),
+      const SizedBox(height: 34),
+    ],
+  );
+
+  Widget _intelligenceStrip(bool wide) => Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: wide ? 56 : 20, vertical: 22),
+    color: AgriNDesign.ink,
+    child: Row(
+      children: [
+        Expanded(child: _stripItem('01', 'WEATHER', 'Open-Meteo')),
+        Expanded(child: _stripItem('02', 'SOIL', 'ISRIC SoilGrids')),
+        Expanded(child: _stripItem('03', 'SATELLITE', 'Sentinel-2')),
+        if (wide) Expanded(child: _stripItem('04', 'AI', 'Evidence grounded')),
+      ],
+    ),
+  ).animate().fadeIn(duration: 700.ms).slideY(begin: .08, end: 0);
+
+  Widget _stripItem(String n, String title, String source) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 10),
+    child: Row(
+      children: [
+        Text(n, style: const TextStyle(color: Color(0xFF7F877F), fontSize: 10, letterSpacing: 1)),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.3)),
+          const SizedBox(height: 3),
+          Text(source, style: const TextStyle(color: Color(0xFF9DA59E), fontSize: 10)),
+        ])),
+      ],
+    ),
+  );
+
+  Widget _capabilities(BuildContext context, bool wide) {
     final items = [
-      ('LIVE', 'Weather • Open-Meteo', Icons.thermostat_rounded),
-      ('MODEL', 'Soil • SoilGrids', Icons.layers_outlined),
-      ('LIVE', 'Satellite • Sentinel-2', Icons.satellite_alt_rounded),
-      ('AI', 'Advisory • Evidence grounded', Icons.auto_awesome_rounded),
+      ('02', 'FARM INTELLIGENCE', 'Combine location, soil, weather and satellite observations.', '/farm-intelligence'),
+      ('03', 'AI AGRO-ADVISORY', 'Turn measured signals into explainable actions.', '/ai-advisory'),
+      ('04', 'CROP DOCTOR', 'Inspect a crop image with evidence-aware visual analysis.', '/crop-doctor'),
+      ('05', 'REGENERATIVE FARMING', 'Explore soil-cover, rotation and resilience practices.', '/regenerative-farming'),
+      ('06', 'HISTORICAL INTELLIGENCE', 'Compare observed weather and Sentinel-2 change over time.', '/historical-intelligence'),
     ];
-    return GridView.builder(
-      shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: items.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: wide ? 4 : 2, crossAxisSpacing: 14, mainAxisSpacing: 14, childAspectRatio: wide ? 2.3 : 1.65),
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), border: Border.all(color: const Color(0xFFE5EAE5))),
-          child: Row(children: [
-            Container(width: 42, height: 42, decoration: BoxDecoration(color: const Color(0xFFEAF4EC), borderRadius: BorderRadius.circular(13)), child: Icon(item.$3, color: green, size: 21)),
-            const SizedBox(width: 12),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-              Row(
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const EditorialRule(),
+        const SizedBox(height: 22),
+        Text('INTELLIGENCE / 02', style: Theme.of(context).textTheme.labelSmall),
+        const SizedBox(height: 24),
+        ...items.asMap().entries.map((entry) {
+          final i = entry.key;
+          final item = entry.value;
+          return InkWell(
+            onTap: () => context.push(item.$4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 22),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (item.$1 == 'LIVE')
-                    Container(
-                      width: 7, height: 7,
-                      margin: const EdgeInsets.only(right: 6),
-                      decoration: const BoxDecoration(color: Color(0xFF3F8F52), shape: BoxShape.circle),
-                    ).animate(onPlay: (c) => c.repeat(reverse: true)).fade(begin: .35, end: 1, duration: 900.ms),
-                  Text(item.$1, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: dark)),
+                  SizedBox(width: wide ? 90 : 48, child: Text(item.$1, style: Theme.of(context).textTheme.labelSmall)),
+                  Expanded(child: Text(item.$2, style: TextStyle(fontFamily: 'Cormorant Garamond', fontSize: wide ? 38 : 27, height: 1.0, color: AgriNDesign.ink))),
+                  if (wide) SizedBox(width: 280, child: Text(item.$3, style: Theme.of(context).textTheme.bodyMedium)),
+                  const Icon(Icons.arrow_outward_rounded, size: 18),
                 ],
               ),
-              const SizedBox(height: 3),
-              Text(
-                item.$2,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 10, color: muted, height: 1.25),
-              ),
-            ])),
-          ]),
-        ).animate(delay: (100 * index).ms).fadeIn(duration: 500.ms).slideY(begin: .12, end: 0);
-      },
-    );
-  }
-
-  Widget _intelligenceGrid(bool wide) {
-    final cards = [
-      ('Farm Intelligence', 'Satellite + soil + weather signals', Icons.satellite_alt_rounded, const Color(0xFFEAF3F0)),
-      ('AI Agro-Advisory', 'Personalized actions for your crop', Icons.auto_awesome_rounded, const Color(0xFFF2EFE4)),
-      ('Crop Doctor', 'Detect possible disease from a photo', Icons.local_florist_rounded, const Color(0xFFF0E9E5)),
-      ('Regenerative Farming', 'Build soil health and resilience', Icons.eco_rounded, const Color(0xFFE8F1E9)),
-      ('Historical Intelligence', 'Understand weather and satellite change', Icons.history_rounded, const Color(0xFFEAF0E8)),
-    ];
-    return GridView.builder(
-      shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: cards.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: wide ? 3 : 1, crossAxisSpacing: 14, mainAxisSpacing: 14, childAspectRatio: wide ? 1.25 : 2.8),
-      itemBuilder: (context, i) {
-        final c = cards[i];
-        return Material(
-          color: Colors.white, borderRadius: BorderRadius.circular(24),
-          child: InkWell(
-            onTap: () {
-              if (c.$1 == 'Farm Intelligence') {
-                context.push('/farm-intelligence');
-              } else if (c.$1 == 'AI Agro-Advisory') {
-                context.push('/ai-advisory');
-              } else if (c.$1 == 'Crop Doctor') {
-                context.push('/crop-doctor');
-              } else if (c.$1 == 'Regenerative Farming') {
-                context.push('/regenerative-farming');
-              } else if (c.$1 == 'Historical Intelligence') {
-                context.push('/historical-intelligence');
-              }
-            },
-            borderRadius: BorderRadius.circular(24),
-            child: Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFE5EAE5))),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Container(width: 48, height: 48, decoration: BoxDecoration(color: c.$4, borderRadius: BorderRadius.circular(15)), child: Icon(c.$3, color: green)),
-                const Spacer(),
-                Text(c.$1, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: dark)),
-                const SizedBox(height: 6),
-                Text(c.$2, style: const TextStyle(color: muted, fontSize: 12, height: 1.4)),
-              ]),
             ),
-          ),
-        ).animate(delay: (120 * i).ms)
-            .fadeIn(duration: 500.ms)
-            .slideY(begin: .08, end: 0)
-            .shimmer(delay: (700 + 120 * i).ms, duration: 1400.ms, color: const Color(0x183F8F52));
-      },
+          ).animate(delay: (80 * i).ms).fadeIn(duration: 500.ms).slideX(begin: .025, end: 0);
+        }),
+      ],
     );
   }
 
-  Widget _bricsBanner(BuildContext context, bool wide) {
+  Widget _agentSection(BuildContext context, bool wide) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(wide ? 30 : 24),
-      decoration: BoxDecoration(color: dark, borderRadius: BorderRadius.circular(28)),
-      child: Row(children: [
-        Container(width: 50, height: 50, decoration: BoxDecoration(color: Colors.white.withValues(alpha: .09), shape: BoxShape.circle), child: const Icon(Icons.public_rounded, color: Colors.white)),
-        const SizedBox(width: 16),
-        const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('BRICS Agricultural Cooperation', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
-          SizedBox(height: 5),
-          Text('A shared architecture for sovereign data, models and climate-resilient farming knowledge.', style: TextStyle(color: Color(0xFFAAB7AE), fontSize: 12, height: 1.45)),
-        ])),
-        if (wide) IconButton(onPressed: () => GoRouter.of(context).push('/brics-network'), icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white54)),
-      ]),
-    ).animate().fadeIn(duration: 700.ms).slideX(begin: .04, end: 0).shimmer(delay: 900.ms, duration: 1800.ms, color: const Color(0x184B8E59));
+      margin: const EdgeInsets.only(top: 30),
+      padding: EdgeInsets.symmetric(horizontal: wide ? 56 : 20, vertical: wide ? 72 : 52),
+      color: AgriNDesign.paper2,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('INTELLIGENCE AGENT', style: Theme.of(context).textTheme.labelSmall),
+              const SizedBox(height: 16),
+              Text('FROM SIGNALS\nTO DECISIONS.', style: TextStyle(fontFamily: 'Cormorant Garamond', fontSize: wide ? 66 : 45, height: .9, color: AgriNDesign.ink)),
+              const SizedBox(height: 18),
+              Text('A farm decision loop that gathers evidence, reasons over it, explains limitations and identifies what should be checked next.', style: Theme.of(context).textTheme.bodyLarge),
+              const SizedBox(height: 26),
+              ElevatedButton(onPressed: () => context.push('/farm-intelligence'), child: const Text('ENTER FARM INTELLIGENCE')),
+            ]),
+          ),
+          if (wide) ...[
+            const SizedBox(width: 40),
+            const Expanded(child: Center(child: MotionOrb(size: 270, label: 'WEATHER\nSOIL\nSATELLITE\nHISTORY'))),
+          ],
+        ],
+      ),
+    ).animate().fadeIn(duration: 700.ms).slideY(begin: .05, end: 0);
   }
+
+  Widget _networkSection(BuildContext context, bool wide) => Padding(
+    padding: const EdgeInsets.only(top: 34),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const EditorialRule(),
+      const SizedBox(height: 22),
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('NETWORK / 07', style: Theme.of(context).textTheme.labelSmall),
+          const SizedBox(height: 15),
+          Text('OPEN AGRICULTURAL\nOBSERVATIONS.', style: TextStyle(fontFamily: 'Cormorant Garamond', fontSize: wide ? 54 : 38, height: .9, color: AgriNDesign.ink)),
+        ])),
+        if (wide) Expanded(child: Text('A platform-independent observation contract for sharing agricultural data with source attribution and explicit privacy controls.', style: Theme.of(context).textTheme.bodyLarge)),
+      ]),
+      const SizedBox(height: 22),
+      OutlinedButton(onPressed: () => context.push('/brics-network'), child: const Text('OPEN NETWORK')),
+    ]),
+  );
+
+  Widget _footer() => const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      EditorialRule(),
+      SizedBox(height: 18),
+      Row(children: [
+        Text('AGRI N', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 2)),
+        Spacer(),
+        Text('EVIDENCE • RESILIENCE • OPEN DATA', style: TextStyle(fontSize: 9, letterSpacing: 1.1, color: AgriNDesign.muted)),
+      ]),
+    ],
+  );
 }
