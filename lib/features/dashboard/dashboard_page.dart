@@ -229,7 +229,7 @@ class DashboardPage extends StatelessWidget {
               const SizedBox(height: 18),
               Text('A farm decision loop that gathers evidence, reasons over it, explains limitations and identifies what should be checked next.', style: Theme.of(context).textTheme.bodyLarge),
               const SizedBox(height: 26),
-              ElevatedButton(onPressed: () => context.push('/farm-intelligence'), child: const Text('ENTER FARM INTELLIGENCE')),
+              ElevatedButton(onPressed: () => context.push('/intelligence-agent'), child: const Text('RUN INTELLIGENCE AGENT')),
             ]),
           ),
           if (wide) ...[
