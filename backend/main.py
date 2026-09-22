@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from regenerative import router as regenerative_router
 from historical import router as historical_router
 from interoperability import router as interoperability_router
+from agent import router as agent_router
 
 app = FastAPI(title="AgriN AI Data API", version="0.2.1")
 
@@ -24,6 +25,7 @@ app.add_middleware(
 app.include_router(regenerative_router)
 app.include_router(historical_router)
 app.include_router(interoperability_router)
+app.include_router(agent_router)
 
 
 class SoilRequest(BaseModel):
