@@ -52,3 +52,55 @@ async def regenerative_plan(request: RegenerativeRequest):
             "Validate practice timing and crop-specific implementation with a local agronomist or extension service."
         ]
     }
+
+
+@router.post("/carbon-water-biodiversity")
+async def regenerative_intelligence(request: RegenerativeRequest):
+    """Evidence-linked regenerative indicators from supplied observations.
+
+    This endpoint intentionally reports signals rather than claiming measured
+    carbon sequestration, biodiversity scores, or soil-moisture values.
+    """
+    indicators = []
+    if request.organic_carbon_g_kg is not None:
+        indicators.append({
+            "name": "soil_carbon_baseline",
+            "value": request.organic_carbon_g_kg,
+            "unit": "g/kg",
+            "status": "observed_model_value",
+            "source": request.soil_source or "SoilGrids",
+            "note": "Use repeated comparable observations or laboratory tests to evaluate change; this is not a carbon-sequestration measurement.",
+        })
+    if request.rain_probability_percent is not None:
+        indicators.append({
+            "name": "rain_event_context",
+            "value": request.rain_probability_percent,
+            "unit": "%",
+            "status": "forecast_context",
+            "source": "Open-Meteo",
+            "note": "Forecast probability is not measured rainfall or soil moisture.",
+        })
+    return {
+        "available": True,
+        "source": "AgriN regenerative evidence engine",
+        "location": request.location,
+        "crop": request.crop,
+        "indicators": indicators,
+        "practice_tracks": [
+            {"track":"soil_cover","actions":["Maintain appropriate residue or living cover where compatible with the crop system.","Check exposed-soil areas after field operations or heavy rain."]},
+            {"track":"soil_disturbance","actions":["Avoid unnecessary passes and compaction.","Match tillage intensity to actual field conditions and crop establishment needs."]},
+            {"track":"water_resilience","actions":["Keep drainage pathways functional before forecast rain.","Check field soil moisture directly before irrigation."]},
+            {"track":"biodiversity","actions":["Consider locally suitable rotation, intercropping, habitat or flowering-resource practices.","Validate timing and species choices with local agronomy guidance."]},
+        ],
+        "verification": [
+            "Repeat comparable soil observations over time before claiming improvement.",
+            "Use field observations or laboratory tests for carbon and soil-property verification.",
+            "Do not treat satellite vegetation indices as a biodiversity measurement.",
+        ],
+        "limitations": [
+            "No direct soil-carbon stock or sequestration rate is measured here.",
+            "No biodiversity survey or species observation dataset is supplied.",
+            "No measured soil moisture is supplied.",
+            "Practice suitability depends on crop stage, local climate, machinery, residues and farm constraints.",
+        ],
+    }
