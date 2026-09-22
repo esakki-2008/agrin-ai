@@ -18,6 +18,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   WeatherData? weather;
   SoilData? soil;
   SatelliteData? satellite;
+  AdvancedSatelliteData? advancedSatellite;
   AdvisoryData? advisory;
   String? error;
 
@@ -32,7 +33,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     if(location.text.trim().isEmpty||size.text.trim().isEmpty||date==null){
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Please complete your farm details first.'))); return;
     }
-    setState(() { analyzing=true; error=null; weather=null; soil=null; satellite=null; advisory=null; showResults=false; });
+    setState(() { analyzing=true; error=null; weather=null; soil=null; satellite=null; advancedSatellite=null; advisory=null; showResults=false; });
     try {
       final liveWeather=await WeatherService().fetch(location.text.trim());
       if(mounted)setState(()=>weather=liveWeather);
@@ -41,6 +42,17 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       try {
         final liveSatellite=await SatelliteService().fetch(latitude:liveWeather.latitude, longitude:liveWeather.longitude);
         if(mounted)setState(()=>satellite=liveSatellite);
+      } catch(e) {
+        if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+      }
+      try {
+        final advanced=await SatelliteService().fetchIntelligence(
+          latitude:liveWeather.latitude,
+          longitude:liveWeather.longitude,
+          days:180,
+          maxCloudCover:30,
+        );
+        if(mounted)setState(()=>advancedSatellite=advanced);
       } catch(e) {
         if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
       }
@@ -371,6 +383,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     const SizedBox(height:20),
     if(soil!=null) _soilSection(soil!,wide),
     if(satellite!=null) _satelliteSection(satellite!,wide),
+    if(advancedSatellite!=null) _advancedSatelliteSection(advancedSatellite!,wide),
     const SizedBox(height:20),
     if(error!=null) _errorCard(),
     if(advisory!=null) _aiAdvisory(advisory!),
@@ -413,6 +426,55 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     Text(data.sceneId==null?'Scene ID unavailable':'Scene: ${data.sceneId}',style:const TextStyle(fontSize:10,color:muted)),
     const SizedBox(height:20),
   ]);
+
+  Widget _advancedSatelliteSection(AdvancedSatelliteData data, bool wide) {
+    if (!data.available) {
+      return _card('Advanced satellite intelligence', const Text(
+        'No Sentinel-2 scene met the requested cloud threshold. No satellite index is shown.',
+        style: TextStyle(color: muted),
+      ));
+    }
+    final ndvi=data.index('latest','ndvi');
+    final ndmi=data.index('latest','ndmi');
+    final evi=data.index('latest','evi');
+    final ndviDelta=data.delta('ndvi');
+    final ndmiDelta=data.delta('ndmi');
+    final eviDelta=data.delta('evi');
+    String fmt(double? value) => value==null ? 'Unavailable' : value.toStringAsFixed(3);
+    String fmtChange(double? value) => value==null ? 'No paired observation' : (value>=0?'+':'')+value.toStringAsFixed(3);
+    return Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Row(children:[
+        const Expanded(child:Text('Advanced satellite intelligence',style:TextStyle(fontSize:21,fontWeight:FontWeight.w800,color:dark))),
+        const Icon(Icons.satellite_alt_rounded,color:green,size:22),
+      ]),
+      const SizedBox(height:8),
+      const Text(
+        'Cloud-aware Sentinel-2 selection with vegetation and moisture indices. Values are point samples, not whole-farm scores.',
+        style: TextStyle(fontSize:11,color:muted,height:1.5),
+      ),
+      const SizedBox(height:12),
+      GridView.count(
+        shrinkWrap:true,
+        physics:const NeverScrollableScrollPhysics(),
+        crossAxisCount:wide?3:2,
+        crossAxisSpacing:12,
+        mainAxisSpacing:12,
+        childAspectRatio:1.45,
+        children:[
+          _metric(fmt(ndvi),'Latest NDVI • Δ '+fmtChange(ndviDelta),Icons.eco_rounded),
+          _metric(fmt(ndmi),'Latest NDMI • Δ '+fmtChange(ndmiDelta),Icons.water_drop_outlined),
+          _metric(fmt(evi),'Latest EVI • Δ '+fmtChange(eviDelta),Icons.grass_outlined),
+        ],
+      ),
+      const SizedBox(height:10),
+      _signalCard(
+        'Cloud-aware observation',
+        'Latest: '+(data.sceneDate('latest')?.substring(0,10) ?? 'Unavailable')+' • '+(data.sceneCloud('latest')?.toStringAsFixed(1) ?? 'Unavailable')+'% cloud',
+        Icons.filter_alt_outlined,
+      ),
+      const SizedBox(height:20),
+    ]);
+  }
 
   Widget _metric(String value,String label,IconData icon)=>Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(2),border:Border.all(color:AgriNDesign.line)),
     child:Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisAlignment:MainAxisAlignment.center,children:[
