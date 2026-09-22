@@ -5,6 +5,7 @@ import '../../services/interoperability_service.dart';
 import '../../services/weather_service.dart';
 import '../../services/soil_service.dart';
 import '../../services/satellite_service.dart';
+import '../../theme/agri_n_design.dart';
 
 class BricsNetworkPage extends StatefulWidget {
   const BricsNetworkPage({super.key});
@@ -183,29 +184,19 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
 
   Widget _hero() => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(30),
-    decoration: BoxDecoration(
-      color: dark,
-      borderRadius: BorderRadius.circular(28),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(Icons.public_rounded, color: Colors.white, size: 36)
-            .animate(onPlay: (controller) => controller.repeat(reverse: true))
-            .scale(begin: const Offset(.94, .94), end: const Offset(1.06, 1.06), duration: 1400.ms),
-        SizedBox(height: 14),
-        Text(
-          'Interoperability without vendor lock-in',
-          style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800),
-        ),
-        SizedBox(height: 8),
-        Text(
-          'A country-neutral open data contract for exchanging agricultural observations while keeping source attribution and privacy controls explicit.',
-          style: TextStyle(color: Color(0xCCD4DDD7), height: 1.5),
-        ),
-      ],
-    ),
+    color: AgriNDesign.ink,
+    padding: const EdgeInsets.fromLTRB(36, 36, 24, 36),
+    child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('OPEN DATA NETWORK / 07', style: TextStyle(color: Color(0xFF9EB6A5), fontSize: 9, letterSpacing: 1.9, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 20),
+        Text('Agriculture that\ncan speak across systems.', style: Theme.of(context).textTheme.displayMedium?.copyWith(color: Colors.white, fontSize: 50, height: .9)),
+        const SizedBox(height: 18),
+        const Text('A country-neutral observation contract for exchanging agricultural evidence while preserving source attribution, coordinates and privacy controls.', style: TextStyle(color: Color(0xCCDDE9DF), fontSize: 13, height: 1.6)),
+      ])),
+      const SizedBox(width: 20),
+      const SizedBox(width: 220, height: 220, child: _NetworkOrb()),
+    ]),
   ).animate().fadeIn(duration: 600.ms).slideY(begin: .05, end: 0);
 
   Widget _content() {
@@ -241,7 +232,7 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: const Color(0xFFEAF3EC),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.zero,
           ),
           child: const Text(
             'AgriN does not claim a live government or BRICS data connection here. This layer defines a platform-independent exchange contract that can accept compatible observations from different systems.',
@@ -308,7 +299,7 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: const Color(0xFFF5F7F4),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.zero,
             ),
             child: SingleChildScrollView(
               child: SelectableText(
@@ -435,7 +426,7 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
     padding: const EdgeInsets.all(22),
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.zero,
       border: Border.all(color: const Color(0xFFE5EAE5)),
       boxShadow: const [
         BoxShadow(
@@ -457,7 +448,23 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
 
   Widget _error() => Container(
     padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(color: const Color(0xFFFFF3F0), borderRadius: BorderRadius.circular(18)),
+    decoration: BoxDecoration(color: const Color(0xFFFFF3F0), borderRadius: BorderRadius.zero),
     child: Text(error!, style: const TextStyle(color: dark)),
   );
+}
+
+class _NetworkOrb extends StatelessWidget {
+  const _NetworkOrb();
+  @override Widget build(BuildContext context)=>Stack(alignment:Alignment.center,children:[
+    Container(width:215,height:215,decoration:BoxDecoration(shape:BoxShape.circle,border:Border.all(color:const Color(0x335E7865)))),
+    Container(width:155,height:155,decoration:BoxDecoration(shape:BoxShape.circle,border:Border.all(color:const Color(0x6685A18B)))),
+    Container(width:75,height:75,decoration:BoxDecoration(shape:BoxShape.circle,color:const Color(0x332E6B43),border:Border.all(color:const Color(0x889AB6A2))),child:const Icon(Icons.hub_outlined,color:Color(0xFFD8E3DB),size:30)),
+    const Positioned(top:2,right:25,child:_NetworkTag('WGS84')),
+    const Positioned(left:0,bottom:48,child:_NetworkTag('JSON')),
+    const Positioned(right:0,bottom:20,child:_NetworkTag('SOURCE')),
+  ]);
+}
+class _NetworkTag extends StatelessWidget {
+  const _NetworkTag(this.text); final String text;
+  @override Widget build(BuildContext context)=>Container(color:const Color(0xDD151914),padding:const EdgeInsets.symmetric(horizontal:8,vertical:6),child:Text(text,style:const TextStyle(color:Color(0xFFB5C2B9),fontSize:7,letterSpacing:1.1,fontWeight:FontWeight.w700)));
 }
