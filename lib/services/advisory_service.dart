@@ -46,7 +46,7 @@ class AdvisoryData {
 
 class AdvisoryService {
   final String baseUrl;
-  const AdvisoryService({this.baseUrl='http://127.0.0.1:8000'});
+  AdvisoryService({String? baseUrl}) : baseUrl = baseUrl ?? ApiConfig.baseUrl;
 
   String _condition(int code) {
     if(code==0) return 'Clear sky';
