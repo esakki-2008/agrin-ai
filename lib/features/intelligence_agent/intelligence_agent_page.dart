@@ -82,8 +82,32 @@ class _IntelligenceAgentPageState extends State<IntelligenceAgentPage> {
 
   InputDecoration _dec(String label,IconData icon)=>InputDecoration(labelText:label,prefixIcon:Icon(icon,color:green,size:18),filled:true,fillColor:const Color(0xFFF8F8F3),border:const OutlineInputBorder(borderSide:BorderSide(color:AgriNDesign.line)),enabledBorder:const OutlineInputBorder(borderSide:BorderSide(color:AgriNDesign.line)),focusedBorder:const OutlineInputBorder(borderSide:BorderSide(color:green,width:1.3)));
 
-  Widget _output()=>Container(padding:const EdgeInsets.all(26),decoration:BoxDecoration(color:AgriNDesign.paper2.withValues(alpha:.55),border:Border.all(color:AgriNDesign.line)),child:data==null?_waiting():_report(data!));
-  Widget _waiting()=>SizedBox(height:520,child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[const Icon(Icons.hub_outlined,size:44,color:Color(0xFF7D8D82)),const SizedBox(height:16),const Text('AGENT OUTPUT',style:TextStyle(fontSize:9,letterSpacing:1.7,fontWeight:FontWeight.w800,color:muted)),const SizedBox(height:8),const Text('Run the agent to assemble a real evidence pack.',textAlign:TextAlign.center,style:TextStyle(color:muted,fontSize:12,height:1.5))]));
+  Widget _output()=>Container(padding:const EdgeInsets.all(26),decoration:BoxDecoration(color:AgriNDesign.paper2.withValues(alpha:.55),border:Border.all(color:AgriNDesign.line)),child:loading?_loadingPanel():data==null?_waiting():_report(data!));
+  Widget _waiting()=>SizedBox(height:520,child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+    const Icon(Icons.hub_outlined,size:44,color:Color(0xFF7D8D82)),
+    const SizedBox(height:16),
+    const Text('AGENT OUTPUT',style:TextStyle(fontSize:9,letterSpacing:1.7,fontWeight:FontWeight.w800,color:muted)),
+    const SizedBox(height:8),
+    const Text('Run the agent to assemble a real evidence pack.',textAlign:TextAlign.center,style:TextStyle(color:muted,fontSize:12,height:1.5)),
+  ]));
+
+  Widget _loadingPanel()=>SizedBox(height:520,child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+    SizedBox(width:58,height:58,child:CircularProgressIndicator(strokeWidth:1.5,color:green,backgroundColor:const Color(0x22306B43))),
+    const SizedBox(height:20),
+    const Text('AGENT IS GATHERING EVIDENCE',style:TextStyle(fontSize:9,letterSpacing:1.6,fontWeight:FontWeight.w800,color:green)),
+    const SizedBox(height:9),
+    const Text('Resolving location and collecting live observations.',textAlign:TextAlign.center,style:TextStyle(color:muted,fontSize:12,height:1.5)),
+    const SizedBox(height:22),
+    Wrap(spacing:8,runSpacing:8,alignment:WrapAlignment.center,children:[
+      _loadingTag('WEATHER'),_loadingTag('SOIL'),_loadingTag('SATELLITE'),_loadingTag('HISTORY'),_loadingTag('REASONING'),
+    ]),
+  ]));
+
+  Widget _loadingTag(String label)=>Container(
+    padding:const EdgeInsets.symmetric(horizontal:9,vertical:6),
+    decoration:BoxDecoration(border:Border.all(color:const Color(0xFFB9C9BD))),
+    child:Text(label,style:const TextStyle(fontSize:7.5,letterSpacing:1.1,fontWeight:FontWeight.w800,color:muted)),
+  );
 
   Widget _report(AgentData d)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     Row(crossAxisAlignment:CrossAxisAlignment.end,children:[
@@ -249,7 +273,16 @@ class _IntelligenceAgentPageState extends State<IntelligenceAgentPage> {
     width:double.infinity,
     padding:const EdgeInsets.all(16),
     decoration:const BoxDecoration(color:Color(0xFFFFF1EC),border:Border(left:BorderSide(color:Colors.deepOrange,width:3))),
-    child:Text(error!,style:const TextStyle(color:ink,fontSize:12)),
+    child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      const Icon(Icons.error_outline,size:18,color:Colors.deepOrange),
+      const SizedBox(width:10),
+      Expanded(child:Text(error!,style:const TextStyle(color:ink,fontSize:12,height:1.5))),
+      const SizedBox(width:10),
+      TextButton(
+        onPressed:loading?null:runAgent,
+        child:const Text('RETRY',style:TextStyle(fontSize:9,letterSpacing:1.1,fontWeight:FontWeight.w800,color:green)),
+      ),
+    ]),
   );
 }
 
