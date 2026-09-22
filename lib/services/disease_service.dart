@@ -5,19 +5,27 @@ import 'package:http/http.dart' as http;
 
 class DiseaseAnalysis {
   final String assessment;
+  final String imageQuality;
+  final String imageQualityReason;
+  final String evidenceStrength;
   final List<String> possibleIssues;
   final List<String> observations;
   final List<DiseaseAction> actions;
   final List<String> limitations;
+  final List<String> followUpQuestions;
   final String source;
   final String model;
 
   DiseaseAnalysis({
     required this.assessment,
+    required this.imageQuality,
+    required this.imageQualityReason,
+    required this.evidenceStrength,
     required this.possibleIssues,
     required this.observations,
     required this.actions,
     required this.limitations,
+    required this.followUpQuestions,
     required this.source,
     required this.model,
   });
@@ -25,12 +33,16 @@ class DiseaseAnalysis {
   factory DiseaseAnalysis.fromJson(Map<String, dynamic> json) {
     return DiseaseAnalysis(
       assessment: json['assessment']?.toString() ?? 'Assessment unavailable.',
+      imageQuality: (json['image_quality'] is Map ? (json['image_quality']['status']?.toString() ?? 'unknown') : 'unknown'),
+      imageQualityReason: (json['image_quality'] is Map ? (json['image_quality']['reason']?.toString() ?? '') : ''),
+      evidenceStrength: json['evidence_strength']?.toString() ?? 'unknown',
       possibleIssues: List<String>.from(json['possible_issues'] ?? const []),
       observations: List<String>.from(json['observations'] ?? const []),
       actions: (json['actions'] as List? ?? const [])
           .map((x) => DiseaseAction.fromJson(Map<String, dynamic>.from(x)))
           .toList(),
       limitations: List<String>.from(json['limitations'] ?? const []),
+      followUpQuestions: List<String>.from(json['follow_up_questions'] ?? const []),
       source: json['source']?.toString() ?? 'Google Gemini API',
       model: json['model']?.toString() ?? 'gemini-2.5-flash',
     );
