@@ -419,6 +419,11 @@ non-chemical checks and professional/local agronomy confirmation.
 Return ONLY valid JSON with exactly these fields:
 {
   "assessment": "short evidence-aware assessment",
+  "image_quality": {
+    "status": "usable|limited|insufficient",
+    "reason": "brief visual-quality reason"
+  },
+  "evidence_strength": "strong|moderate|weak|insufficient",
   "possible_issues": ["possible issue or 'No specific issue can be determined from this image.'"],
   "observations": ["visible observation"],
   "actions": [
@@ -428,6 +433,7 @@ Return ONLY valid JSON with exactly these fields:
       "priority": "high|medium|low"
     }
   ],
+  "follow_up_questions": ["question that would materially improve assessment"],
   "limitations": ["important limitation"]
 }
 
