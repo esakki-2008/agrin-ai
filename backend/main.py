@@ -384,12 +384,8 @@ class DiseaseRequest(BaseModel):
 
 @app.post("/disease/analyze")
 async def disease_analyze(request: DiseaseRequest):
-    import os
+    import base64
     import json
-
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise HTTPException(status_code=503, detail="GEMINI_API_KEY is not configured on the backend.")
 
     allowed_types = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
     if request.mime_type not in allowed_types:
@@ -445,57 +441,27 @@ Keep it concise and farmer-friendly.
 Optional context:
 """ + json.dumps({"crop": request.crop, "location": request.location}, ensure_ascii=False)
 
-    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
-    payload = {
-        "contents": [{
-            "parts": [
-                {"text": prompt},
-                {
-                    "inline_data": {
-                        "mime_type": request.mime_type,
-                        "data": base64.b64encode(image_bytes).decode("ascii"),
-                    }
-                },
-            ]
-        }],
-        "generationConfig": {
-            "temperature": 0.1,
-            "responseMimeType": "application/json",
-        },
-    }
+    from ai_gateway import AIProviderError, generate_json
 
     try:
-        async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
-            response = await client.post(
-                endpoint,
-                headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
-                json=payload,
-            )
-    except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Gemini image request failed: {exc}") from exc
-
-    if response.status_code != 200:
-        detail = "Gemini image analysis failed."
-        try:
-            detail = response.json().get("error", {}).get("message", detail)
-        except ValueError:
-            pass
-        raise HTTPException(status_code=502, detail=detail)
-
-    try:
-        body = response.json()
-        text = body["candidates"][0]["content"]["parts"][0]["text"]
-        result = json.loads(text)
-    except (KeyError, IndexError, TypeError, ValueError) as exc:
-        raise HTTPException(status_code=502, detail="Gemini returned an invalid crop analysis response.") from exc
+        result, provider_meta = await generate_json(
+            prompt,
+            temperature=0.1,
+            timeout=60,
+            image_base64=base64.b64encode(image_bytes).decode("ascii"),
+            mime_type=request.mime_type,
+        )
+    except AIProviderError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     return {
         "source": "Google Gemini API",
-        "model": "gemini-2.5-flash",
+        "model": provider_meta["model"],
+        "provider": provider_meta,
         "analysis": {
             **result,
             "source": "Google Gemini API",
-            "model": "gemini-2.5-flash",
+            "model": provider_meta["model"],
         },
     }
 
@@ -523,15 +489,7 @@ class AdvisoryRequest(BaseModel):
 
 @app.post("/advisory")
 async def advisory(request: AdvisoryRequest):
-    import os
     import json
-
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise HTTPException(
-            status_code=503,
-            detail="GEMINI_API_KEY is not configured on the backend.",
-        )
 
     measured = {
         "location": request.location,
@@ -600,47 +558,20 @@ a measured soil-moisture value is actually provided.
 Measured farm data:
 """ + json.dumps(measured, ensure_ascii=False)
 
-    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
-
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": 0.2,
-            "responseMimeType": "application/json",
-        },
-    }
+    from ai_gateway import AIProviderError, generate_json
 
     try:
-        async with httpx.AsyncClient(timeout=45, follow_redirects=True) as client:
-            response = await client.post(
-                endpoint,
-                headers={
-                    "x-goog-api-key": api_key,
-                    "Content-Type": "application/json",
-                },
-                json=payload,
-            )
-    except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Gemini request failed: {exc}") from exc
-
-    if response.status_code != 200:
-        detail = "Gemini API request failed."
-        try:
-            error_json = response.json()
-            detail = error_json.get("error", {}).get("message", detail)
-        except ValueError:
-            pass
-        raise HTTPException(status_code=502, detail=detail)
-
-    try:
-        body = response.json()
-        text = body["candidates"][0]["content"]["parts"][0]["text"]
-        result = json.loads(text)
-    except (KeyError, IndexError, TypeError, ValueError) as exc:
-        raise HTTPException(status_code=502, detail="Gemini returned an invalid advisory response.") from exc
+        result, provider_meta = await generate_json(
+            prompt,
+            temperature=0.2,
+            timeout=45,
+        )
+    except AIProviderError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     return {
         "source": "Google Gemini API",
-        "model": "gemini-2.5-flash",
+        "model": provider_meta["model"],
+        "provider": provider_meta,
         "advisory": result,
     }
