@@ -28,7 +28,7 @@ class RegenerativePlan {
 }
 class RegenerativeService {
   final String baseUrl;
-  const RegenerativeService({this.baseUrl='http://127.0.0.1:8000'});
+  RegenerativeService({String? baseUrl}) : baseUrl = baseUrl ?? ApiConfig.baseUrl;
   Future<RegenerativePlan> fetch({required String location,required String crop,required double temperature,required double humidity,required int rainProbability,required double ph,required double organicCarbon,required double nitrogen,required double clay,required String soilSource}) async {
     final response=await http.post(Uri.parse(baseUrl+'/regenerative/plan'),headers:{'Content-Type':'application/json'},body:jsonEncode({
       'location':location,'crop':crop,'temperature_c':temperature,'humidity_percent':humidity,'rain_probability_percent':rainProbability,
