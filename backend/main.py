@@ -14,6 +14,7 @@ from regenerative import router as regenerative_router
 from historical import router as historical_router
 from interoperability import router as interoperability_router
 from agent import router as agent_router
+from satellite_intelligence import router as satellite_intelligence_router
 
 app = FastAPI(title="AgriN AI Data API", version="0.2.1")
 
@@ -29,6 +30,7 @@ app.include_router(regenerative_router)
 app.include_router(historical_router)
 app.include_router(interoperability_router)
 app.include_router(agent_router)
+app.include_router(satellite_intelligence_router)
 
 
 class SoilRequest(BaseModel):
