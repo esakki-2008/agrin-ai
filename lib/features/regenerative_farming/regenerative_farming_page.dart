@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/weather_service.dart';
 import '../../services/soil_service.dart';
 import '../../services/regenerative_service.dart';
+import '../../theme/agri_n_design.dart';
 
 class RegenerativeFarmingPage extends StatefulWidget {
   const RegenerativeFarmingPage({super.key});
@@ -51,6 +52,8 @@ class _RegenerativeFarmingPageState extends State<RegenerativeFarmingPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _hero(),
+                  const SizedBox(height: 14),
+                  _landLayers(),
                   const SizedBox(height: 20),
                   if (plan == null) _form() else _results(wide),
                   if (error != null) ...[
@@ -66,11 +69,47 @@ class _RegenerativeFarmingPageState extends State<RegenerativeFarmingPage> {
     );
   }
 
-  Widget _hero()=>Container(width:double.infinity,padding:const EdgeInsets.all(28),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF102318),Color(0xFF4D8256)]),borderRadius:BorderRadius.circular(28),boxShadow:const[BoxShadow(color:Color(0x22102D1B),blurRadius:28,offset:Offset(0,12))]),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+  Widget _hero()=>Container(width:double.infinity,padding:const EdgeInsets.all(28),decoration:BoxDecoration(color:AgriNDesign.ink,border:Border.all(color:AgriNDesign.line)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     Icon(Icons.eco_rounded,color:Colors.white,size:34),SizedBox(height:14),
     Text('Build a regenerative plan',style:TextStyle(color:Colors.white,fontSize:27,fontWeight:FontWeight.w800)),
     SizedBox(height:8),Text('Use live weather and model-derived soil context to organize practical soil, water and biodiversity actions.',style:TextStyle(color:Color(0xCCDDE9DF),height:1.5)),
   ])).animate().fadeIn(duration:600.ms).slideY(begin:.06,end:0);
+
+  Widget _landLayers() {
+    final layers = [
+      ('COVER', 'Protect surface', Icons.grass_outlined),
+      ('SOIL', 'Build organic matter', Icons.layers_outlined),
+      ('WATER', 'Retain and observe', Icons.water_drop_outlined),
+      ('BIODIVERSITY', 'Increase resilience', Icons.eco_outlined),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('LAND SYSTEM', style: TextStyle(fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.w800, color: AgriNDesign.muted)),
+        const SizedBox(height: 10),
+        ...layers.asMap().entries.map((e) {
+          final item = e.value;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            decoration: BoxDecoration(
+              color: e.key.isEven ? Colors.white : AgriNDesign.paper2,
+              border: Border.all(color: AgriNDesign.line),
+            ),
+            child: Row(
+              children: [
+                Icon(item.$3, size: 18, color: AgriNDesign.green),
+                const SizedBox(width: 12),
+                Text(item.$1, style: const TextStyle(fontSize: 9, letterSpacing: 1.2, fontWeight: FontWeight.w800)),
+                const Spacer(),
+                Text(item.$2, style: const TextStyle(fontSize: 11, color: AgriNDesign.muted)),
+              ],
+            ),
+          ).animate(delay: (70 * e.key).ms).fadeIn(duration: 350.ms).slideX(begin: .03, end: 0);
+        }),
+      ],
+    );
+  }
 
   Widget _form()=>_card('Farm context',Column(children:[
     TextField(controller:location,decoration:decoration('Village / district / location',Icons.location_on_outlined)).animate().fadeIn(delay:100.ms,duration:350.ms),
@@ -101,7 +140,7 @@ class _RegenerativeFarmingPageState extends State<RegenerativeFarmingPage> {
     _metric(soil!.organicCarbon.toStringAsFixed(1),'Soil organic C g/kg'),
   ]);
 
-  Widget _metric(String value,String label)=>Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(22),border:Border.all(color:const Color(0xFFE5EAE5))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisAlignment:MainAxisAlignment.center,children:[Text(value,style:const TextStyle(fontSize:22,fontWeight:FontWeight.w800,color:dark)),const SizedBox(height:4),Text(label,style:const TextStyle(fontSize:11,color:muted))])).animate().fadeIn(duration:350.ms).scale(begin:const Offset(.96,.96),end:const Offset(1,1));
+  Widget _metric(String value,String label)=>Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(2),border:Border.all(color:AgriNDesign.line)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisAlignment:MainAxisAlignment.center,children:[Text(value,style:const TextStyle(fontSize:22,fontWeight:FontWeight.w800,color:dark)),const SizedBox(height:4),Text(label,style:const TextStyle(fontSize:11,color:muted))])).animate().fadeIn(duration:350.ms).scale(begin:const Offset(.96,.96),end:const Offset(1,1));
 
   Widget _practice(RegenerativePractice item,int index)=>Container(margin:const EdgeInsets.only(bottom:10),padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(20),border:Border.all(color:const Color(0xFFE5EAE5))),child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
     Container(width:42,height:42,decoration:BoxDecoration(color:const Color(0xFFEAF4EC),borderRadius:BorderRadius.circular(13)),child:const Icon(Icons.eco_outlined,color:green)),
