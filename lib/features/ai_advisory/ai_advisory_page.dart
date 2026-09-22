@@ -4,6 +4,7 @@ import '../../services/weather_service.dart';
 import '../../services/soil_service.dart';
 import '../../services/satellite_service.dart';
 import '../../services/advisory_service.dart';
+import '../../theme/agri_n_design.dart';
 
 class AiAdvisoryPage extends StatefulWidget {
   const AiAdvisoryPage({super.key});
@@ -47,53 +48,26 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
   }
 
   Widget _hero() => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(30),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0B1D13), Color(0xFF2E6B43)],
-          ),
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: const [
-            BoxShadow(color: Color(0x22102D1B), blurRadius: 28, offset: Offset(0, 12)),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 58,
-              height: 58,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: .10),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 30),
-            ).animate(onPlay: (c) => c.repeat(reverse: true))
-                .scale(begin: const Offset(.94, .94), end: const Offset(1.06, 1.06), duration: 1400.ms)
-                .shimmer(duration: 1800.ms, color: Colors.white.withValues(alpha: .16)),
-            const SizedBox(width: 18),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('AI Agro-Advisory',
-                      style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
-                  SizedBox(height: 7),
-                  Text('Generate evidence-grounded actions from your real farm signals.',
-                      style: TextStyle(color: Color(0xCCDDE9DF), height: 1.45)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ).animate().fadeIn(duration: 600.ms).slideY(begin: .08, end: 0, curve: Curves.easeOutCubic);
+    width: double.infinity,
+    color: AgriNDesign.ink,
+    padding: const EdgeInsets.fromLTRB(36, 36, 24, 36),
+    child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('DECISION ENGINE / 03', style: TextStyle(color: Color(0xFF9EB6A5), fontSize: 9, letterSpacing: 1.9, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 20),
+        Text('Advice with\nevidence behind it.', style: Theme.of(context).textTheme.displayMedium?.copyWith(color: Colors.white, fontSize: 52, height: .9)),
+        const SizedBox(height: 18),
+        const Text('AgriN gathers the farm signals first, then turns the available evidence into practical actions — with data limits kept visible.', style: TextStyle(color: Color(0xCCDDE9DF), fontSize: 13, height: 1.6)),
+      ])),
+      const SizedBox(width: 24),
+      const SizedBox(width: 210, height: 210, child: _DecisionOrb()),
+    ]),
+  ).animate().fadeIn(duration: 600.ms).slideY(begin: .05, end: 0);
 
   Widget _form(bool wide) {
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFE5EAE5))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.zero, border: Border.all(color: const Color(0xFFE5EAE5))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Farm context', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: dark)),
         const SizedBox(height: 18),
@@ -221,4 +195,19 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
       ).animate().fadeIn(duration: 600.ms).slideY(begin: .06, end: 0, curve: Curves.easeOutCubic);
 
   Widget _error()=>Container(width:double.infinity,padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:const Color(0xFFFFF3F0),borderRadius:BorderRadius.circular(16)),child:Row(children:[const Icon(Icons.error_outline,color:Colors.deepOrange),const SizedBox(width:10),Expanded(child:Text(error??'Unable to generate advisory.',style:const TextStyle(color:dark)))]));
+}
+class _DecisionOrb extends StatelessWidget {
+  const _DecisionOrb();
+  @override Widget build(BuildContext context)=>Stack(alignment:Alignment.center,children:[
+    Container(width:205,height:205,decoration:BoxDecoration(shape:BoxShape.circle,border:Border.all(color:const Color(0x445E7865)))),
+    Container(width:145,height:145,decoration:BoxDecoration(shape:BoxShape.circle,border:Border.all(color:const Color(0x6685A18B)))),
+    Container(width:70,height:70,decoration:BoxDecoration(shape:BoxShape.circle,color:const Color(0x332E6B43),border:Border.all(color:const Color(0x889AB6A2))),child:const Icon(Icons.auto_awesome_outlined,color:Color(0xFFD8E3DB),size:28)),
+    const Positioned(top:4,left:22,child:_DecisionTag('WEATHER')),
+    const Positioned(right:0,bottom:35,child:_DecisionTag('SOIL')),
+    const Positioned(left:4,bottom:12,child:_DecisionTag('SATELLITE')),
+  ]);
+}
+class _DecisionTag extends StatelessWidget {
+  const _DecisionTag(this.text); final String text;
+  @override Widget build(BuildContext context)=>Container(color:const Color(0xDD151914),padding:const EdgeInsets.symmetric(horizontal:8,vertical:6),child:Text(text,style:const TextStyle(color:Color(0xFFB5C2B9),fontSize:7,letterSpacing:1.1,fontWeight:FontWeight.w700)));
 }
