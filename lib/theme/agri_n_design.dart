@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -139,4 +140,103 @@ class MotionOrb extends StatelessWidget {
       ),
     );
   }
+}
+
+
+class AgriNCinematicLayer extends StatefulWidget {
+  const AgriNCinematicLayer({super.key, required this.child});
+  final Widget child;
+
+  @override
+  State<AgriNCinematicLayer> createState() => _AgriNCinematicLayerState();
+}
+
+class _AgriNCinematicLayerState extends State<AgriNCinematicLayer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 18),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        widget.child,
+        IgnorePointer(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) {
+              final t = _controller.value * 2 * 3.141592653589793;
+              return Stack(
+                children: [
+                  Positioned(
+                    left: -90 + 38 * math.sin(t),
+                    top: 120 + 28 * math.cos(t * .7),
+                    child: _ambientOrb(170, AgriNDesign.green.withValues(alpha: .045)),
+                  ),
+                  Positioned(
+                    right: -100 + 42 * math.cos(t * .8),
+                    bottom: 70 + 32 * math.sin(t * .6),
+                    child: _ambientOrb(220, AgriNDesign.green.withValues(alpha: .035)),
+                  ),
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _CinematicLinePainter(progress: _controller.value),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _ambientOrb(double size, Color color) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color,
+          boxShadow: [
+            BoxShadow(
+              color: color,
+              blurRadius: 70,
+              spreadRadius: 16,
+            ),
+          ],
+        ),
+      );
+}
+
+class _CinematicLinePainter extends CustomPainter {
+  const _CinematicLinePainter({required this.progress});
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.7
+      ..color = AgriNDesign.ink.withValues(alpha: .055);
+
+    final y = size.height * (.18 + .64 * progress);
+    canvas.drawLine(Offset(0, y), Offset(size.width, y), p);
+
+    final x = size.width * (.82 - .12 * progress);
+    canvas.drawLine(Offset(x, 0), Offset(x, size.height), p);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CinematicLinePainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
