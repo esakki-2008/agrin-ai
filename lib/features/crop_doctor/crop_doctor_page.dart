@@ -129,16 +129,6 @@ class _CropDoctorPageState extends State<CropDoctorPage> with SingleTickerProvid
     ]),
   );
 
-  Widget _processStrip() {
-    const items = [('01','IMAGE','CAPTURE',Icons.image_outlined),('02','VISION','ANALYZE',Icons.center_focus_strong_outlined),('03','EVIDENCE','EXPLAIN',Icons.fact_check_outlined),('04','ACTION','NEXT CHECKS',Icons.arrow_forward_outlined)];
-    return Row(children: items.asMap().entries.map((entry) {
-      final i=entry.key; final item=entry.value;
-      return Expanded(child: Container(height:82,padding:const EdgeInsets.symmetric(horizontal:14),decoration:BoxDecoration(color:i==3?dark:Colors.transparent,border:Border.all(color:AgriNDesign.line)),child:Row(children:[
-        Text(item.$1,style:const TextStyle(fontSize:8,color:muted)),const SizedBox(width:10),Icon(item.$4,size:16,color:i==3?const Color(0xFFB7C8BC):green),const SizedBox(width:10),
-        Expanded(child:Column(mainAxisAlignment:MainAxisAlignment.center,crossAxisAlignment:CrossAxisAlignment.start,children:[Text(item.$2,style:TextStyle(color:i==3?Colors.white:dark,fontSize:9,letterSpacing:1.1,fontWeight:FontWeight.w800)),const SizedBox(height:4),Text(item.$3,style:TextStyle(color:i==3?const Color(0xFF9EADA3):muted,fontSize:8))]))
-      ]))).animate(delay:(80*i).ms).fadeIn(duration:400.ms).slideX(begin:.04,end:0);
-    }).toList());
-  }
   Widget _input() => Container(padding: const EdgeInsets.all(28), decoration: BoxDecoration(color: Colors.white.withValues(alpha: .62), border: Border.all(color: AgriNDesign.line)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
     const Text('01 / SAMPLE CONTEXT', style: TextStyle(color: green,fontSize:9,letterSpacing:1.7,fontWeight:FontWeight.w800)), const SizedBox(height:10),
     Text('Tell us what we are looking at.', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize:30,color:dark)), const SizedBox(height:20),
@@ -236,16 +226,6 @@ class _CropDoctorPageState extends State<CropDoctorPage> with SingleTickerProvid
     labelText: label, prefixIcon: Icon(icon, color: green), filled: true,
     fillColor: const Color(0xFFF7F9F5),
     border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide.none),
-  );
-
-  Widget _card(String title, Widget child) => Container(
-    width: double.infinity, padding: const EdgeInsets.all(22),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: const Color(0xFFE5EAE5))),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: dark)),
-      const SizedBox(height: 18), child,
-    ]),
   );
 
   Widget _error() => Container(
