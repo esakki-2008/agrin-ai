@@ -22,7 +22,7 @@ class _IntelligenceAgentPageState extends State<IntelligenceAgentPage> {
     if(acres.text.trim().isNotEmpty&&size==null){setState(()=>error='Farm size must be a valid number.');return;}
     setState((){loading=true;data=null;error=null;});
     try {
-      final result=await const AgentService().analyze(location:loc,crop:crop,farmSizeAcres:size,historicalDays:days);
+      final result=await AgentService().analyze(location:loc,crop:crop,farmSizeAcres:size,historicalDays:days);
       if(mounted)setState(()=>data=result);
     } catch(e){if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));}
     finally{if(mounted)setState(()=>loading=false);}
