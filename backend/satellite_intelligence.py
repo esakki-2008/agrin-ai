@@ -62,38 +62,38 @@ def _date_key(feature: dict[str, Any]) -> str:
 
 
 def _choose(features: list[dict[str, Any]], max_cloud: float) -> list[dict[str, Any]]:
-    usable = [f for f in features if _cloud(f) is not None and _cloud(f) <= max_cloud]
-    # Cloud-aware selection: minimize cloud first, then prefer the newest observation
-    # within the low-cloud candidates. This avoids silently using a heavily cloudy scene.
+    usable = [
+        f for f in features
+        if _cloud(f) is not None and _cloud(f) <= max_cloud
+    ]
+
+    def timestamp(feature: dict[str, Any]) -> float:
+        value = feature.get("properties", {}).get("datetime") or ""
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+        except ValueError:
+            return 0.0
+
+    # Prefer the lowest-cloud observations; when cloud quality is tied,
+    # prefer the newest observation.
     usable.sort(
         key=lambda f: (
             _cloud(f) if _cloud(f) is not None else 101.0,
-            -(f.get("properties", {}).get("datetime") or "").__hash__(),
+            -timestamp(f),
         )
     )
-    # Python hash is not stable enough for chronological ordering, so perform the
-    # deterministic chronological ordering separately after the cloud filter.
-    usable.sort(
-        key=lambda f: (
-            _cloud(f) if _cloud(f) is not None else 101.0,
-            f.get("properties", {}).get("datetime") or "",
-        )
-    )
-    # For equal cloud quality, newest wins.
+
     result: list[dict[str, Any]] = []
-    for feature in sorted(
-        usable,
-        key=lambda f: (
-            _cloud(f) if _cloud(f) is not None else 101.0,
-            -(datetime.fromisoformat((f.get("properties", {}).get("datetime") or "1970-01-01T00:00:00+00:00").replace("Z", "+00:00")).timestamp()),
-        ),
-    ):
-        if _date_key(feature) not in {_date_key(x) for x in result}:
-            result.append(feature)
+    dates: set[str] = set()
+    for feature in usable:
+        day = _date_key(feature)
+        if day in dates:
+            continue
+        result.append(feature)
+        dates.add(day)
         if len(result) >= 2:
             break
     return result
-
 
 def _sample_asset(
     href: str,
