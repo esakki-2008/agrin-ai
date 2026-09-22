@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AgriNDesign {
@@ -169,7 +170,25 @@ class _AgriNCinematicLayerState extends State<AgriNCinematicLayer>
     return Stack(
       fit: StackFit.expand,
       children: [
-        widget.child,
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 700),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, .018),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          ),
+          child: KeyedSubtree(
+            key: ValueKey(widget.child.key),
+            child: widget.child,
+          ),
+        ),
         IgnorePointer(
           child: AnimatedBuilder(
             animation: _controller,
@@ -190,6 +209,11 @@ class _AgriNCinematicLayerState extends State<AgriNCinematicLayer>
                   Positioned.fill(
                     child: CustomPaint(
                       painter: _CinematicLinePainter(progress: _controller.value),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _SignalNetworkPainter(progress: _controller.value),
                     ),
                   ),
                 ],
@@ -238,5 +262,52 @@ class _CinematicLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _CinematicLinePainter oldDelegate) =>
+      oldDelegate.progress != progress;
+}
+
+class _SignalNetworkPainter extends CustomPainter {
+  const _SignalNetworkPainter({required this.progress});
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width < 520) return;
+
+    final p = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .8
+      ..color = AgriNDesign.green.withValues(alpha: .075);
+
+    final fill = Paint()
+      ..style = PaintingStyle.fill
+      ..color = AgriNDesign.green.withValues(alpha: .11);
+
+    final phase = progress * math.pi * 2;
+    final points = <Offset>[
+      Offset(size.width * .78, size.height * .20),
+      Offset(size.width * .88, size.height * .34),
+      Offset(size.width * .73, size.height * .48),
+      Offset(size.width * .91, size.height * .63),
+    ];
+
+    for (var i = 0; i < points.length - 1; i++) {
+      canvas.drawLine(points[i], points[i + 1], p);
+    }
+
+    for (var i = 0; i < points.length; i++) {
+      final pulse = .75 + .25 * math.sin(phase + i);
+      canvas.drawCircle(points[i], 3.5 * pulse, fill);
+      canvas.drawCircle(points[i], 8 + 3 * pulse, p);
+    }
+
+    final sweepX = size.width * (.55 + .35 * ((math.sin(phase * .5) + 1) / 2));
+    final sweep = Paint()
+      ..strokeWidth = .6
+      ..color = AgriNDesign.green.withValues(alpha: .035);
+    canvas.drawLine(Offset(sweepX, 0), Offset(sweepX - 80, size.height), sweep);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SignalNetworkPainter oldDelegate) =>
       oldDelegate.progress != progress;
 }
