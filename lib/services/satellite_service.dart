@@ -22,7 +22,7 @@ class SatelliteData {
 
 class SatelliteService {
   final String baseUrl;
-  const SatelliteService({this.baseUrl = 'http://127.0.0.1:8000'});
+  SatelliteService({String? baseUrl}) : baseUrl = baseUrl ?? ApiConfig.baseUrl;
   Future<SatelliteData> fetch({required double latitude, required double longitude, int days = 90, double maxCloudCover = 50}) async {
     final response = await http.post(
       Uri.parse('$baseUrl/satellite/ndvi'),
