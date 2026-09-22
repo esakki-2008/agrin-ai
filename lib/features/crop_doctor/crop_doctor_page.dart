@@ -184,6 +184,16 @@ class _CropDoctorPageState extends State<CropDoctorPage> with SingleTickerProvid
         Text('AI assessment', style: TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w800)),
       ]),
       const SizedBox(height: 14),
+      Row(children: [
+        _evidenceBadge('IMAGE '+result!.imageQuality.toUpperCase()),
+        const SizedBox(width: 8),
+        _evidenceBadge('EVIDENCE '+result!.evidenceStrength.toUpperCase()),
+      ]),
+      if (result!.imageQualityReason.isNotEmpty) ...[
+        const SizedBox(height: 8),
+        Text(result!.imageQualityReason, style: const TextStyle(color: Color(0xFF9FB0A4), fontSize: 10, height: 1.4)),
+      ],
+      const SizedBox(height: 14),
       Text(result!.assessment, style: const TextStyle(color: Color(0xFFD4DDD7), height: 1.55)),
       if (result!.possibleIssues.isNotEmpty) ...[
         const SizedBox(height: 18), const Text('Possible issues', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
@@ -202,7 +212,12 @@ class _CropDoctorPageState extends State<CropDoctorPage> with SingleTickerProvid
             style: const TextStyle(color: Color(0xFFD4DDD7), fontSize: 12, height: 1.4)),
         )),
       ],
-      if (result!.limitations.isNotEmpty) ...[
+      if (result!.followUpQuestions.isNotEmpty) ...[
+        const SizedBox(height: 16),
+        const Text('Questions for the next field check', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        ...result!.followUpQuestions.map(_bullet),
+      ],      if (result!.limitations.isNotEmpty) ...[
         const SizedBox(height: 12),
         Text('Limits: ' + result!.limitations.join(' • '),
           style: const TextStyle(color: Color(0xFF9FB0A4), fontSize: 10, height: 1.4)),
@@ -213,6 +228,11 @@ class _CropDoctorPageState extends State<CropDoctorPage> with SingleTickerProvid
     ]),
   ).animate().fadeIn(duration: 600.ms).slideY(begin: .06, end: 0, curve: Curves.easeOutCubic);
 
+  Widget _evidenceBadge(String text) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+    decoration: BoxDecoration(border: Border.all(color: const Color(0x446F8C76)), color: const Color(0x221F4A2D)),
+    child: Text(text, style: const TextStyle(color: Color(0xFFB9C9BF), fontSize: 8, letterSpacing: 1.0, fontWeight: FontWeight.w800)),
+  );
   Widget _bullet(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 5),
     child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
