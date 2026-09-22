@@ -560,3 +560,108 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     );
   }
 }
+
+
+class _HeroTag extends StatelessWidget {
+  const _HeroTag(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0x445B765F)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Color(0xFFB5C5BA),
+          fontSize: 8,
+          letterSpacing: 1.4,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _FieldVisualPainter extends CustomPainter {
+  const _FieldVisualPainter(this.progress);
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width * .52, size.height * .52);
+    final radius = math.min(size.width, size.height) * .31;
+    final phase = progress * math.pi * 2;
+
+    final faint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .8
+      ..color = const Color(0x335F7C66);
+
+    final bright = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = const Color(0x7795B29C);
+
+    for (var i = 0; i < 7; i++) {
+      canvas.drawCircle(center, radius * (.45 + i * .1), faint);
+    }
+
+    for (var i = 0; i < 12; i++) {
+      final a = i * math.pi / 6 + phase * .18;
+      canvas.drawLine(
+        Offset(center.dx + math.cos(a) * radius * .48,
+            center.dy + math.sin(a) * radius * .48),
+        Offset(center.dx + math.cos(a) * radius * 1.45,
+            center.dy + math.sin(a) * radius * 1.45),
+        faint,
+      );
+    }
+
+    final sweep = phase;
+    final sweepPoint = Offset(
+      center.dx + math.cos(sweep) * radius * 1.28,
+      center.dy + math.sin(sweep) * radius * 1.28,
+    );
+    canvas.drawLine(center, sweepPoint, bright);
+
+    final dotPaint = Paint()..color = const Color(0xFF8EAF98);
+    canvas.drawCircle(center, 4, dotPaint);
+    canvas.drawCircle(sweepPoint, 3, dotPaint);
+
+    final ring = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..color = const Color(0x668EAF98);
+    canvas.drawCircle(center, radius * 1.12, ring);
+
+    const labels = ['WEATHER', 'SOIL', 'SATELLITE', 'AI'];
+    for (var i = 0; i < labels.length; i++) {
+      final a = i * math.pi / 2 - math.pi / 4 + phase * .04;
+      final p = Offset(
+        center.dx + math.cos(a) * radius * 1.55,
+        center.dy + math.sin(a) * radius * 1.55,
+      );
+      final tp = TextPainter(
+        text: TextSpan(
+          text: labels[i],
+          style: const TextStyle(
+            color: Color(0xFF93A99A),
+            fontSize: 8,
+            letterSpacing: 1.5,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, Offset(p.dx - tp.width / 2, p.dy - tp.height / 2));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FieldVisualPainter oldDelegate) =>
+      oldDelegate.progress != progress;
+}
