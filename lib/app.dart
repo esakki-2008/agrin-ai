@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'features/dashboard/dashboard_page.dart';
 import 'features/farm_intelligence/farm_intelligence_page.dart';
@@ -8,6 +7,7 @@ import 'features/crop_doctor/crop_doctor_page.dart';
 import 'features/regenerative_farming/regenerative_farming_page.dart';
 import 'features/historical_intelligence/historical_intelligence_page.dart';
 import 'features/brics_network/brics_network_page.dart';
+import 'theme/agri_n_design.dart';
 
 class AgriNApp extends StatelessWidget {
   const AgriNApp({super.key});
@@ -27,14 +27,9 @@ class AgriNApp extends StatelessWidget {
     );
 
     return MaterialApp.router(
-      title: 'AgriN AI',
+      title: 'AgriN — Agricultural Intelligence',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF5F7F1),
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3F7D4C)),
-        textTheme: GoogleFonts.interTextTheme(),
-      ),
+      theme: AgriNDesign.theme(),
       routerConfig: router,
     );
   }
