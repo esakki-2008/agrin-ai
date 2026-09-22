@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AgriNDesign {
   static const ink = Color(0xFF11130F);
@@ -167,7 +166,7 @@ class MotionOrb extends StatelessWidget {
                 child: Text(
                   label!,
                   textAlign: TextAlign.center,
-                  style: _sansStyle(fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.1, color: AgriNDesign.ink),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.1, color: AgriNDesign.ink),
                 ),
               ),
       ),
