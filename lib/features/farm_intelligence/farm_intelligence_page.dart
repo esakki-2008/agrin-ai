@@ -430,6 +430,39 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     _signalCard('Connected live sources','Open-Meteo • ISRIC SoilGrids • Sentinel-2',Icons.hub_rounded),
   ]).animate().fadeIn(duration:650.ms).slideY(begin:.06,end:0);
 
+  Widget _soilProfileSection(SoilProfileData data, bool wide) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Text('Multi-depth soil intelligence', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: dark)),
+    const SizedBox(height: 8),
+    Text(data.source + ' • ' + data.resolution.toString() + ' m model resolution', style: const TextStyle(fontSize: 11, color: muted)),
+    const SizedBox(height: 12),
+    GridView.count(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisCount: wide ? 3 : 2, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.6,
+      children: List.generate(data.profile.length, (i) {
+        final row = data.profile[i];
+        final depth = row is Map ? row['depth']?.toString() ?? 'Depth ' + (i + 1).toString() : 'Depth ' + (i + 1).toString();
+        final ph = data.value(i, 'ph');
+        final carbon = data.value(i, 'organic_carbon_g_kg');
+        return _metric((ph == null ? 'Unavailable' : ph.toStringAsFixed(2)) + ' pH\\n' + (carbon == null ? 'Unavailable' : carbon.toStringAsFixed(1)) + ' g/kg C', depth, Icons.layers_outlined);
+      }),
+    ),
+    const SizedBox(height: 20),
+  ]);
+
+  Widget _waterIntelligenceSection(WaterIntelligenceData data, bool wide) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Text('Water & irrigation intelligence', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: dark)),
+    const SizedBox(height: 8),
+    Text(data.source, style: const TextStyle(fontSize: 11, color: muted)),
+    const SizedBox(height: 12),
+    GridView.count(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisCount: wide ? 4 : 2, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.5, children: [
+      _metric(data.metric('forecast_precipitation_mm'), 'Forecast rain (mm)', Icons.water_drop_outlined),
+      _metric(data.metric('reference_et0_mm'), 'Reference ET0 (mm)', Icons.wb_sunny_outlined),
+      _metric(data.metric('water_balance_mm'), 'Atmospheric balance (mm)', Icons.balance_outlined),
+      _metric(data.metric('max_rain_probability_percent'), 'Max rain probability', Icons.umbrella_outlined),
+    ]),
+    const SizedBox(height: 10),
+    if (data.signals.isNotEmpty) _signalCard('Water signals', data.signals.map((x) => '• ' + x.toString()).join('\\n'), Icons.water_drop_outlined),
+    const SizedBox(height: 20),
+  ]);
+
   Widget _soilSection(SoilData data, bool wide)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     Row(children:[
       const Expanded(child:Text('Soil intelligence',style:TextStyle(fontSize:21,fontWeight:FontWeight.w800,color:dark))),
