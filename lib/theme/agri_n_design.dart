@@ -72,7 +72,7 @@ class AgriNDesign {
         ),
       ),
       dividerTheme: const DividerThemeData(color: line, thickness: 1, space: 1),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: paper,
         elevation: 0,
         margin: EdgeInsets.zero,
