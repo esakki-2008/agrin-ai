@@ -19,7 +19,7 @@ class DashboardPage extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: pad, vertical: 22),
               sliver: SliverToBoxAdapter(child: _nav(context, wide)),
             ),
-            SliverToBoxAdapter(child: _hero(wide)),
+            SliverToBoxAdapter(child: _hero(context, wide)),
             SliverPadding(
               padding: EdgeInsets.symmetric(horizontal: pad),
               sliver: SliverToBoxAdapter(child: _intro(wide)),
@@ -69,7 +69,7 @@ class DashboardPage extends StatelessWidget {
     ),
   );
 
-  Widget _hero(bool wide) {
+  Widget _hero(BuildContext context, bool wide) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: wide ? 56 : 20, vertical: wide ? 76 : 58),
@@ -109,8 +109,8 @@ class DashboardPage extends StatelessWidget {
                   spacing: 10,
                   runSpacing: 10,
                   children: [
-                    _action('ANALYZE FARM', () => GoRouter.of(_navContext!).push('/farm-intelligence')),
-                    _action('CROP DOCTOR', () => GoRouter.of(_navContext!).push('/crop-doctor'), outline: true),
+                    _action('ANALYZE FARM', () => context.push('/farm-intelligence')),
+                    _action('CROP DOCTOR', () => context.push('/crop-doctor'), outline: true),
                   ],
                 ),
               ],
@@ -120,9 +120,6 @@ class DashboardPage extends StatelessWidget {
       ),
     ).animate().fadeIn(duration: 700.ms);
   }
-
-  // Set only for the duration of building action widgets; actions are invoked later.
-  static BuildContext? _navContext;
 
   Widget _action(String label, VoidCallback onTap, {bool outline = false}) {
     return outline
