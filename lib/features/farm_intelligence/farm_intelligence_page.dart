@@ -6,6 +6,7 @@ import '../../services/satellite_service.dart';
 import '../../services/advisory_service.dart';
 import '../../services/climate_service.dart';
 import '../../services/soil_intelligence_service.dart';
+import '../../services/water_intelligence_service.dart';
 import '../../theme/agri_n_design.dart';
 
 class FarmIntelligencePage extends StatefulWidget {
@@ -23,6 +24,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   AdvancedSatelliteData? advancedSatellite;
   ClimateIntelligenceData? climate;
   SoilProfileData? soilProfile;
+  WaterIntelligenceData? waterIntelligence;
   AdvisoryData? advisory;
   String? error;
 
@@ -37,7 +39,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     if(location.text.trim().isEmpty||size.text.trim().isEmpty||date==null){
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Please complete your farm details first.'))); return;
     }
-    setState(() { analyzing=true; error=null; weather=null; soil=null; satellite=null; advancedSatellite=null; climate=null; soilProfile=null; advisory=null; showResults=false; });
+    setState(() { analyzing=true; error=null; weather=null; soil=null; satellite=null; advancedSatellite=null; climate=null; soilProfile=null; waterIntelligence=null; advisory=null; showResults=false; });
     try {
       final liveWeather=await WeatherService().fetch(location.text.trim());
       if(mounted)setState(()=>weather=liveWeather);
@@ -76,6 +78,16 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
           longitude:liveWeather.longitude,
         );
         if(mounted)setState(()=>soilProfile=profile);
+      } catch(e) {
+        if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+      }
+      try {
+        final water=await WaterIntelligenceService().fetch(
+          latitude:liveWeather.latitude,
+          longitude:liveWeather.longitude,
+          forecastDays:7,
+        );
+        if(mounted)setState(()=>waterIntelligence=water);
       } catch(e) {
         if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
       }
@@ -409,6 +421,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     if(advancedSatellite!=null) _advancedSatelliteSection(advancedSatellite!,wide),
     if(climate!=null) _climateSection(climate!,wide),
     if(soilProfile!=null) _soilProfileSection(soilProfile!,wide),
+    if(waterIntelligence!=null) _waterIntelligenceSection(waterIntelligence!,wide),
     const SizedBox(height:20),
     if(error!=null) _errorCard(),
     if(advisory!=null) _aiAdvisory(advisory!),
