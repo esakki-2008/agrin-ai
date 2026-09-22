@@ -14,7 +14,6 @@ class CropDoctorPage extends StatefulWidget {
 class _CropDoctorPageState extends State<CropDoctorPage> with SingleTickerProviderStateMixin {
   static const green = Color(0xFF2E6B43);
   static const dark = Color(0xFF102318);
-  static const muted = Color(0xFF66736A);
   final picker = ImagePicker();
   final crop = TextEditingController(text: 'Rice');
   final location = TextEditingController();
