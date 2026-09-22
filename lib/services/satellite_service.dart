@@ -18,6 +18,71 @@ class SatelliteData {
     cloudCover: (json['cloud_cover_percent'] as num?)?.toDouble(),
     ndvi: (json['ndvi'] as num?)?.toDouble(),
   );
+  Future<AdvancedSatelliteData> fetchIntelligence({
+    required double latitude,
+    required double longitude,
+    int days = 180,
+    double maxCloudCover = 30,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/satellite/intelligence'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'latitude': latitude,
+        'longitude': longitude,
+        'days': days,
+        'max_cloud_cover': maxCloudCover,
+      }),
+    ).timeout(const Duration(seconds: 120));
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode != 200) {
+      throw Exception(json['detail']?.toString() ?? 'Advanced satellite intelligence failed.');
+    }
+    return AdvancedSatelliteData.fromJson(json);
+  }
+}
+
+class AdvancedSatelliteData {
+  final bool available;
+  final Map<String, dynamic>? latest;
+  final Map<String, dynamic>? previous;
+  final Map<String, dynamic>? change;
+  final Map<String, dynamic>? selection;
+  final List<dynamic> errors;
+  const AdvancedSatelliteData({
+    required this.available,
+    this.latest,
+    this.previous,
+    this.change,
+    this.selection,
+    this.errors = const [],
+  });
+
+  factory AdvancedSatelliteData.fromJson(Map<String, dynamic> json) {
+    return AdvancedSatelliteData(
+      available: json['available'] == true,
+      latest: json['latest'] as Map<String, dynamic>?,
+      previous: json['previous'] as Map<String, dynamic>?,
+      change: json['change'] as Map<String, dynamic>?,
+      selection: json['selection'] as Map<String, dynamic>?,
+      errors: (json['errors'] as List<dynamic>?) ?? const [],
+    );
+  }
+
+  double? index(String scene, String name) {
+    final source = scene == 'latest' ? latest : previous;
+    final indices = source?['indices'];
+    if (indices is! Map) return null;
+    final value = indices[name];
+    return value is num ? value.toDouble() : null;
+  }
+
+  double? delta(String name) {
+    final values = change?['absolute_index_change'];
+    if (values is! Map) return null;
+    final value = values[name];
+    return value is num ? value.toDouble() : null;
+  }
 }
 
 class SatelliteService {
