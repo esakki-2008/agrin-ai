@@ -4,6 +4,7 @@ import '../../services/weather_service.dart';
 import '../../services/soil_service.dart';
 import '../../services/satellite_service.dart';
 import '../../services/advisory_service.dart';
+import '../../services/climate_service.dart';
 import '../../theme/agri_n_design.dart';
 
 class FarmIntelligencePage extends StatefulWidget {
@@ -19,6 +20,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   SoilData? soil;
   SatelliteData? satellite;
   AdvancedSatelliteData? advancedSatellite;
+  ClimateIntelligenceData? climate;
   AdvisoryData? advisory;
   String? error;
 
@@ -33,7 +35,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     if(location.text.trim().isEmpty||size.text.trim().isEmpty||date==null){
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Please complete your farm details first.'))); return;
     }
-    setState(() { analyzing=true; error=null; weather=null; soil=null; satellite=null; advancedSatellite=null; advisory=null; showResults=false; });
+    setState(() { analyzing=true; error=null; weather=null; soil=null; satellite=null; advancedSatellite=null; climate=null; advisory=null; showResults=false; });
     try {
       final liveWeather=await WeatherService().fetch(location.text.trim());
       if(mounted)setState(()=>weather=liveWeather);
@@ -53,6 +55,16 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
           maxCloudCover:30,
         );
         if(mounted)setState(()=>advancedSatellite=advanced);
+      } catch(e) {
+        if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+      }
+      try {
+        final climateData=await ClimateService().fetch(
+          latitude:liveWeather.latitude,
+          longitude:liveWeather.longitude,
+          forecastDays:7,
+        );
+        if(mounted)setState(()=>climate=climateData);
       } catch(e) {
         if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
       }
@@ -384,6 +396,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     if(soil!=null) _soilSection(soil!,wide),
     if(satellite!=null) _satelliteSection(satellite!,wide),
     if(advancedSatellite!=null) _advancedSatelliteSection(advancedSatellite!,wide),
+    if(climate!=null) _climateSection(climate!,wide),
     const SizedBox(height:20),
     if(error!=null) _errorCard(),
     if(advisory!=null) _aiAdvisory(advisory!),
@@ -472,6 +485,50 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
         'Latest: '+(data.sceneDate('latest')?.substring(0,10) ?? 'Unavailable')+' • '+(data.sceneCloud('latest')?.toStringAsFixed(1) ?? 'Unavailable')+'% cloud',
         Icons.filter_alt_outlined,
       ),
+      const SizedBox(height:20),
+    ]);
+  }
+
+  Widget _climateSection(ClimateIntelligenceData data, bool wide) {
+    final rain=data.number('total_forecast_precipitation_mm');
+    final et0=data.number('total_reference_et0_mm');
+    final maxTemp=data.number('maximum_temperature_c');
+    final maxWind=data.number('maximum_wind_kmh');
+    String fmt(double? value,String unit) => value==null ? 'Unavailable' : value.toStringAsFixed(1)+unit;
+    return Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Row(children:[
+        const Expanded(child:Text('Climate & weather intelligence',style:TextStyle(fontSize:21,fontWeight:FontWeight.w800,color:dark))),
+        const Icon(Icons.cloud_outlined,color:green,size:22),
+      ]),
+      const SizedBox(height:8),
+      const Text(
+        'Seven-day forecast signals from Open-Meteo. Forecasts can change as the model updates.',
+        style:TextStyle(fontSize:11,color:muted,height:1.5),
+      ),
+      const SizedBox(height:12),
+      GridView.count(
+        shrinkWrap:true,
+        physics:const NeverScrollableScrollPhysics(),
+        crossAxisCount:wide?4:2,
+        crossAxisSpacing:12,
+        mainAxisSpacing:12,
+        childAspectRatio:1.45,
+        children:[
+          _metric(fmt(rain,' mm'),'Forecast precipitation',Icons.umbrella_outlined),
+          _metric(fmt(et0,' mm'),'Reference ET0',Icons.wb_sunny_outlined),
+          _metric(fmt(maxTemp,'°C'),'Maximum temperature',Icons.thermostat_outlined),
+          _metric(fmt(maxWind,' km/h'),'Maximum wind',Icons.air_outlined),
+        ],
+      ),
+      const SizedBox(height:10),
+      if(data.signals.isNotEmpty)
+        _signalCard(
+          'Climate signals',
+          data.signals.map((item)=>item is Map ? (item['evidence']?.toString() ?? '') : '').where((x)=>x.isNotEmpty).join(' • '),
+          Icons.insights_outlined,
+        )
+      else
+        _signalCard('Climate signals','No screening signal triggered by the available forecast values.',Icons.insights_outlined),
       const SizedBox(height:20),
     ]);
   }
