@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 
 class AgriNDesign {
   static const ink = Color(0xFF11130F);
