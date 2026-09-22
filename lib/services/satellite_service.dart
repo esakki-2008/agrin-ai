@@ -9,7 +9,16 @@ class SatelliteData {
   final String? observationDate;
   final double? cloudCover;
   final double? ndvi;
-  const SatelliteData({required this.available, required this.source, this.sceneId, this.observationDate, this.cloudCover, this.ndvi});
+
+  const SatelliteData({
+    required this.available,
+    required this.source,
+    this.sceneId,
+    this.observationDate,
+    this.cloudCover,
+    this.ndvi,
+  });
+
   factory SatelliteData.fromJson(Map<String, dynamic> json) => SatelliteData(
     available: json['available'] == true,
     source: json['source']?.toString() ?? 'Satellite data',
@@ -18,28 +27,6 @@ class SatelliteData {
     cloudCover: (json['cloud_cover_percent'] as num?)?.toDouble(),
     ndvi: (json['ndvi'] as num?)?.toDouble(),
   );
-  Future<AdvancedSatelliteData> fetchIntelligence({
-    required double latitude,
-    required double longitude,
-    int days = 180,
-    double maxCloudCover = 30,
-  }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/satellite/intelligence'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'latitude': latitude,
-        'longitude': longitude,
-        'days': days,
-        'max_cloud_cover': maxCloudCover,
-      }),
-    ).timeout(const Duration(seconds: 120));
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode != 200) {
-      throw Exception(json['detail']?.toString() ?? 'Advanced satellite intelligence failed.');
-    }
-    return AdvancedSatelliteData.fromJson(json);
-  }
 }
 
 class AdvancedSatelliteData {
@@ -49,6 +36,7 @@ class AdvancedSatelliteData {
   final Map<String, dynamic>? change;
   final Map<String, dynamic>? selection;
   final List<dynamic> errors;
+
   const AdvancedSatelliteData({
     required this.available,
     this.latest,
@@ -83,19 +71,67 @@ class AdvancedSatelliteData {
     final value = values[name];
     return value is num ? value.toDouble() : null;
   }
+
+  String? sceneDate(String scene) {
+    final source = scene == 'latest' ? latest : previous;
+    return source?['observation_date']?.toString();
+  }
+
+  double? sceneCloud(String scene) {
+    final source = scene == 'latest' ? latest : previous;
+    final value = source?['cloud_cover_percent'];
+    return value is num ? value.toDouble() : null;
+  }
 }
 
 class SatelliteService {
   final String baseUrl;
+
   SatelliteService({String? baseUrl}) : baseUrl = baseUrl ?? ApiConfig.baseUrl;
-  Future<SatelliteData> fetch({required double latitude, required double longitude, int days = 90, double maxCloudCover = 50}) async {
+
+  Future<SatelliteData> fetch({
+    required double latitude,
+    required double longitude,
+    int days = 90,
+    double maxCloudCover = 50,
+  }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/satellite/ndvi'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'latitude': latitude, 'longitude': longitude, 'days': days, 'max_cloud_cover': maxCloudCover}),
+      body: jsonEncode({
+        'latitude': latitude,
+        'longitude': longitude,
+        'days': days,
+        'max_cloud_cover': maxCloudCover,
+      }),
     ).timeout(const Duration(seconds: 90));
     final json = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode != 200) throw Exception(json['detail']?.toString() ?? 'Satellite service failed.');
+    if (response.statusCode != 200) {
+      throw Exception(json['detail']?.toString() ?? 'Satellite service failed.');
+    }
     return SatelliteData.fromJson(json);
+  }
+
+  Future<AdvancedSatelliteData> fetchIntelligence({
+    required double latitude,
+    required double longitude,
+    int days = 180,
+    double maxCloudCover = 30,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/satellite/intelligence'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'latitude': latitude,
+        'longitude': longitude,
+        'days': days,
+        'max_cloud_cover': maxCloudCover,
+      }),
+    ).timeout(const Duration(seconds: 120));
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode != 200) {
+      throw Exception(json['detail']?.toString() ?? 'Advanced satellite intelligence failed.');
+    }
+    return AdvancedSatelliteData.fromJson(json);
   }
 }
