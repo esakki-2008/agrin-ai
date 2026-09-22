@@ -83,7 +83,6 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
     width: double.infinity,
     padding: const EdgeInsets.fromLTRB(34, 34, 24, 34),
     color: dark,
-    decoration: const BoxDecoration(),
     child: const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
