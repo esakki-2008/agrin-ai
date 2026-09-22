@@ -21,7 +21,7 @@ class InteroperabilityProfile {
 }
 
 class InteroperabilityService {
-  static const baseUrl = 'http://127.0.0.1:8000';
+  static String get baseUrl => ApiConfig.baseUrl;
 
   Future<InteroperabilityProfile> profile() async {
     final response = await http.get(
