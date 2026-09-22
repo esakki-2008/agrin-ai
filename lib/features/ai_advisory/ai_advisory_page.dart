@@ -12,7 +12,7 @@ class AiAdvisoryPage extends StatefulWidget {
 }
 
 class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
-  static const green=Color(0xFF2E6B43), dark=Color(0xFF102318), muted=Color(0xFF66736A);
+  static const green=Color(0xFF2E6B43), dark=Color(0xFF102318);
   final location=TextEditingController(), acres=TextEditingController();
   String crop='Rice'; DateTime? sowingDate; bool loading=false;
   AdvisoryData? advisory; String? error;
