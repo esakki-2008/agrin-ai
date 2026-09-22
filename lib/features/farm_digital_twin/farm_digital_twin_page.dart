@@ -25,7 +25,7 @@ class _FarmDigitalTwinPageState extends State<FarmDigitalTwinPage>{
     final wide=MediaQuery.sizeOf(context).width>=900;
     return Scaffold(appBar:AppBar(title:const Text('Farm Digital Twin',style:TextStyle(fontWeight:FontWeight.w800))),body:SafeArea(child:SingleChildScrollView(padding:EdgeInsets.all(wide?48:20),child:Center(child:ConstrainedBox(constraints:const BoxConstraints(maxWidth:1100),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       _hero(wide),const SizedBox(height:18),if(twin==null)_form()else _twin(wide),if(error!=null)...[const SizedBox(height:14),_error()],
-    ])))));
+    ]))))));
   }
   Widget _hero(bool wide) => Container(
     width: double.infinity,
