@@ -199,8 +199,8 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
                 ),
               ),
               const SizedBox(height: 28),
-              const Row(
-                children: [
+              Row(
+                children: const [
                   _HeroTag('WEATHER'),
                   SizedBox(width: 7),
                   _HeroTag('SOIL'),
