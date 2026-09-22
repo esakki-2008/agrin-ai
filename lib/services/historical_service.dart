@@ -77,7 +77,7 @@ class HistoricalNdvi {
 }
 
 class HistoricalService {
-  static const baseUrl = 'http://127.0.0.1:8000';
+  static String get baseUrl => ApiConfig.baseUrl;
 
   Future<HistoricalWeather> weather({required double latitude, required double longitude, int days = 30}) async {
     final response = await http.post(
