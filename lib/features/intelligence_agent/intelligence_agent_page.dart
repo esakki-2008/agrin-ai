@@ -54,7 +54,7 @@ class _IntelligenceAgentPageState extends State<IntelligenceAgentPage> {
       const Wrap(spacing:7,runSpacing:7,children:[_Tag('WEATHER'),_Tag('SOIL'),_Tag('SATELLITE'),_Tag('HISTORY'),_Tag('REASONING')]),
     ])),
     if(wide)const SizedBox(width:30),if(wide)const SizedBox(width:300,height:300,child:_AgentVisual()),
-  ])).animate().fadeIn(duration:650.ms).slideY(begin:.05,end:0));
+  ])).animate().fadeIn(duration:650.ms).slideY(begin:.05,end:0);
 
   Widget _loop()=>Container(height:88,decoration:BoxDecoration(border:Border.all(color:AgriNDesign.line)),child:Row(children:[
     _step('01','GATHER'),_arrow(),_step('02','EVIDENCE'),_arrow(),_step('03','REASON'),_arrow(),_step('04','ACT'),
@@ -78,7 +78,7 @@ class _IntelligenceAgentPageState extends State<IntelligenceAgentPage> {
     DropdownButtonFormField<int>(value:days,decoration:_dec('Historical window',Icons.history_outlined),items:const [7,14,30,60,90].map((x)=>DropdownMenuItem(value:x,child:Text(x.toString()+' days'))).toList(),onChanged:loading?null:(x)=>setState(()=>days=x??30)),
     const SizedBox(height:20),
     SizedBox(width:double.infinity,child:ElevatedButton(onPressed:loading?null:runAgent,style:ElevatedButton.styleFrom(backgroundColor:green,foregroundColor:Colors.white,padding:const EdgeInsets.symmetric(vertical:18),shape:const RoundedRectangleBorder(borderRadius:BorderRadius.zero)),child:Row(mainAxisAlignment:MainAxisAlignment.center,children:[if(loading)const SizedBox(width:16,height:16,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white))else const Icon(Icons.play_arrow,size:17),const SizedBox(width:9),Text(loading?'AGENT IS GATHERING EVIDENCE...':'RUN INTELLIGENCE AGENT',style:const TextStyle(fontSize:10,letterSpacing:1.3,fontWeight:FontWeight.w800))]))),
-  ])).animate().fadeIn(duration:550.ms).slideX(begin:-.04,end:0));
+  ])).animate().fadeIn(duration:550.ms).slideX(begin:-.04,end:0);
 
   InputDecoration _dec(String label,IconData icon)=>InputDecoration(labelText:label,prefixIcon:Icon(icon,color:green,size:18),filled:true,fillColor:const Color(0xFFF8F8F3),border:const OutlineInputBorder(borderSide:BorderSide(color:AgriNDesign.line)),enabledBorder:const OutlineInputBorder(borderSide:BorderSide(color:AgriNDesign.line)),focusedBorder:const OutlineInputBorder(borderSide:BorderSide(color:green,width:1.3)));
 
