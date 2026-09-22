@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../config/api_config.dart';
 import 'package:http/http.dart' as http;
 
 class AgentData {
@@ -23,7 +24,7 @@ class AgentData {
 
 class AgentService {
   final String baseUrl;
-  const AgentService({this.baseUrl='http://127.0.0.1:8000'});
+  AgentService({String? baseUrl}) : baseUrl = baseUrl ?? ApiConfig.baseUrl;
 
   Future<AgentData> analyze({required String location,required String crop,double? farmSizeAcres,int historicalDays=30}) async {
     final response=await http.post(Uri.parse('$baseUrl/agent/analyze'),
