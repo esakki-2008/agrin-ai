@@ -3,7 +3,7 @@ from typing import Any
 import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from main import sample
+from data_sources import sample
 from satellite_intelligence import _search_features, _choose, _analyze_scene
 
 router = APIRouter(prefix="/farm-twin", tags=["Farm Digital Twin"])

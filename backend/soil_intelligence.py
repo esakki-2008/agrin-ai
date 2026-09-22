@@ -1,7 +1,7 @@
 from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from main import sample
+from data_sources import sample
 
 router = APIRouter(prefix="/soil-intelligence", tags=["Soil Intelligence"])
 

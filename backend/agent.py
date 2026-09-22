@@ -131,7 +131,7 @@ async def analyze(request: AgentRequest):
     place = await geocode(request.location.strip())
     lat, lon = place["latitude"], place["longitude"]
 
-    from main import find_satellite_scene, sample
+    from data_sources import find_satellite_scene, sample
     from historical import HistoricalRequest, historical_weather, historical_satellite_ndvi
 
     weather_data = await weather(lat, lon)
