@@ -61,8 +61,8 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
 
   InputDecoration decoration(String label,IconData icon)=>InputDecoration(
     labelText:label,prefixIcon:Icon(icon,color:green),filled:true,fillColor:const Color(0xFFF7F9F5),
-    border:OutlineInputBorder(borderRadius:BorderRadius.circular(16),borderSide:BorderSide.none),
-    focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(16),borderSide:const BorderSide(color:green,width:1.4)),
+    border:OutlineInputBorder(borderRadius:BorderRadius.zero,borderSide:BorderSide.none),
+    focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.zero,borderSide:const BorderSide(color:green,width:1.4)),
   );
 
   @override Widget build(BuildContext context){
@@ -83,52 +83,252 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     );
   }
 
-  Widget _header()=>Container(width:double.infinity,padding:const EdgeInsets.all(28),decoration:BoxDecoration(
-    color:AgriNDesign.ink,border:Border.all(color:AgriNDesign.line)),
-    child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Row(children:[const Icon(Icons.satellite_alt_rounded,color:Colors.white,size:30),const Spacer(),const Text('LIVE EVIDENCE',style:TextStyle(color:Color(0xFFB7C5BA),fontSize:9,letterSpacing:1.8,fontWeight:FontWeight.w700))]),const SizedBox(height:18),
-      Text('Let’s understand your farm',style:TextStyle(color:Colors.white,fontSize:27,fontWeight:FontWeight.w800)),
-      SizedBox(height:8),Text('Build a localized intelligence profile from your farm details.',style:TextStyle(color:Color(0xCCDDE9DF),height:1.5)),
-    ])).animate().fadeIn(duration:600.ms).slideY(begin:.06,end:0);
-
-  Widget _signalPipeline() {
-    const items = [
-      ('01', 'WEATHER', Icons.cloud_outlined),
-      ('02', 'SOIL', Icons.water_drop_outlined),
-      ('03', 'SATELLITE', Icons.satellite_alt_outlined),
-      ('04', 'AI', Icons.auto_awesome_rounded),
-    ];
-    return Row(
-      children: items.asMap().entries.map((entry) {
-        final i = entry.key;
-        final item = entry.value;
-        return Expanded(
-          child: Row(
+  Widget _header() => Container(
+    width: double.infinity,
+    constraints: const BoxConstraints(minHeight: 390),
+    decoration: const BoxDecoration(
+      color: AgriNDesign.ink,
+      border: Border.fromBorderSide(BorderSide(color: AgriNDesign.ink)),
+    ),
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth > 720;
+        final visual = SizedBox(
+          width: wide ? 390 : double.infinity,
+          height: wide ? 390 : 250,
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: i == 3 ? AgriNDesign.ink : Colors.white,
-                    border: Border.all(color: AgriNDesign.line),
+              const MotionOrb(size: 190, label: 'FIELD'),
+              Container(
+                width: 270,
+                height: 270,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0x445A765F)),
+                ),
+              ),
+              Container(
+                width: 205,
+                height: 205,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0x667D9A83)),
+                ),
+              ),
+              Container(
+                width: 125,
+                height: 125,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AgriNDesign.green.withValues(alpha: .25),
+                  border: Border.all(color: const Color(0x8895B29C)),
+                ),
+                child: const Icon(Icons.eco_outlined, color: Color(0xFFD6E1D9), size: 34),
+              ),
+              Positioned(
+                top: 26,
+                right: 24,
+                child: _heroNode('WEATHER', Icons.cloud_outlined),
+              ),
+              Positioned(
+                bottom: 26,
+                left: 18,
+                child: _heroNode('SOIL', Icons.layers_outlined),
+              ),
+              Positioned(
+                bottom: 48,
+                right: 6,
+                child: _heroNode('SATELLITE', Icons.satellite_alt_outlined),
+              ),
+            ],
+          ),
+        );
+
+        final copy = Padding(
+          padding: const EdgeInsets.fromLTRB(42, 38, 24, 38),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.eco_outlined, color: Color(0xFF9EB6A5), size: 18),
+                  SizedBox(width: 10),
+                  Text(
+                    'AGRI N / FIELD INTELLIGENCE',
+                    style: TextStyle(
+                      color: Color(0xFFB4C0B7),
+                      fontSize: 9,
+                      letterSpacing: 1.9,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                  child: Column(
-                    children: [
-                      Icon(item.$3, size: 18, color: i == 3 ? Colors.white : AgriNDesign.green),
-                      const SizedBox(height: 7),
-                      Text(item.$1, style: TextStyle(fontSize: 9, color: i == 3 ? Colors.white54 : AgriNDesign.muted)),
-                      const SizedBox(height: 3),
-                      Text(item.$2, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 1, color: i == 3 ? Colors.white : AgriNDesign.ink)),
-                    ],
+                  Spacer(),
+                  Text(
+                    'LIVE EVIDENCE  /  01',
+                    style: TextStyle(
+                      color: Color(0xFF8FA196),
+                      fontSize: 8,
+                      letterSpacing: 1.4,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 45),
+              Text(
+                'Let’s understand\\nyour farm.',
+                style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                      color: Colors.white,
+                      fontSize: wide ? 62 : 43,
+                      height: .9,
+                      fontWeight: FontWeight.w500,
+                    ),
+              ),
+              const SizedBox(height: 20),
+              const SizedBox(
+                width: 490,
+                child: Text(
+                  'Build a localized intelligence profile from live weather, soil and satellite observations.',
+                  style: TextStyle(
+                    color: Color(0xFFD1DAD3),
+                    fontSize: 13,
+                    height: 1.65,
                   ),
                 ),
               ),
-              if (i < items.length - 1)
-                const SizedBox(width: 4, child: Icon(Icons.chevron_right, size: 14, color: AgriNDesign.muted)),
+              const SizedBox(height: 28),
+              const Row(
+                children: [
+                  _HeroTag('WEATHER'),
+                  SizedBox(width: 7),
+                  _HeroTag('SOIL'),
+                  SizedBox(width: 7),
+                  _HeroTag('SATELLITE'),
+                  SizedBox(width: 7),
+                  _HeroTag('AI'),
+                ],
+              ),
             ],
           ),
-        ).animate(delay: (90 * i).ms).fadeIn(duration: 400.ms).slideX(begin: .04, end: 0);
-      }).toList(),
+        );
+
+        return wide
+            ? Row(
+                children: [
+                  Expanded(child: copy),
+                  visual,
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [copy, visual],
+              );
+      },
+    ),
+  ).animate().fadeIn(duration: 600.ms).slideY(begin: .05, end: 0);
+
+  Widget _heroNode(String label, IconData icon) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+    decoration: BoxDecoration(
+      color: const Color(0xDD151914),
+      border: Border.all(color: const Color(0x446F8C76)),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: const Color(0xFFA5B8AA)),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFFB5C2B9),
+            fontSize: 7,
+            letterSpacing: 1.2,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _signalPipeline() {
+    const items = [
+      ('01', 'WEATHER', 'LIVE FORECAST', Icons.cloud_outlined),
+      ('02', 'SOIL', 'SOILGRIDS MODEL', Icons.layers_outlined),
+      ('03', 'SATELLITE', 'SENTINEL-2', Icons.satellite_alt_outlined),
+      ('04', 'AI', 'EVIDENCE REASONING', Icons.auto_awesome_outlined),
+    ];
+
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: AgriNDesign.line),
+          bottom: BorderSide(color: AgriNDesign.line),
+        ),
+      ),
+      child: Row(
+        children: items.asMap().entries.map((entry) {
+          final i = entry.key;
+          final item = entry.value;
+          return Expanded(
+            child: Container(
+              height: 92,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: i == 3 ? AgriNDesign.ink : Colors.transparent,
+                border: Border(
+                  right: BorderSide(
+                    color: AgriNDesign.line,
+                    width: i == items.length - 1 ? 0 : 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    item.$1,
+                    style: const TextStyle(fontSize: 8, color: AgriNDesign.muted),
+                  ),
+                  const SizedBox(width: 13),
+                  Icon(
+                    item.$4,
+                    size: 17,
+                    color: i == 3 ? const Color(0xFFB7C8BC) : AgriNDesign.green,
+                  ),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.$2,
+                          style: TextStyle(
+                            color: i == 3 ? Colors.white : AgriNDesign.ink,
+                            fontSize: 9,
+                            letterSpacing: 1.1,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          item.$3,
+                          style: TextStyle(
+                            color: i == 3 ? const Color(0xFF9EADA3) : AgriNDesign.muted,
+                            fontSize: 8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ).animate(delay: (90 * i).ms).fadeIn(duration: 450.ms).slideX(begin: .04, end: 0);
+        }).toList(),
+      ),
     );
   }
 
@@ -146,7 +346,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     const SizedBox(height:20),
     SizedBox(width:double.infinity,child:ElevatedButton.icon(onPressed:analyzing?null:analyze,icon:analyzing?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.auto_awesome_rounded),
       label:Padding(padding:const EdgeInsets.symmetric(vertical:15),child:Text(analyzing?'Analyzing farm signals...':'Analyze my farm')),
-      style:ElevatedButton.styleFrom(backgroundColor:green,foregroundColor:Colors.white,shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(15))))),
+      style:ElevatedButton.styleFrom(backgroundColor:green,foregroundColor:Colors.white,shape:RoundedRectangleBorder(borderRadius:BorderRadius.zero)))),
   ])).animate().fadeIn(duration:550.ms).slideX(begin:-.04,end:0);
 
   Widget _preview()=>_card('Intelligence layers',const Column(children:[
@@ -233,12 +433,12 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     return 'Variable conditions';
   }
 
-  Widget _errorCard()=>Container(width:double.infinity,padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:const Color(0xFFFFF3F0),borderRadius:BorderRadius.circular(18)),child:Row(children:[const Icon(Icons.error_outline,color:Colors.deepOrange),const SizedBox(width:10),Expanded(child:Text(error??'Unable to fetch live data.',style:const TextStyle(color:dark)))]));
+  Widget _errorCard()=>Container(width:double.infinity,padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:const Color(0xFFFFF3F0),borderRadius:BorderRadius.zero),child:Row(children:[const Icon(Icons.error_outline,color:Colors.deepOrange),const SizedBox(width:10),Expanded(child:Text(error??'Unable to fetch live data.',style:const TextStyle(color:dark)))]));
   Widget _aiAdvisory(AdvisoryData data) {
     return Container(
       width:double.infinity,
       padding:const EdgeInsets.all(22),
-      decoration:BoxDecoration(color:dark,borderRadius:BorderRadius.circular(24)),
+      decoration:BoxDecoration(color:dark,borderRadius:BorderRadius.zero),
       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         const Row(children:[
           Icon(Icons.auto_awesome_rounded,color:Colors.white),
@@ -252,7 +452,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
           ...data.actions.map((a)=>Container(
             margin:const EdgeInsets.only(bottom:10),
             padding:const EdgeInsets.all(14),
-            decoration:BoxDecoration(color:const Color(0xFF1C3325),borderRadius:BorderRadius.circular(14)),
+            decoration:BoxDecoration(color:const Color(0xFF1C3325),borderRadius:BorderRadius.zero),
             child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
               Text(a.title,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w700)),
               const SizedBox(height:5),
@@ -284,7 +484,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: dark,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.zero,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,7 +520,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.zero,
         border: Border.all(color: const Color(0xFFE5EAE5)),
       ),
       child: Row(
@@ -349,7 +549,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.zero,
         border: Border.all(color: const Color(0xFFE5EAE5)),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
