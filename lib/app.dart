@@ -7,6 +7,7 @@ import 'features/crop_doctor/crop_doctor_page.dart';
 import 'features/regenerative_farming/regenerative_farming_page.dart';
 import 'features/historical_intelligence/historical_intelligence_page.dart';
 import 'features/brics_network/brics_network_page.dart';
+import 'features/intelligence_agent/intelligence_agent_page.dart';
 import 'theme/agri_n_design.dart';
 
 class AgriNApp extends StatelessWidget {
@@ -23,6 +24,7 @@ class AgriNApp extends StatelessWidget {
         GoRoute(path: '/regenerative-farming', builder: (context, state) => const RegenerativeFarmingPage()),
         GoRoute(path: '/historical-intelligence', builder: (context, state) => const HistoricalIntelligencePage()),
         GoRoute(path: '/brics-network', builder: (context, state) => const BricsNetworkPage()),
+        GoRoute(path: '/intelligence-agent', builder: (context, state) => const IntelligenceAgentPage()),
       ],
     );
 
