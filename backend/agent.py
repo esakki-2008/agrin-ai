@@ -67,10 +67,6 @@ async def weather(lat: float, lon: float):
 
 
 async def gemini_report(evidence: dict):
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise HTTPException(status_code=503, detail="GEMINI_API_KEY is not configured on the backend.")
-
     prompt = """You are the AgriN Farm Intelligence Agent.
 Reason ONLY from the supplied observations. Never invent measurements, crop stage, disease,
 soil moisture, irrigation status, weather conditions, or satellite observations.
@@ -101,55 +97,24 @@ not a whole-farm health score. Do not infer causality from historical weather an
 EVIDENCE:
 """ + json.dumps(evidence, ensure_ascii=False)
 
-    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.15, "responseMimeType": "application/json"},
-    }
-    response = None
-    last_error = None
-    for attempt in range(3):
-        try:
-            async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
-                response = await client.post(
-                    endpoint,
-                    headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
-                    json=payload,
-                )
-        except httpx.HTTPError as exc:
-            last_error = f"Gemini request failed: {exc}"
-            response = None
-
-        if response is not None and response.status_code == 200:
-            break
-
-        # Gemini can temporarily return 429/503 during demand spikes.
-        # Retry briefly before surfacing the real provider error to the UI.
-        if response is None or response.status_code in (429, 500, 502, 503, 504):
-            if attempt < 2:
-                import asyncio
-                await asyncio.sleep(2 ** attempt)
-                continue
-
-        break
-
-    if response is None:
-        raise HTTPException(status_code=502, detail=last_error or "Gemini request failed.")
-
-    if response.status_code != 200:
-        detail = "Gemini API request failed."
-        try:
-            detail = response.json().get("error", {}).get("message", detail)
-        except ValueError:
-            pass
-        raise HTTPException(status_code=502, detail=detail)
+    from ai_gateway import AIProviderError, generate_json
 
     try:
-        body = response.json()
-        text = body["candidates"][0]["content"]["parts"][0]["text"]
-        return json.loads(text)
-    except (KeyError, IndexError, TypeError, ValueError) as exc:
-        raise HTTPException(status_code=502, detail="Gemini returned an invalid agent response.") from exc
+        result, provider_meta = await generate_json(
+            prompt,
+            temperature=0.15,
+            timeout=60,
+        )
+    except AIProviderError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "report": result,
+        "provider": provider_meta,
+    }
 
 
 @router.post("/analyze")
