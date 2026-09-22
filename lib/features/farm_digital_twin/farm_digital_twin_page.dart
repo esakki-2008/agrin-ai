@@ -27,15 +27,23 @@ class _FarmDigitalTwinPageState extends State<FarmDigitalTwinPage>{
       _hero(wide),const SizedBox(height:18),if(twin==null)_form()else _twin(wide),if(error!=null)...[const SizedBox(height:14),_error()],
     ])))));
   }
-  Widget _hero(bool wide)=>Container(width:double.infinity,color:AgriNDesign.ink,padding:const EdgeInsets.fromLTRB(38,34,28,30),child:Row(children:[
-    Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+  Widget _hero(bool wide) => Container(
+    width: double.infinity,
+    color: AgriNDesign.ink,
+    padding: const EdgeInsets.fromLTRB(38, 34, 28, 30),
+    child: Row(
+      children: [
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
       const Text('AGRI N / DIGITAL TWIN',style:TextStyle(color:Color(0xFF9EB6A5),fontSize:9,letterSpacing:1.9,fontWeight:FontWeight.w800)),
       const SizedBox(height:18),Text('One farm.\nMany signals.',style:Theme.of(context).textTheme.displayMedium?.copyWith(color:Colors.white,fontSize:wide?58:42,height:.9)),
       const SizedBox(height:16),const Text('Turn real observations into a refreshable farm state — without pretending that a point sample is the whole farm.',style:TextStyle(color:Color(0xFFD1DAD3),fontSize:13,height:1.6)),
       const SizedBox(height:20),const Row(children:[_Tag('WEATHER'),SizedBox(width:6),_Tag('SOIL'),SizedBox(width:6),_Tag('SATELLITE'),SizedBox(width:6),_Tag('STATE')]),
-    ])),
-    if(wide)const SizedBox(width:30),if(wide)const MotionOrb(size:190,label:'TWIN'),
-  ])).animate().fadeIn(duration:600.ms);
+        ])),
+        if (wide) const SizedBox(width: 30),
+        if (wide) const MotionOrb(size: 190, label: 'TWIN'),
+      ],
+    ),
+  ).animate().fadeIn(duration: 600.ms);
   Widget _form()=>Container(padding:const EdgeInsets.all(28),decoration:BoxDecoration(color:Colors.white,border:Border.all(color:AgriNDesign.line)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     const Text('BUILD OBSERVATION SNAPSHOT',style:TextStyle(color:green,fontSize:9,letterSpacing:1.7,fontWeight:FontWeight.w800)),const SizedBox(height:12),
     TextField(controller:location,decoration:const InputDecoration(labelText:'Farm location',prefixIcon:Icon(Icons.location_on_outlined))),
