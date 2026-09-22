@@ -6,6 +6,7 @@ import '../../services/weather_service.dart';
 import '../../services/soil_service.dart';
 import '../../services/satellite_service.dart';
 import '../../theme/agri_n_design.dart';
+import '../../services/agri_network_service.dart';
 
 class BricsNetworkPage extends StatefulWidget {
   const BricsNetworkPage({super.key});
@@ -30,6 +31,9 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
   String? exportError;
   final importController = TextEditingController();
   bool validating = false;
+  final networkService = AgriNetworkService();
+  Map<String, dynamic>? networkManifest;
+  String? networkError;
   Map<String, dynamic>? validationResult;
   String? validationError;
 
@@ -42,6 +46,11 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
   Future<void> _load() async {
     try {
       final result = await service.profile();
+      try {
+        networkManifest = await networkService.manifest();
+      } catch (e) {
+        networkError = e.toString().replaceFirst('Exception: ', '');
+      }
       if (!mounted) return;
       setState(() {
         profile = result;
@@ -223,6 +232,8 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
         const SizedBox(height: 16),
         _section('Privacy controls', p.privacy, Icons.lock_outline_rounded),
         const SizedBox(height: 16),
+        _networkProtocolCard(),
+        const SizedBox(height: 16),
         _exportCard(),
         const SizedBox(height: 16),
         _importCard(),
@@ -242,6 +253,22 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
       ],
     ).animate().fadeIn(duration: 650.ms).slideY(begin: .025, end: 0);
   }
+
+  Widget _networkProtocolCard() => _card(
+    'AgriN Open Agricultural Network',
+    networkManifest == null
+        ? Text(networkError ?? 'Network manifest unavailable.', style: const TextStyle(color: muted, fontSize: 12))
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _row('Protocol', networkManifest!['protocol_version']?.toString() ?? '—'),
+              _row('Status', networkManifest!['status']?.toString() ?? '—'),
+              _row('Exchange', 'JSON / WGS84 / HTTP API'),
+              const SizedBox(height: 12),
+              const Text('Federated-ready means AgriN can package observations for another compatible system without requiring a shared database or vendor-specific storage.', style: TextStyle(color: muted, fontSize: 12, height: 1.5)),
+            ],
+          ),
+  );
 
   Widget _exportCard() => _card(
     'Create a live standardized observation',
