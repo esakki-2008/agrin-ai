@@ -38,6 +38,8 @@ async def generate_json(
     *,
     temperature: float = 0.2,
     timeout: float = 45,
+    image_base64: str | None = None,
+    mime_type: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     providers = _providers()
     if not providers:
@@ -50,8 +52,17 @@ async def generate_json(
             "https://generativelanguage.googleapis.com/"
             f"v1beta/models/{provider['model']}:generateContent"
         )
+        parts: list[dict[str, Any]] = [{"text": prompt}]
+        if image_base64 and mime_type:
+            parts.append({
+                "inline_data": {
+                    "mime_type": mime_type,
+                    "data": image_base64,
+                }
+            })
+
         payload = {
-            "contents": [{"parts": [{"text": prompt}]}],
+            "contents": [{"parts": parts}],
             "generationConfig": {
                 "temperature": temperature,
                 "responseMimeType": "application/json",
