@@ -11,17 +11,49 @@ class AgriNDesign {
   static const line = Color(0x3311130F);
   static const muted = Color(0xFF66685F);
 
+  static const _sans = 'Inter';
+  static const _display = 'Cormorant Garamond';
+
+  static TextStyle _sansStyle({
+    double? fontSize,
+    double? height,
+    FontWeight? fontWeight,
+    Color? color,
+    double? letterSpacing,
+  }) => TextStyle(
+        fontFamily: _sans,
+        fontSize: fontSize,
+        height: height,
+        fontWeight: fontWeight,
+        color: color,
+        letterSpacing: letterSpacing,
+      );
+
+  static TextStyle _displayStyle({
+    double? fontSize,
+    double? height,
+    FontWeight? fontWeight,
+    Color? color,
+    double? letterSpacing,
+  }) => TextStyle(
+        fontFamily: _display,
+        fontSize: fontSize,
+        height: height,
+        fontWeight: fontWeight,
+        color: color,
+        letterSpacing: letterSpacing,
+      );
+
   static TextTheme textTheme() {
-    final base = GoogleFonts.interTextTheme();
-    return base.copyWith(
-      displayLarge: GoogleFonts.cormorantGaramond(fontSize: 78, height: .88, fontWeight: FontWeight.w500, color: ink),
-      displayMedium: GoogleFonts.cormorantGaramond(fontSize: 58, height: .92, fontWeight: FontWeight.w500, color: ink),
-      headlineLarge: GoogleFonts.cormorantGaramond(fontSize: 42, height: .98, fontWeight: FontWeight.w500, color: ink),
-      headlineMedium: GoogleFonts.cormorantGaramond(fontSize: 32, height: 1.0, fontWeight: FontWeight.w500, color: ink),
-      titleLarge: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700, color: ink),
-      bodyLarge: GoogleFonts.inter(fontSize: 15, height: 1.55, color: ink),
-      bodyMedium: GoogleFonts.inter(fontSize: 13, height: 1.5, color: muted),
-      labelSmall: GoogleFonts.inter(fontSize: 10, letterSpacing: 1.4, fontWeight: FontWeight.w700, color: muted),
+    return TextTheme(
+      displayLarge: _displayStyle(fontSize: 78, height: .88, fontWeight: FontWeight.w500, color: ink),
+      displayMedium: _displayStyle(fontSize: 58, height: .92, fontWeight: FontWeight.w500, color: ink),
+      headlineLarge: _displayStyle(fontSize: 42, height: .98, fontWeight: FontWeight.w500, color: ink),
+      headlineMedium: _displayStyle(fontSize: 32, height: 1.0, fontWeight: FontWeight.w500, color: ink),
+      titleLarge: _sansStyle(fontSize: 18, fontWeight: FontWeight.w700, color: ink),
+      bodyLarge: _sansStyle(fontSize: 15, height: 1.55, color: ink),
+      bodyMedium: _sansStyle(fontSize: 13, height: 1.5, color: muted),
+      labelSmall: _sansStyle(fontSize: 10, letterSpacing: 1.4, fontWeight: FontWeight.w700, color: muted),
     );
   }
 
@@ -42,13 +74,13 @@ class AgriNDesign {
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: ink),
+        titleTextStyle: _sansStyle(fontSize: 14, fontWeight: FontWeight.w700, color: ink),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.transparent,
-        labelStyle: GoogleFonts.inter(fontSize: 12, color: muted),
-        hintStyle: GoogleFonts.inter(fontSize: 12, color: muted),
+        labelStyle: _sansStyle(fontSize: 12, color: muted),
+        hintStyle: _sansStyle(fontSize: 12, color: muted),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         border: const OutlineInputBorder(borderSide: BorderSide(color: line)),
         enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: line)),
@@ -61,7 +93,7 @@ class AgriNDesign {
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-          textStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: .3),
+          textStyle: _sansStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: .3),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -70,7 +102,7 @@ class AgriNDesign {
           side: const BorderSide(color: ink),
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-          textStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700),
+          textStyle: _sansStyle(fontSize: 12, fontWeight: FontWeight.w700),
         ),
       ),
       dividerTheme: const DividerThemeData(color: line, thickness: 1, space: 1),
@@ -135,7 +167,7 @@ class MotionOrb extends StatelessWidget {
                 child: Text(
                   label!,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.1, color: AgriNDesign.ink),
+                  style: _sansStyle(fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.1, color: AgriNDesign.ink),
                 ),
               ),
       ),
