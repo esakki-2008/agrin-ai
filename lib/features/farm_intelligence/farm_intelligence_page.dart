@@ -5,6 +5,7 @@ import '../../services/soil_service.dart';
 import '../../services/satellite_service.dart';
 import '../../services/advisory_service.dart';
 import '../../services/climate_service.dart';
+import '../../services/soil_intelligence_service.dart';
 import '../../theme/agri_n_design.dart';
 
 class FarmIntelligencePage extends StatefulWidget {
@@ -21,6 +22,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   SatelliteData? satellite;
   AdvancedSatelliteData? advancedSatellite;
   ClimateIntelligenceData? climate;
+  SoilProfileData? soilProfile;
   AdvisoryData? advisory;
   String? error;
 
@@ -35,7 +37,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     if(location.text.trim().isEmpty||size.text.trim().isEmpty||date==null){
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Please complete your farm details first.'))); return;
     }
-    setState(() { analyzing=true; error=null; weather=null; soil=null; satellite=null; advancedSatellite=null; climate=null; advisory=null; showResults=false; });
+    setState(() { analyzing=true; error=null; weather=null; soil=null; satellite=null; advancedSatellite=null; climate=null; soilProfile=null; advisory=null; showResults=false; });
     try {
       final liveWeather=await WeatherService().fetch(location.text.trim());
       if(mounted)setState(()=>weather=liveWeather);
@@ -65,6 +67,15 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
           forecastDays:7,
         );
         if(mounted)setState(()=>climate=climateData);
+      } catch(e) {
+        if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+      }
+      try {
+        final profile=await SoilIntelligenceService().fetch(
+          latitude:liveWeather.latitude,
+          longitude:liveWeather.longitude,
+        );
+        if(mounted)setState(()=>soilProfile=profile);
       } catch(e) {
         if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
       }
@@ -397,6 +408,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     if(satellite!=null) _satelliteSection(satellite!,wide),
     if(advancedSatellite!=null) _advancedSatelliteSection(advancedSatellite!,wide),
     if(climate!=null) _climateSection(climate!,wide),
+    if(soilProfile!=null) _soilProfileSection(soilProfile!,wide),
     const SizedBox(height:20),
     if(error!=null) _errorCard(),
     if(advisory!=null) _aiAdvisory(advisory!),
