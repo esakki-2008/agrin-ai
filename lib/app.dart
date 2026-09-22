@@ -31,7 +31,9 @@ class AgriNApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AgriNDesign.theme(),
       routerConfig: router,
-      builder: (context, child) => AgriNCinematicLayer(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) => AgriNCinematicLayer(
+        child: child ?? const SizedBox.shrink(),
+      ),
     );
   }
 }
