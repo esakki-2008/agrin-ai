@@ -34,7 +34,7 @@ class SoilData {
 
 class SoilService {
   final String baseUrl;
-  const SoilService({this.baseUrl = 'http://127.0.0.1:8000'});
+  SoilService({String? baseUrl}) : baseUrl = baseUrl ?? ApiConfig.baseUrl;
 
   Future<SoilData> fetch({required double latitude, required double longitude}) async {
     final response = await http.post(
