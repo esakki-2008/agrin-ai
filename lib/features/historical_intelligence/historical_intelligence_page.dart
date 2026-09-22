@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/weather_service.dart';
 import '../../services/historical_service.dart';
+import '../../theme/agri_n_design.dart';
 
 class HistoricalIntelligencePage extends StatefulWidget {
   const HistoricalIntelligencePage({super.key});
@@ -80,20 +81,17 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
 
   Widget _hero() => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(28),
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF102318), Color(0xFF3F7D4C)]),
-      borderRadius: BorderRadius.circular(28),
-      boxShadow: const [BoxShadow(color: Color(0x22102D1B), blurRadius: 28, offset: Offset(0, 12))],
-    ),
+    padding: const EdgeInsets.fromLTRB(34, 34, 24, 34),
+    color: dark,
+    decoration: const BoxDecoration(),
     child: const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(Icons.history_rounded, color: Colors.white, size: 34),
         SizedBox(height: 14),
-        Text('See what changed over time', style: TextStyle(color: Colors.white, fontSize: 27, fontWeight: FontWeight.w800)),
+        Text('See what changed\nover time.', style: TextStyle(color: Colors.white, fontSize: 42, height: .95, fontWeight: FontWeight.w800)),
         SizedBox(height: 8),
-        Text('Use real historical weather and Sentinel-2 observations to understand recent farm conditions and trends.', style: TextStyle(color: Color(0xCCDDE9DF), height: 1.5)),
+        Text('Read the farm as a sequence of real observations — weather, satellite scenes and NDVI — without turning them into synthetic crop-health claims.', style: TextStyle(color: Color(0xCCDDE9DF), height: 1.5)),
       ],
     ),
   ).animate().fadeIn(duration: 600.ms).slideY(begin: .06, end: 0);
@@ -130,7 +128,9 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Historical farm intelligence', style: TextStyle(fontSize: wide ? 32 : 27, fontWeight: FontWeight.w800, color: dark)),
+        const Text('OBSERVATION TIMELINE', style: TextStyle(fontSize:9, letterSpacing:1.8, fontWeight:FontWeight.w800, color:green)),
+        const SizedBox(height:8),
+        Text('Historical farm intelligence', style: TextStyle(fontSize: wide ? 38 : 29, fontWeight: FontWeight.w800, color: dark)),
         const SizedBox(height: 6),
         Text(h.startDate + ' → ' + h.endDate, style: const TextStyle(color: muted)),
         const SizedBox(height: 18),
@@ -178,7 +178,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
       children: recent.map((x) => Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE5EAE5))),
+        decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AgriNDesign.line)),
         child: Row(
           children: [
             SizedBox(width: 92, child: Text(x.date, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: dark))),
@@ -193,7 +193,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
   Widget _scene(HistoricalScene x) => Container(
     margin: const EdgeInsets.only(bottom: 8),
     padding: const EdgeInsets.all(15),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE5EAE5))),
+    decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AgriNDesign.line)),
     child: Row(
       children: [
         const Icon(Icons.satellite_alt_rounded, color: green),
@@ -212,7 +212,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
 
   Widget _metric(String value, String label) => Container(
     padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), border: Border.all(color: const Color(0xFFE5EAE5))),
+    decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AgriNDesign.line)),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
       Text(value, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: dark)),
       const SizedBox(height: 5),
@@ -309,11 +309,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
 
   Widget _changeMetric(String value, String label) => Container(
     padding: const EdgeInsets.all(13),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: const Color(0xFFE5EAE5)),
-    ),
+    decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AgriNDesign.line)),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -327,7 +323,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
   Widget _limitations() => Container(
     width: double.infinity,
     padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(color: dark, borderRadius: BorderRadius.circular(20)),
+    decoration: const BoxDecoration(color: dark),
     child: const Text(
       'Historical weather is sourced from Open-Meteo archive data. Sentinel-2 entries are scene metadata; scene count and cloud cover are not crop-health scores. Historical NDVI change is calculated only from usable Sentinel-2 observations returned for this point and period. Weather values provide context; they do not establish causation.',
       style: TextStyle(color: Color(0xFFD4DDD7), fontSize: 11, height: 1.5),
@@ -337,14 +333,14 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
   Widget _empty(String text) => Container(
     width: double.infinity,
     padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFE5EAE5))),
+    decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AgriNDesign.line)),
     child: Text(text, style: const TextStyle(color: muted)),
   );
 
   Widget _error() => Container(
     width: double.infinity,
     padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(color: const Color(0xFFFFF3F0), borderRadius: BorderRadius.circular(18)),
+    decoration: const BoxDecoration(color: Color(0xFFFFF1EC), border: Border(left: BorderSide(color: Colors.deepOrange, width: 3))),
     child: Row(children: [
       const Icon(Icons.error_outline, color: Colors.deepOrange),
       const SizedBox(width: 10),
@@ -357,7 +353,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
     prefixIcon: Icon(icon, color: green),
     filled: true,
     fillColor: const Color(0xFFF7F9F5),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+    border: const OutlineInputBorder(borderSide: BorderSide(color: AgriNDesign.line)),
   );
 
   Widget _sectionTitle(String text) => Text(text, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: dark));
@@ -365,7 +361,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
   Widget _card(String title, Widget child) => Container(
     width: double.infinity,
     padding: const EdgeInsets.all(22),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFE5EAE5))),
+    decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AgriNDesign.line)),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: dark)),
       const SizedBox(height: 18),
