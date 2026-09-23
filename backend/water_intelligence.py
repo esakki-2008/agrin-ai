@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any
 import httpx
+from data_sources import _get_http_client
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -26,8 +27,8 @@ async def water_intelligence(r: WaterRequest):
         "daily": "precipitation_sum,precipitation_probability_max,et0_fao_evapotranspiration,temperature_2m_mean",
     }
     try:
-        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            response = await client.get("https://api.open-meteo.com/v1/forecast", params=params)
+        client = await _get_http_client()
+        response = await client.get("https://api.open-meteo.com/v1/forecast", params=params, timeout=30)
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail=f"Water forecast request failed: {exc}") from exc
     if response.status_code != 200:
