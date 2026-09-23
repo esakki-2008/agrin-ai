@@ -10,7 +10,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from data_sources import sample, find_satellite_scene
+from data_sources import sample, find_satellite_scene, close_http_client
+from ai_gateway import close_client as close_ai_client
 
 from regenerative import router as regenerative_router
 from historical import router as historical_router
@@ -50,6 +51,11 @@ app.include_router(soil_intelligence_router)
 app.include_router(water_intelligence_router)
 app.include_router(farm_twin_router)
 app.include_router(agri_network_router)
+
+@app.on_event("shutdown")
+async def shutdown_clients():
+    await close_ai_client()
+    await close_http_client()
 
 
 # ============================================================
