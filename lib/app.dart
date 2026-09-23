@@ -10,7 +10,6 @@ import 'features/brics_network/brics_network_page.dart';
 import 'features/intelligence_agent/intelligence_agent_page.dart';
 import 'features/farm_digital_twin/farm_digital_twin_page.dart';
 import 'theme/agri_n_design.dart';
-import 'l10n/language_controller.dart';
 
 class AgriNApp extends StatelessWidget {
   const AgriNApp({super.key});
@@ -36,21 +35,8 @@ class AgriNApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AgriNDesign.theme(),
       routerConfig: router,
-      builder: (context, child) => AnimatedBuilder(
-        animation: languageController,
-        builder: (context, _) {
-          final code = languageController.language.code;
-          final rtl = code == 'ur' || code == 'sd' || code == 'ks';
-          return Directionality(
-            textDirection: rtl ? TextDirection.rtl : TextDirection.ltr,
-            child: AgriNCinematicLayer(
-              child: KeyedSubtree(
-                key: ValueKey(code),
-                child: child ?? const SizedBox.shrink(),
-              ),
-            ),
-          );
-        },
+      builder: (context, child) => AgriNCinematicLayer(
+        child: child ?? const SizedBox.shrink(),
       ),
     );
   }
