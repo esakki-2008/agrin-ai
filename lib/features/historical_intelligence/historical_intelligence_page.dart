@@ -102,7 +102,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
         TextField(controller: location, decoration: _decoration('Village / district / location', Icons.location_on_outlined)).animate().fadeIn(delay: 100.ms, duration: 350.ms),
         const SizedBox(height: 15),
         DropdownButtonFormField<int>(
-          initialValue: days,
+          value: days,
           decoration: _decoration('Period', Icons.date_range_rounded),
           items: const [30, 60, 90].map((x) => DropdownMenuItem(value: x, child: Text('$x days'))).toList(),
           onChanged: (x) => setState(() => days = x ?? days),
