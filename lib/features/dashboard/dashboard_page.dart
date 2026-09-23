@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../theme/agri_n_design.dart';
-import '../../l10n/language_picker.dart';
-import '../../l10n/language_controller.dart';
-import '../../l10n/ui_strings.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -14,9 +11,7 @@ class DashboardPage extends StatelessWidget {
     final wide = MediaQuery.sizeOf(context).width >= 900;
     final pad = wide ? 56.0 : 20.0;
 
-    return AnimatedBuilder(
-      animation: languageController,
-      builder: (context, _) => Scaffold(
+    return Scaffold(
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -46,7 +41,6 @@ class DashboardPage extends StatelessWidget {
           ],
         ),
       ),
-    ),
     );
   }
 
@@ -56,15 +50,13 @@ class DashboardPage extends StatelessWidget {
         Text('AGRI N', style: Theme.of(context).textTheme.titleLarge?.copyWith(letterSpacing: 2.8)),
         const Spacer(),
         if (wide) ...[
-          _link(context, tr('FARM', languageController.language), '/farm-intelligence'),
-          _link(context, tr('DOCTOR', languageController.language), '/crop-doctor'),
-          _link(context, tr('HISTORY', languageController.language), '/historical-intelligence'),
-          _link(context, tr('NETWORK', languageController.language), '/brics-network'),
+          _link(context, 'FARM', '/farm-intelligence'),
+          _link(context, 'DOCTOR', '/crop-doctor'),
+          _link(context, 'HISTORY', '/historical-intelligence'),
+          _link(context, 'NETWORK', '/brics-network'),
         ],
         const SizedBox(width: 16),
-        const LanguagePicker(compact: true),
-        const SizedBox(width: 14),
-        Text(tr('INDIA', languageController.language), style: Theme.of(context).textTheme.labelSmall),
+        Text('INDIA', style: Theme.of(context).textTheme.labelSmall),
       ],
     ).animate().fadeIn(duration: 500.ms).slideY(begin: -.12, end: 0);
   }
@@ -88,19 +80,19 @@ class DashboardPage extends StatelessWidget {
           Positioned(
             right: wide ? 90 : -45,
             top: wide ? -20 : 12,
-            child: MotionOrb(size: wide ? 300 : 190, label: tr('LIVING\\nLAND', languageController.language)),
+            child: MotionOrb(size: wide ? 300 : 190, label: 'LIVING\nLAND'),
           ),
           Positioned(
             right: wide ? 270 : -10,
             bottom: -70,
-            child: MotionOrb(size: wide ? 170 : 110, label: tr('FIELD', languageController.language)),
+            child: MotionOrb(size: wide ? 170 : 110, label: 'FIELD'),
           ),
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: wide ? 780 : 600),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tr('AGRICULTURAL INTELLIGENCE', languageController.language), style: TextStyle(
+                Text('AGRICULTURAL\nINTELLIGENCE', style: TextStyle(
                   fontFamily: 'Cormorant Garamond',
                   fontSize: wide ? 92 : 58,
                   height: .82,
@@ -109,7 +101,7 @@ class DashboardPage extends StatelessWidget {
                 )).animate().fadeIn(duration: 800.ms).slideX(begin: -.04, end: 0),
                 const SizedBox(height: 28),
                 Text(
-                  tr('Evidence from weather, soil, satellite and history — brought together for better farm decisions.', languageController.language),
+                  'Evidence from weather, soil, satellite and history — brought together for better farm decisions.',
                   style: TextStyle(fontSize: wide ? 16 : 14, height: 1.6, color: AgriNDesign.muted),
                 ).animate(delay: 180.ms).fadeIn(duration: 650.ms),
                 const SizedBox(height: 28),
@@ -117,8 +109,8 @@ class DashboardPage extends StatelessWidget {
                   spacing: 10,
                   runSpacing: 10,
                   children: [
-                    _action(tr('ANALYZE FARM', languageController.language), () => context.push('/farm-intelligence')),
-                    _action(tr('CROP DOCTOR', languageController.language), () => context.push('/crop-doctor'), outline: true),
+                    _action('ANALYZE FARM', () => context.push('/farm-intelligence')),
+                    _action('CROP DOCTOR', () => context.push('/crop-doctor'), outline: true),
                   ],
                 ),
               ],
@@ -143,8 +135,8 @@ class DashboardPage extends StatelessWidget {
       Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Expanded(child: Text(tr('THE FARM / 01', languageController.language), style: TextStyle(fontSize: wide ? 12 : 10, letterSpacing: 2.2, fontWeight: FontWeight.w700, color: AgriNDesign.muted))),
-          Expanded(child: Text(tr('AgriN treats every observation as evidence — with its source, date and limitations kept visible.', languageController.language), style: TextStyle(fontSize: wide ? 15 : 13, height: 1.55, color: AgriNDesign.ink))),
+          Expanded(child: Text('THE FARM / 01', style: TextStyle(fontSize: wide ? 12 : 10, letterSpacing: 2.2, fontWeight: FontWeight.w700, color: AgriNDesign.muted))),
+          Expanded(child: Text('AgriN treats every observation as evidence — with its source, date and limitations kept visible.', style: TextStyle(fontSize: wide ? 15 : 13, height: 1.55, color: AgriNDesign.ink))),
         ],
       ),
       const SizedBox(height: 34),
@@ -157,10 +149,10 @@ class DashboardPage extends StatelessWidget {
     color: AgriNDesign.ink,
     child: Row(
       children: [
-        Expanded(child: _stripItem('01', tr('WEATHER', languageController.language), 'Open-Meteo')),
-        Expanded(child: _stripItem('02', tr('SOIL', languageController.language), 'ISRIC SoilGrids')),
-        Expanded(child: _stripItem('03', tr('SATELLITE', languageController.language), 'Sentinel-2')),
-        if (wide) Expanded(child: _stripItem('04', tr('AI', languageController.language), 'Evidence grounded')),
+        Expanded(child: _stripItem('01', 'WEATHER', 'Open-Meteo')),
+        Expanded(child: _stripItem('02', 'SOIL', 'ISRIC SoilGrids')),
+        Expanded(child: _stripItem('03', 'SATELLITE', 'Sentinel-2')),
+        if (wide) Expanded(child: _stripItem('04', 'AI', 'Evidence grounded')),
       ],
     ),
   ).animate().fadeIn(duration: 700.ms).slideY(begin: .08, end: 0);
@@ -182,11 +174,11 @@ class DashboardPage extends StatelessWidget {
 
   Widget _capabilities(BuildContext context, bool wide) {
     final items = [
-      ('02', tr('FARM INTELLIGENCE', languageController.language), 'Combine location, soil, weather and satellite observations.', '/farm-intelligence'),
-      ('03', tr('AI AGRO-ADVISORY', languageController.language), 'Turn measured signals into explainable actions.', '/ai-advisory'),
-      ('04', tr('CROP DOCTOR', languageController.language), 'Inspect a crop image with evidence-aware visual analysis.', '/crop-doctor'),
-      ('05', tr('REGENERATIVE FARMING', languageController.language), 'Explore soil-cover, rotation and resilience practices.', '/regenerative-farming'),
-      ('06', tr('HISTORICAL INTELLIGENCE', languageController.language), 'Compare observed weather and Sentinel-2 change over time.', '/historical-intelligence'),
+      ('02', 'FARM INTELLIGENCE', 'Combine location, soil, weather and satellite observations.', '/farm-intelligence'),
+      ('03', 'AI AGRO-ADVISORY', 'Turn measured signals into explainable actions.', '/ai-advisory'),
+      ('04', 'CROP DOCTOR', 'Inspect a crop image with evidence-aware visual analysis.', '/crop-doctor'),
+      ('05', 'REGENERATIVE FARMING', 'Explore soil-cover, rotation and resilience practices.', '/regenerative-farming'),
+      ('06', 'HISTORICAL INTELLIGENCE', 'Compare observed weather and Sentinel-2 change over time.', '/historical-intelligence'),
     ];
 
     return Column(
@@ -194,7 +186,7 @@ class DashboardPage extends StatelessWidget {
       children: [
         const EditorialRule(),
         const SizedBox(height: 22),
-        Text(tr('INTELLIGENCE / 02', languageController.language), style: Theme.of(context).textTheme.labelSmall),
+        Text('INTELLIGENCE / 02', style: Theme.of(context).textTheme.labelSmall),
         const SizedBox(height: 24),
         ...items.asMap().entries.map((entry) {
           final i = entry.key;
@@ -231,18 +223,18 @@ class DashboardPage extends StatelessWidget {
           Expanded(
             flex: 3,
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(tr('INTELLIGENCE AGENT', languageController.language), style: Theme.of(context).textTheme.labelSmall),
+              Text('INTELLIGENCE AGENT', style: Theme.of(context).textTheme.labelSmall),
               const SizedBox(height: 16),
-              Text(tr('FROM SIGNALS\\nTO DECISIONS.', languageController.language), style: TextStyle(fontFamily: 'Cormorant Garamond', fontSize: wide ? 66 : 45, height: .9, color: AgriNDesign.ink)),
+              Text('FROM SIGNALS\nTO DECISIONS.', style: TextStyle(fontFamily: 'Cormorant Garamond', fontSize: wide ? 66 : 45, height: .9, color: AgriNDesign.ink)),
               const SizedBox(height: 18),
               Text('A farm decision loop that gathers evidence, reasons over it, explains limitations and identifies what should be checked next.', style: Theme.of(context).textTheme.bodyLarge),
               const SizedBox(height: 26),
-              ElevatedButton(onPressed: () => context.push('/intelligence-agent'), child: Text(tr('RUN INTELLIGENCE AGENT', languageController.language))),
+              ElevatedButton(onPressed: () => context.push('/intelligence-agent'), child: const Text('RUN INTELLIGENCE AGENT')),
             ]),
           ),
           if (wide) ...[
             const SizedBox(width: 40),
-            Expanded(child: Center(child: MotionOrb(size: 270, label: 'WEATHER\nSOIL\nSATELLITE\nHISTORY'))),
+            const Expanded(child: Center(child: MotionOrb(size: 270, label: 'WEATHER\nSOIL\nSATELLITE\nHISTORY'))),
           ],
         ],
       ),
@@ -256,18 +248,18 @@ class DashboardPage extends StatelessWidget {
       const SizedBox(height: 22),
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(tr('NETWORK / 07', languageController.language), style: Theme.of(context).textTheme.labelSmall),
+          Text('NETWORK / 07', style: Theme.of(context).textTheme.labelSmall),
           const SizedBox(height: 15),
-          Text(tr('OPEN AGRICULTURAL\\nOBSERVATIONS.', languageController.language), style: TextStyle(fontFamily: 'Cormorant Garamond', fontSize: wide ? 54 : 38, height: .9, color: AgriNDesign.ink)),
+          Text('OPEN AGRICULTURAL\nOBSERVATIONS.', style: TextStyle(fontFamily: 'Cormorant Garamond', fontSize: wide ? 54 : 38, height: .9, color: AgriNDesign.ink)),
         ])),
         if (wide) Expanded(child: Text('A platform-independent observation contract for sharing agricultural data with source attribution and explicit privacy controls.', style: Theme.of(context).textTheme.bodyLarge)),
       ]),
       const SizedBox(height: 22),
-      OutlinedButton(onPressed: () => context.push('/brics-network'), child: Text(tr('OPEN NETWORK', languageController.language))),
+      OutlinedButton(onPressed: () => context.push('/brics-network'), child: const Text('OPEN NETWORK')),
     ]),
   );
 
-  Widget _footer() => Column(
+  Widget _footer() => const Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       EditorialRule(),
@@ -275,7 +267,7 @@ class DashboardPage extends StatelessWidget {
       Row(children: [
         Text('AGRI N', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 2)),
         Spacer(),
-        Text(tr('EVIDENCE • RESILIENCE • OPEN DATA', languageController.language), style: TextStyle(fontSize: 9, letterSpacing: 1.1, color: AgriNDesign.muted)),
+        Text('EVIDENCE • RESILIENCE • OPEN DATA', style: TextStyle(fontSize: 9, letterSpacing: 1.1, color: AgriNDesign.muted)),
       ]),
     ],
   );
