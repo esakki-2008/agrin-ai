@@ -135,7 +135,7 @@ async def soil(request: SoilRequest):
     except Exception as exc:
         raise HTTPException(
             status_code=502,
-            detail=str(exc),
+            detail="Soil data could not be retrieved or processed.",
         ) from exc
 
 
