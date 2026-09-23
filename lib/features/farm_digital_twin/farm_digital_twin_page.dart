@@ -48,7 +48,7 @@ class _FarmDigitalTwinPageState extends State<FarmDigitalTwinPage>{
     const Text('BUILD OBSERVATION SNAPSHOT',style:TextStyle(color:green,fontSize:9,letterSpacing:1.7,fontWeight:FontWeight.w800)),const SizedBox(height:12),
     TextField(controller:location,decoration:const InputDecoration(labelText:'Farm location',prefixIcon:Icon(Icons.location_on_outlined))),
     const SizedBox(height:12),TextField(controller:size,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Farm size in acres (optional)',prefixIcon:Icon(Icons.square_foot_outlined))),
-    const SizedBox(height:12),DropdownButtonFormField<String>(initialValue:crop,decoration:const InputDecoration(labelText:'Crop'),items:const ['Rice','Wheat','Cotton','Sugarcane','Vegetables','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:(v)=>setState(()=>crop=v??crop)),
+    const SizedBox(height:12),DropdownButtonFormField<String>(value:crop,decoration:const InputDecoration(labelText:'Crop'),items:const ['Rice','Wheat','Cotton','Sugarcane','Vegetables','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:(v)=>setState(()=>crop=v??crop)),
     const SizedBox(height:18),SizedBox(width:double.infinity,child:ElevatedButton.icon(onPressed:loading?null:buildTwin,icon:loading?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.hub_outlined),label:Padding(padding:const EdgeInsets.symmetric(vertical:14),child:Text(loading?'Gathering live evidence...':'Build farm twin')))),
   ]));
   Widget _twin(bool wide)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
