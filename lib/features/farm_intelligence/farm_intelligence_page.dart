@@ -31,6 +31,13 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   bool advisoryUnavailable=false;
   String? advisoryError;
   final VoiceService voiceService = VoiceService();
+  final WeatherService weatherService = WeatherService();
+  final SoilService soilService = SoilService();
+  final SatelliteService satelliteService = SatelliteService();
+  final AdvisoryService advisoryService = AdvisoryService();
+  final ClimateService climateService = ClimateService();
+  final SoilIntelligenceService soilIntelligenceService = SoilIntelligenceService();
+  final WaterIntelligenceService waterIntelligenceService = WaterIntelligenceService();
   bool voiceListening=false;
   String voiceLanguage='en-IN';
 
@@ -91,6 +98,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   }
 
   Future<void> analyze() async {
+    if (analyzing) return;
     if(location.text.trim().isEmpty||size.text.trim().isEmpty||date==null){
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Please complete your farm details first.'))); return;
     }
@@ -113,7 +121,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
 
     try {
       // Resolve the location first. Everything else can then load concurrently.
-      final liveWeather=await WeatherService().fetch(location.text.trim());
+      final liveWeather=await weatherService.fetch(location.text.trim());
       if(!mounted)return;
       setState(() {
         weather=liveWeather;
@@ -127,7 +135,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
 
       Future<void> loadSoil() async {
         try {
-          final value=await SoilService().fetch(
+          final value=await soilService.fetch(
             latitude:liveWeather.latitude,
             longitude:liveWeather.longitude,
           );
@@ -139,7 +147,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
 
       Future<void> loadSatellite() async {
         try {
-          final value=await SatelliteService().fetch(
+          final value=await satelliteService.fetch(
             latitude:liveWeather.latitude,
             longitude:liveWeather.longitude,
           );
@@ -151,7 +159,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
 
       Future<void> loadAdvancedSatellite() async {
         try {
-          final value=await SatelliteService().fetchIntelligence(
+          final value=await satelliteService.fetchIntelligence(
             latitude:liveWeather.latitude,
             longitude:liveWeather.longitude,
             days:180,
@@ -165,7 +173,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
 
       Future<void> loadClimate() async {
         try {
-          final value=await ClimateService().fetch(
+          final value=await climateService.fetch(
             latitude:liveWeather.latitude,
             longitude:liveWeather.longitude,
             forecastDays:7,
@@ -178,7 +186,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
 
       Future<void> loadSoilProfile() async {
         try {
-          final value=await SoilIntelligenceService().fetch(
+          final value=await soilIntelligenceService.fetch(
             latitude:liveWeather.latitude,
             longitude:liveWeather.longitude,
           );
@@ -190,7 +198,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
 
       Future<void> loadWater() async {
         try {
-          final value=await WaterIntelligenceService().fetch(
+          final value=await waterIntelligenceService.fetch(
             latitude:liveWeather.latitude,
             longitude:liveWeather.longitude,
             forecastDays:7,
@@ -219,7 +227,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       // This keeps the first advisory responsive instead of waiting for
       // satellite processing to finish.
       try {
-        final ai=await AdvisoryService().fetch(
+        final ai=await advisoryService.fetch(
           location:location.text.trim(),
           crop:crop,
           farmSizeAcres:acres,
