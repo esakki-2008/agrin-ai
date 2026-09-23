@@ -27,10 +27,35 @@ async def _geocode(location: str) -> dict[str, Any]:
     if r.status_code!=200:
         raise HTTPException(status_code=502,detail="Location lookup returned an error.")
     results=r.json().get("results",[])
-    if not results:
-        raise HTTPException(status_code=404,detail="Location could not be resolved.")
-    x=results[0]
-    return {"name":x.get("name"),"country":x.get("country"),"latitude":x.get("latitude"),"longitude":x.get("longitude")}
+    if results:
+        x=results[0]
+        return {"name":x.get("name"),"country":x.get("country"),"latitude":x.get("latitude"),"longitude":x.get("longitude")}
+
+    # Open-Meteo can occasionally return no match for otherwise valid place
+    # names. Fall back to Nominatim so Farm Twin is not blocked by one
+    # geocoder's coverage/index.
+    try:
+        client = await _get_http_client()
+        r = await client.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={"q": location, "format": "jsonv2", "limit": 1},
+            headers={"User-Agent": "AgriN-AI/1.0 (https://github.com/esakki-2008/agrin-ai)"},
+            timeout=20,
+        )
+        if r.status_code == 200:
+            fallback_results = r.json()
+            if fallback_results:
+                x = fallback_results[0]
+                return {
+                    "name": x.get("display_name", location),
+                    "country": None,
+                    "latitude": float(x["lat"]),
+                    "longitude": float(x["lon"]),
+                }
+    except (httpx.HTTPError, ValueError, KeyError, TypeError):
+        pass
+
+    raise HTTPException(status_code=404,detail="Location could not be resolved.")
 
 @router.post("/build")
 async def build_farm_twin(request: FarmTwinRequest):
