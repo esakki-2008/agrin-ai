@@ -23,7 +23,7 @@ async def _geocode(location: str) -> dict[str, Any]:
             timeout=20,
         )
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502,detail=f"Location lookup failed: {exc}") from exc
+        raise HTTPException(status_code=502,detail="Location lookup failed.") from exc
     if r.status_code!=200:
         raise HTTPException(status_code=502,detail="Location lookup returned an error.")
     results=r.json().get("results",[])
