@@ -70,10 +70,7 @@ async def sample(
     if response.status_code != 200:
         raise HTTPException(
             status_code=502,
-            detail=(
-                f"SoilGrids WCS returned HTTP "
-                f"{response.status_code}."
-            ),
+            detail="SoilGrids service returned an error.",
         )
 
     content_type = response.headers.get(
@@ -89,11 +86,7 @@ async def sample(
     ):
         raise HTTPException(
             status_code=502,
-            detail=(
-                "SoilGrids did not return a GeoTIFF. "
-                f"Content-Type: {content_type}. "
-                f"Response: {response.text[:500]}"
-            ),
+            detail="SoilGrids returned an invalid raster response.",
         )
 
     try:
@@ -118,10 +111,7 @@ async def sample(
     except Exception as exc:
         raise HTTPException(
             status_code=502,
-            detail=(
-                "Unable to read SoilGrids GeoTIFF: "
-                f"{exc}"
-            ),
+            detail="Unable to process SoilGrids data.",
         ) from exc
 
 
