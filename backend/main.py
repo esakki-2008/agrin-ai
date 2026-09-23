@@ -466,14 +466,9 @@ async def satellite_ndvi(request: SatelliteRequest):
             ) from exc
 
     try:
-        red = sample_cog(
-            red_href,
-            red_asset,
-        )
-
-        nir = sample_cog(
-            nir_href,
-            nir_asset,
+        red, nir = await asyncio.gather(
+            asyncio.to_thread(sample_cog, red_href, red_asset),
+            asyncio.to_thread(sample_cog, nir_href, nir_asset),
         )
 
     except RuntimeError as exc:
