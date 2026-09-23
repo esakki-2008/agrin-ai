@@ -2,6 +2,29 @@ from datetime import datetime, timedelta, timezone
 import io
 
 import httpx
+
+_http_client: httpx.AsyncClient | None = None
+
+
+async def _get_http_client() -> httpx.AsyncClient:
+    global _http_client
+    if _http_client is None or _http_client.is_closed:
+        _http_client = httpx.AsyncClient(
+            follow_redirects=True,
+            limits=httpx.Limits(
+                max_connections=20,
+                max_keepalive_connections=10,
+                keepalive_expiry=30,
+            ),
+        )
+    return _http_client
+
+
+async def close_http_client() -> None:
+    global _http_client
+    if _http_client is not None and not _http_client.is_closed:
+        await _http_client.aclose()
+    _http_client = None
 import rasterio
 from fastapi import HTTPException
 
@@ -41,11 +64,8 @@ async def sample(
 ) -> float:
     url, params = wcs_url(property_name, coverage, lon, lat)
 
-    async with httpx.AsyncClient(
-        timeout=60,
-        follow_redirects=True,
-    ) as client:
-        response = await client.get(url, params=params)
+    client = await _get_http_client()
+    response = await client.get(url, params=params, timeout=60)
 
     if response.status_code != 200:
         raise HTTPException(
@@ -131,14 +151,8 @@ async def find_satellite_scene(
         "limit": 50,
     }
 
-    async with httpx.AsyncClient(
-        timeout=30,
-        follow_redirects=True,
-    ) as client:
-        response = await client.post(
-            stac_url,
-            json=payload,
-        )
+    client = await _get_http_client()
+    response = await client.post(stac_url, json=payload, timeout=30)
 
     if response.status_code != 200:
         raise HTTPException(
