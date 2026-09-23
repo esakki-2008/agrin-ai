@@ -52,8 +52,6 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     super.dispose();
   }
 
-  String _languageName(String code) => supportedLanguages.firstWhere((language) => language.speechLocale == code, orElse: () => supportedLanguages.first).aiName;
-
   Future<void> toggleVoiceInput() async {
     if (voiceListening) {
       await voiceService.stopListening();
