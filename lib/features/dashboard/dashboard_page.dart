@@ -263,11 +263,11 @@ class DashboardPage extends StatelessWidget {
         if (wide) Expanded(child: Text('A platform-independent observation contract for sharing agricultural data with source attribution and explicit privacy controls.', style: Theme.of(context).textTheme.bodyLarge)),
       ]),
       const SizedBox(height: 22),
-      OutlinedButton(onPressed: () => context.push('/brics-network'), child: const Text(tr('OPEN NETWORK', languageController.language))),
+      OutlinedButton(onPressed: () => context.push('/brics-network'), child: Text(tr('OPEN NETWORK', languageController.language))),
     ]),
   );
 
-  Widget _footer() => const Column(
+  Widget _footer() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       EditorialRule(),
