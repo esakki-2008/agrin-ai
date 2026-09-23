@@ -29,6 +29,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   AdvisoryData? advisory;
   String? error;
   bool advisoryUnavailable=false;
+  String? advisoryError;
   final VoiceService voiceService = VoiceService();
   bool voiceListening=false;
   String voiceLanguage='en-IN';
@@ -106,6 +107,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       waterIntelligence=null;
       advisory=null;
       advisoryUnavailable=false;
+      advisoryError=null;
       showResults=false;
     });
 
@@ -131,7 +133,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
           );
           if(mounted)setState(()=>soil=value);
         } catch(e) {
-          if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+          if(mounted)setState(() {});
         }
       }
 
@@ -227,7 +229,10 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
         );
         if(mounted)setState(()=>advisory=ai);
       } catch(e) {
-        if(mounted)setState(()=>advisoryUnavailable=true);
+        if(mounted)setState(() {
+          advisoryUnavailable=true;
+          advisoryError=e.toString().replaceFirst('Exception: ','');
+        });
       }
 
       await sourceLoads;
@@ -840,12 +845,12 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
             ]),
             SizedBox(height: 16),
             Text(
-              'AI Advisory is currently unavailable because no AI provider is configured. Live environmental intelligence remains available from the connected data sources.',
+              'AI Advisory is currently unavailable. Live environmental intelligence remains available from the connected data sources.',
               style: TextStyle(color: Color(0xFFD4DDD7), height: 1.55),
             ),
             SizedBox(height: 14),
             Text(
-              'No generated recommendation is shown while the AI provider is unavailable.',
+              'No generated recommendation is shown while the AI provider is unavailable. ${advisoryError ?? ''}',
               style: TextStyle(color: Color(0xFF9FB0A4), fontSize: 11),
             ),
           ],
