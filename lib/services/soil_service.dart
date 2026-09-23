@@ -1,4 +1,5 @@
 import 'api_client.dart';
+import '../config/api_config.dart';
 
 class SoilData {
   final double ph;
