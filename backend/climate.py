@@ -146,6 +146,20 @@ async def _fetch_met_norway_forecast(
             detail="Climate forecast returned no usable data.",
         )
 
+    daily: dict[str, list[Any]] = {
+        "time": [row["date"] for row in rows],
+        "temperature_2m_mean": [row["temperature_mean_c"] for row in rows],
+        "temperature_2m_max": [row["temperature_max_c"] for row in rows],
+        "temperature_2m_min": [row["temperature_min_c"] for row in rows],
+        "precipitation_sum": [row["precipitation_mm"] for row in rows],
+        "precipitation_probability_max": [
+            row["precipitation_probability_percent"] for row in rows
+        ],
+        "wind_speed_10m_max": [row["wind_max_kmh"] for row in rows],
+        "et0_fao_evapotranspiration": [row["et0_mm"] for row in rows],
+        "weather_code": [row["weather_code"] for row in rows],
+    }
+
     return {
         "available": True,
         "source": "MET Norway Locationforecast",
@@ -156,7 +170,7 @@ async def _fetch_met_norway_forecast(
         },
         "timezone": "UTC",
         "forecast_days": len(rows),
-        "daily": rows,
+        "daily": daily,
     }
 
 
@@ -344,4 +358,67 @@ async def climate_intelligence(request: ClimateRequest):
             "Screening thresholds are not crop-specific agronomic thresholds.",
             "ET0 is reference evapotranspiration and does not equal crop water requirement.",
         ],
-    }
+    }    try:
+        client = await _get_http_client()
+        response = await _fetch_forecast(client, params)
+
+        if response.status_code == 429:
+            logger.warning("Open-Meteo quota exhausted; using MET Norway fallback.")
+            body = await _fetch_met_norway_forecast(
+                client,
+                request.latitude,
+                request.longitude,
+                request.forecast_days,
+            )
+            daily = body["daily"]
+        else:
+            if response.status_code != 200:
+                fallback_params = {
+                    "latitude": request.latitude,
+                    "longitude": request.longitude,
+                    "forecast_days": request.forecast_days,
+                    "daily": ",".join([
+                        "temperature_2m_max",
+                        "temperature_2m_min",
+                        "precipitation_sum",
+                        "wind_speed_10m_max",
+                        "weather_code",
+                    ]),
+                    "timezone": "auto",
+                }
+                response = await _fetch_forecast(client, fallback_params)
+
+            if response.status_code != 200:
+                logger.warning(
+                    "Open-Meteo forecast failed: status=%s body=%s",
+                    response.status_code,
+                    response.text[:500].replace("\\n", " "),
+                )
+                raise HTTPException(
+                    status_code=502,
+                    detail="Climate forecast service returned an error.",
+                )
+
+            try:
+                body = response.json()
+                daily = body["daily"]
+            except (ValueError, KeyError, TypeError) as exc:
+                raise HTTPException(
+                    status_code=502,
+                    detail="Climate forecast returned an invalid response.",
+                ) from exc
+    except HTTPException:
+        raise
+    except httpx.HTTPError as exc:
+        logger.warning("Climate forecast transport failure: %s", type(exc).__name__)
+        raise HTTPException(
+            status_code=502,
+            detail="Climate forecast request failed.",
+        ) from exc
+    except Exception as exc:
+        logger.exception("Climate forecast unexpected failure: %s", type(exc).__name__)
+        raise HTTPException(
+            status_code=502,
+            detail="Climate forecast request failed.",
+        ) from exc
+
