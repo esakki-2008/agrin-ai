@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from typing import Any
 import httpx
@@ -50,11 +51,17 @@ async def build_farm_twin(request: FarmTwinRequest):
 
     soil={}
     try:
+        ph_raw, soc_raw, nitrogen_raw, clay_raw = await asyncio.gather(
+            sample("phh2o","phh2o_0-5cm_Q0.5",lon,lat),
+            sample("soc","soc_0-5cm_Q0.5",lon,lat),
+            sample("nitrogen","nitrogen_0-5cm_Q0.5",lon,lat),
+            sample("clay","clay_0-5cm_Q0.5",lon,lat),
+        )
         soil={
-            "ph":round((await sample("phh2o","phh2o_0-5cm_Q0.5",lon,lat))/10,2),
-            "organic_carbon_g_kg":round((await sample("soc","soc_0-5cm_Q0.5",lon,lat))/10,2),
-            "nitrogen_g_kg":round((await sample("nitrogen","nitrogen_0-5cm_Q0.5",lon,lat))/100,3),
-            "clay_percent":round((await sample("clay","clay_0-5cm_Q0.5",lon,lat))/10,2),
+            "ph":round(ph_raw/10,2),
+            "organic_carbon_g_kg":round(soc_raw/10,2),
+            "nitrogen_g_kg":round(nitrogen_raw/100,3),
+            "clay_percent":round(clay_raw/10,2),
         }
     except Exception:
         soil={}
