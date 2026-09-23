@@ -36,8 +36,14 @@ async def _geocode(location: str) -> dict[str, Any]:
 async def build_farm_twin(request: FarmTwinRequest):
     if not request.location.strip():
         raise HTTPException(status_code=400,detail="Location is required.")
-    if request.farm_size_acres is not None and request.farm_size_acres <= 0:
-        raise HTTPException(status_code=400,detail="Farm size must be greater than zero.")
+    if len(request.location.strip()) > 120:
+        raise HTTPException(status_code=400,detail="Location is too long.")
+    if not request.crop.strip():
+        raise HTTPException(status_code=400,detail="Crop is required.")
+    if len(request.crop.strip()) > 80:
+        raise HTTPException(status_code=400,detail="Crop name is too long.")
+    if request.farm_size_acres is not None and not (0 < request.farm_size_acres <= 100000):
+        raise HTTPException(status_code=400,detail="Farm size must be between 0 and 100000 acres.")
 
     place=await _geocode(request.location)
     lat,lon=place["latitude"],place["longitude"]
@@ -52,7 +58,7 @@ async def build_farm_twin(request: FarmTwinRequest):
                 },
                 timeout=25,
             )
-            return r.json().get("current",{}) if r.status_code==200 else {}
+            return r.json() if r.status_code==200 else {}
         except httpx.HTTPError:
             return {}
 
