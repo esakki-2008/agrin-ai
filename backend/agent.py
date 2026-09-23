@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 import httpx
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 router = APIRouter(
     prefix="/agent",
@@ -12,10 +12,10 @@ router = APIRouter(
 
 
 class AgentRequest(BaseModel):
-    location: str
-    crop: str
-    farm_size_acres: float | None = None
-    historical_days: int = 30
+    location: str = Field(..., min_length=1, max_length=120)
+    crop: str = Field(..., min_length=1, max_length=80)
+    farm_size_acres: float | None = Field(default=None, gt=0, le=100000)
+    historical_days: int = Field(default=30, ge=7, le=92)
 
 
 # ============================================================
@@ -23,11 +23,10 @@ class AgentRequest(BaseModel):
 # ============================================================
 
 async def geocode(location: str):
-    async with httpx.AsyncClient(
-        timeout=20,
-        follow_redirects=True,
-    ) as client:
-        response = await client.get(
+    from data_sources import _get_http_client
+
+    client = await _get_http_client()
+    response = await client.get(
             "https://geocoding-api.open-meteo.com/v1/search",
             params={
                 "name": location,
@@ -411,7 +410,7 @@ EVIDENCE
     except AIProviderError as exc:
         raise HTTPException(
             status_code=503,
-            detail=str(exc),
+            detail="AI agent service is temporarily unavailable.",
         ) from exc
 
     return {
@@ -557,9 +556,7 @@ async def analyze(request: AgentRequest):
     except Exception as exc:
         raise HTTPException(
             status_code=502,
-            detail=(
-                f"Soil data unavailable: {exc}"
-            ),
+            detail="Soil data unavailable.",
         ) from exc
 
     # --------------------------------------------------------
@@ -620,10 +617,7 @@ async def analyze(request: AgentRequest):
                 "AWS Open Data / "
                 "Earth Search STAC"
             ),
-            "message": (
-                f"Satellite observation unavailable: "
-                f"{exc}"
-            ),
+            "message": "Satellite observation unavailable.",
         }
 
     # --------------------------------------------------------
@@ -642,10 +636,7 @@ async def analyze(request: AgentRequest):
     except Exception as exc:
         historical_data = {
             "available": False,
-            "message": (
-                "Historical weather unavailable: "
-                f"{exc}"
-            ),
+            "message": "Historical weather unavailable.",
         }
 
     # --------------------------------------------------------
@@ -666,10 +657,7 @@ async def analyze(request: AgentRequest):
     except Exception as exc:
         historical_ndvi = {
             "available": False,
-            "message": (
-                "Historical satellite observations "
-                f"unavailable: {exc}"
-            ),
+            "message": "Historical satellite observations unavailable.",
         }
 
     # --------------------------------------------------------
