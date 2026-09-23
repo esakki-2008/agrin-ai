@@ -568,7 +568,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       const SizedBox(width:7),
       const Text('Language',style:TextStyle(fontSize:11,color:muted)),
       const SizedBox(width:10),
-      const Expanded(child:LanguagePicker(compact:true)),
+      Expanded(child:LanguagePicker(compact:true,onChanged:(language)=>setState(() { voiceLanguage=language.speechLocale; responseLanguage=language.aiName; }))),
     ]),
     const SizedBox(height:15),
     DropdownButtonFormField<String>(value:crop,decoration:decoration('Primary crop',Icons.grass_rounded),
