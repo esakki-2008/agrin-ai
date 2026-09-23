@@ -71,11 +71,11 @@ class _IntelligenceAgentPageState extends State<IntelligenceAgentPage> {
     const SizedBox(height:22),
     TextField(controller:location,decoration:_dec('Village / district / location',Icons.location_on_outlined)),
     const SizedBox(height:13),
-    DropdownButtonFormField<String>(initialValue:crop,decoration:_dec('Crop',Icons.grass_outlined),items:const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:loading?null:(x)=>setState(()=>crop=x??crop)),
+    DropdownButtonFormField<String>(value:crop,decoration:_dec('Crop',Icons.grass_outlined),items:const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:loading?null:(x)=>setState(()=>crop=x??crop)),
     const SizedBox(height:13),
     TextField(controller:acres,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:_dec('Farm size (optional, acres)',Icons.straighten_outlined)),
     const SizedBox(height:13),
-    DropdownButtonFormField<int>(initialValue:days,decoration:_dec('Historical window',Icons.history_outlined),items:const [7,14,30,60,90].map((x)=>DropdownMenuItem(value:x,child:Text('$x days'))).toList(),onChanged:loading?null:(x)=>setState(()=>days=x??30)),
+    DropdownButtonFormField<int>(value:days,decoration:_dec('Historical window',Icons.history_outlined),items:const [7,14,30,60,90].map((x)=>DropdownMenuItem(value:x,child:Text('$x days'))).toList(),onChanged:loading?null:(x)=>setState(()=>days=x??30)),
     const SizedBox(height:20),
     SizedBox(width:double.infinity,child:ElevatedButton(onPressed:loading?null:runAgent,style:ElevatedButton.styleFrom(backgroundColor:green,foregroundColor:Colors.white,padding:const EdgeInsets.symmetric(vertical:18),shape:const RoundedRectangleBorder(borderRadius:BorderRadius.zero)),child:Row(mainAxisAlignment:MainAxisAlignment.center,children:[if(loading)const SizedBox(width:16,height:16,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white))else const Icon(Icons.play_arrow,size:17),const SizedBox(width:9),Text(loading?'AGENT IS GATHERING EVIDENCE...':'RUN INTELLIGENCE AGENT',style:const TextStyle(fontSize:10,letterSpacing:1.3,fontWeight:FontWeight.w800))]))),
   ])).animate().fadeIn(duration:550.ms).slideX(begin:-.04,end:0);
