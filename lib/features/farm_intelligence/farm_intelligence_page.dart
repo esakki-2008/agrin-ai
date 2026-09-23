@@ -9,8 +9,6 @@ import '../../services/soil_intelligence_service.dart';
 import '../../services/water_intelligence_service.dart';
 import '../../services/voice_service.dart';
 import '../../theme/agri_n_design.dart';
-import '../../l10n/language_controller.dart';
-import '../../l10n/language_picker.dart';
 
 class FarmIntelligencePage extends StatefulWidget {
   const FarmIntelligencePage({super.key});
@@ -35,15 +33,6 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   final VoiceService voiceService = VoiceService();
   bool voiceListening=false;
   String voiceLanguage='en-IN';
-  String responseLanguage='English';
-
-  @override
-  void initState() {
-    super.initState();
-    final language = languageController.language;
-    voiceLanguage = language.speechLocale;
-    responseLanguage = language.aiName;
-  }
 
   @override void dispose(){
     location.dispose();
@@ -66,19 +55,8 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
             setState(() => voiceListening=false);
           }
         },
-        onError: (error) {
-          if (!mounted) return;
-          setState(() => voiceListening=false);
-          final message = error.toString().trim();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                message.isEmpty
-                    ? 'Microphone or speech recognition is unavailable. Check the browser microphone permission.'
-                    : message,
-              ),
-            ),
-          );
+        onError: (_) {
+          if (mounted) setState(() => voiceListening=false);
         },
       );
       if (!available) throw Exception('Speech recognition is unavailable on this device.');
@@ -248,7 +226,6 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
           weather:liveWeather,
           soil:soil,
           satellite:satellite,
-          responseLanguage:responseLanguage,
         );
         if(mounted)setState(()=>advisory=ai);
       } catch(e) {
@@ -563,9 +540,22 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     Row(children:[
       const Icon(Icons.translate_outlined,size:15,color:muted),
       const SizedBox(width:7),
-      const Text('Language',style:TextStyle(fontSize:11,color:muted)),
+      const Text('Voice language',style:TextStyle(fontSize:11,color:muted)),
       const SizedBox(width:10),
-      Expanded(child:LanguagePicker(compact:true,onChanged:(language)=>setState(() { voiceLanguage=language.speechLocale; responseLanguage=language.aiName; }))),
+      Expanded(child:DropdownButton<String>(
+        value:voiceLanguage,
+        isExpanded:true,
+        underline:const SizedBox.shrink(),
+        items:const [
+          DropdownMenuItem(value:'en-IN',child:Text('English (India)')),
+          DropdownMenuItem(value:'hi-IN',child:Text('Hindi')),
+          DropdownMenuItem(value:'mr-IN',child:Text('Marathi')),
+          DropdownMenuItem(value:'ta-IN',child:Text('Tamil')),
+          DropdownMenuItem(value:'te-IN',child:Text('Telugu')),
+          DropdownMenuItem(value:'kn-IN',child:Text('Kannada')),
+        ],
+        onChanged:(x)=>setState(()=>voiceLanguage=x??voiceLanguage),
+      )),
     ]),
     const SizedBox(height:15),
     DropdownButtonFormField<String>(value:crop,decoration:decoration('Primary crop',Icons.grass_rounded),
