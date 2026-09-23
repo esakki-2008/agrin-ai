@@ -41,11 +41,35 @@ async def climate_intelligence(request: ClimateRequest):
     }
     try:
         client = await _get_http_client()
-        response = await client.get("https://api.open-meteo.com/v1/forecast", params=params, timeout=30)
-    except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail="Climate forecast request failed.") from exc
-    if response.status_code != 200:
-        raise HTTPException(status_code=502, detail="Climate forecast service returned an error.")
+        response = None
+        for attempt in range(3):
+            try:
+                response = await client.get(
+                    "https://api.open-meteo.com/v1/forecast",
+                    params=params,
+                    timeout=30,
+                )
+            except httpx.HTTPError as exc:
+                if attempt == 2:
+                    raise HTTPException(
+                        status_code=502,
+                        detail="Climate forecast request failed.",
+                    ) from exc
+                continue
+            if response.status_code == 200:
+                break
+            if response.status_code not in {429, 500, 502, 503, 504} or attempt == 2:
+                raise HTTPException(
+                    status_code=502,
+                    detail="Climate forecast service returned an error.",
+                )
+        if response is None or response.status_code != 200:
+            raise HTTPException(
+                status_code=502,
+                detail="Climate forecast service returned an error.",
+            )
+    except HTTPException:
+        raise
     try:
         body = response.json()
         daily = body["daily"]
