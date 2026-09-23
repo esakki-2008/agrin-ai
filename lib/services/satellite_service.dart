@@ -1,6 +1,4 @@
-import 'dart:convert';
-import '../config/api_config.dart';
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
 class SatelliteData {
   final bool available;
@@ -95,20 +93,16 @@ class SatelliteService {
     int days = 90,
     double maxCloudCover = 50,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/satellite/ndvi'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
+    final json = await const ApiClient().postJson(
+      '/satellite/ndvi',
+      body: {
         'latitude': latitude,
         'longitude': longitude,
         'days': days,
         'max_cloud_cover': maxCloudCover,
-      }),
-    ).timeout(const Duration(seconds: 90));
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode != 200) {
-      throw Exception(json['detail']?.toString() ?? 'Satellite service failed.');
-    }
+      },
+      timeout: const Duration(seconds: 90),
+    );
     return SatelliteData.fromJson(json);
   }
 
