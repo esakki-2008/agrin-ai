@@ -685,7 +685,6 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       );
     }
     return Container(
-    return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
