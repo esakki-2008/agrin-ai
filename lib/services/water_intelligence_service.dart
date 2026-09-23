@@ -38,7 +38,7 @@ class WaterIntelligenceService {
   WaterIntelligenceService({String? baseUrl}):baseUrl=baseUrl??ApiConfig.baseUrl;
 
   Future<WaterIntelligenceData> fetch({required double latitude,required double longitude,int forecastDays=7}) async {
-    final json = await const ApiClient().postJson(
+    final json = await ApiClient(baseUrl: baseUrl).postJson(
       '/water/intelligence',
       body: {'latitude':latitude,'longitude':longitude,'forecast_days':forecastDays},
       timeout: const Duration(seconds:60),
