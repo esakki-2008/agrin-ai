@@ -5,8 +5,6 @@ import '../../services/soil_service.dart';
 import '../../services/satellite_service.dart';
 import '../../services/advisory_service.dart';
 import '../../theme/agri_n_design.dart';
-import '../../l10n/language_picker.dart';
-import '../../l10n/language_controller.dart';
 
 class AiAdvisoryPage extends StatefulWidget {
   const AiAdvisoryPage({super.key});
@@ -18,8 +16,6 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
   final location=TextEditingController(), acres=TextEditingController();
   String crop='Rice'; DateTime? sowingDate; bool loading=false;
   AdvisoryData? advisory; String? error;
-  String responseLanguage='English';
-  @override void initState(){super.initState(); responseLanguage=languageController.language.aiName;}
   @override void dispose(){location.dispose();acres.dispose();super.dispose();}
 
   Future<void> pickDate() async {
@@ -38,7 +34,7 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
       final s=await SoilService().fetch(latitude:w.latitude,longitude:w.longitude);
       SatelliteData? sat;
       try { sat=await SatelliteService().fetch(latitude:w.latitude,longitude:w.longitude); } catch (_) {}
-      final a=await AdvisoryService().fetch(location:location.text.trim(),crop:crop,farmSizeAcres:size,sowingDate:sowingDate!,weather:w,soil:s,satellite:sat,responseLanguage:responseLanguage);
+      final a=await AdvisoryService().fetch(location:location.text.trim(),crop:crop,farmSizeAcres:size,sowingDate:sowingDate!,weather:w,soil:s,satellite:sat);
       if(mounted)setState(()=>advisory=a);
     } catch(e) { if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ','')); }
     if(mounted)setState(()=>loading=false);
@@ -59,7 +55,7 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('DECISION ENGINE / 03', style: TextStyle(color: Color(0xFF9EB6A5), fontSize: 9, letterSpacing: 1.9, fontWeight: FontWeight.w800)),
         const SizedBox(height: 20),
-        Text('Advice with\\nevidence behind it.', style: Theme.of(context).textTheme.displayMedium?.copyWith(color: Colors.white, fontSize: 52, height: .9)),
+        Text('Advice with\nevidence behind it.', style: Theme.of(context).textTheme.displayMedium?.copyWith(color: Colors.white, fontSize: 52, height: .9)),
         const SizedBox(height: 18),
         const Text('AgriN gathers the farm signals first, then turns the available evidence into practical actions — with data limits kept visible.', style: TextStyle(color: Color(0xCCDDE9DF), fontSize: 13, height: 1.6)),
       ])),
@@ -73,10 +69,7 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.zero, border: Border.all(color: const Color(0xFFE5EAE5))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          const Expanded(child: Text('Farm context', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: dark))),
-          LanguagePicker(compact:true,onChanged:(language){setState(() => responseLanguage=language.aiName);}),
-        ]),
+        const Text('Farm context', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: dark)),
         const SizedBox(height: 18),
         TextField(controller: location, decoration: dec('Village / district / location', Icons.location_on_outlined)).animate().fadeIn(delay: 100.ms, duration: 400.ms).slideX(begin: -.03, end: 0),
         const SizedBox(height: 14),
