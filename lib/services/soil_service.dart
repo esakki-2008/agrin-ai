@@ -1,6 +1,4 @@
-import 'dart:convert';
-import '../config/api_config.dart';
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
 class SoilData {
   final double ph;
@@ -37,16 +35,11 @@ class SoilService {
   SoilService({String? baseUrl}) : baseUrl = baseUrl ?? ApiConfig.baseUrl;
 
   Future<SoilData> fetch({required double latitude, required double longitude}) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/soil'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'latitude': latitude, 'longitude': longitude}),
-    ).timeout(const Duration(seconds: 45));
-
-    if (response.statusCode != 200) {
-      final body = jsonDecode(response.body);
-      throw Exception(body['detail']?.toString() ?? 'Soil service failed.');
-    }
-    return SoilData.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    final json = await const ApiClient().postJson(
+      '/soil',
+      body: {'latitude': latitude, 'longitude': longitude},
+      timeout: const Duration(seconds: 45),
+    );
+    return SoilData.fromJson(json);
   }
 }
