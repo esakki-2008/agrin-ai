@@ -33,12 +33,24 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   final VoiceService voiceService = VoiceService();
   bool voiceListening=false;
   String voiceLanguage='en-IN';
+  String responseLanguage='English';
 
   @override void dispose(){
     location.dispose();
     size.dispose();
     voiceService.dispose();
     super.dispose();
+  }
+
+  String _languageName(String code) {
+    const names={
+      'en-IN':'English','as-IN':'Assamese','bn-IN':'Bengali','brx-IN':'Bodo','doi-IN':'Dogri',
+      'gu-IN':'Gujarati','hi-IN':'Hindi','kn-IN':'Kannada','ks-IN':'Kashmiri','kok-IN':'Konkani',
+      'ml-IN':'Malayalam','mni-IN':'Manipuri','mr-IN':'Marathi','mai-IN':'Maithili','ne-IN':'Nepali',
+      'or-IN':'Odia','pa-IN':'Punjabi','sa-IN':'Sanskrit','sat-IN':'Santali','sd-IN':'Sindhi',
+      'ta-IN':'Tamil','te-IN':'Telugu','ur-IN':'Urdu',
+    };
+    return names[code] ?? 'English';
   }
 
   Future<void> toggleVoiceInput() async {
@@ -226,6 +238,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
           weather:liveWeather,
           soil:soil,
           satellite:satellite,
+          responseLanguage:responseLanguage,
         );
         if(mounted)setState(()=>advisory=ai);
       } catch(e) {
@@ -547,14 +560,31 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
         isExpanded:true,
         underline:const SizedBox.shrink(),
         items:const [
-          DropdownMenuItem(value:'en-IN',child:Text('English (India)')),
+          DropdownMenuItem(value:'en-IN',child:Text('English')),
+          DropdownMenuItem(value:'as-IN',child:Text('Assamese')),
+          DropdownMenuItem(value:'bn-IN',child:Text('Bengali')),
+          DropdownMenuItem(value:'brx-IN',child:Text('Bodo')),
+          DropdownMenuItem(value:'doi-IN',child:Text('Dogri')),
+          DropdownMenuItem(value:'gu-IN',child:Text('Gujarati')),
           DropdownMenuItem(value:'hi-IN',child:Text('Hindi')),
+          DropdownMenuItem(value:'kn-IN',child:Text('Kannada')),
+          DropdownMenuItem(value:'ks-IN',child:Text('Kashmiri')),
+          DropdownMenuItem(value:'kok-IN',child:Text('Konkani')),
+          DropdownMenuItem(value:'ml-IN',child:Text('Malayalam')),
+          DropdownMenuItem(value:'mni-IN',child:Text('Manipuri')),
           DropdownMenuItem(value:'mr-IN',child:Text('Marathi')),
+          DropdownMenuItem(value:'mai-IN',child:Text('Maithili')),
+          DropdownMenuItem(value:'ne-IN',child:Text('Nepali')),
+          DropdownMenuItem(value:'or-IN',child:Text('Odia')),
+          DropdownMenuItem(value:'pa-IN',child:Text('Punjabi')),
+          DropdownMenuItem(value:'sa-IN',child:Text('Sanskrit')),
+          DropdownMenuItem(value:'sat-IN',child:Text('Santali')),
+          DropdownMenuItem(value:'sd-IN',child:Text('Sindhi')),
           DropdownMenuItem(value:'ta-IN',child:Text('Tamil')),
           DropdownMenuItem(value:'te-IN',child:Text('Telugu')),
-          DropdownMenuItem(value:'kn-IN',child:Text('Kannada')),
+          DropdownMenuItem(value:'ur-IN',child:Text('Urdu')),
         ],
-        onChanged:(x)=>setState(()=>voiceLanguage=x??voiceLanguage),
+        onChanged:(x)=>setState(() { voiceLanguage=x??voiceLanguage; responseLanguage=_languageName(voiceLanguage); }),
       )),
     ]),
     const SizedBox(height:15),
