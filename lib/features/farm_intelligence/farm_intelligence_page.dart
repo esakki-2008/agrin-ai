@@ -364,7 +364,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
               ),
               const SizedBox(height: 45),
               Text(
-                'Let’s understand\\nyour farm.',
+                'Let’s understand\nyour farm.',
                 style: Theme.of(context).textTheme.displayMedium?.copyWith(
                       color: Colors.white,
                       fontSize: wide ? 62 : 43,
