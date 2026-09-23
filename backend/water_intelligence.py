@@ -30,9 +30,9 @@ async def water_intelligence(r: WaterRequest):
         client = await _get_http_client()
         response = await client.get("https://api.open-meteo.com/v1/forecast", params=params, timeout=30)
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Water forecast request failed: {exc}") from exc
+        raise HTTPException(status_code=502, detail="Water forecast request failed.") from exc
     if response.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"Water forecast returned HTTP {response.status_code}.")
+        raise HTTPException(status_code=502, detail="Water forecast service returned an error.")
     try:
         body = response.json()
         daily = body["daily"]
