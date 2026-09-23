@@ -7,6 +7,9 @@ import rasterio
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+_weather_cache: dict[tuple[float, float, int], tuple[datetime, dict]] = {}
+_WEATHER_CACHE_TTL = timedelta(minutes=10)
+
 router = APIRouter(prefix="/historical", tags=["historical"])
 
 
@@ -26,6 +29,12 @@ def _validate(request: HistoricalRequest) -> None:
 @router.post("/weather")
 async def historical_weather(request: HistoricalRequest):
     _validate(request)
+
+    cache_key = (round(request.latitude, 4), round(request.longitude, 4), request.days)
+    cached = _weather_cache.get(cache_key)
+    now_utc = datetime.now(timezone.utc)
+    if cached and now_utc - cached[0] < _WEATHER_CACHE_TTL:
+        return cached[1]
 
     end = date.today() - timedelta(days=1)
     start = end - timedelta(days=request.days - 1)
@@ -97,7 +106,7 @@ async def historical_weather(request: HistoricalRequest):
     else:
         temperature_trend = "Relatively stable"
 
-    return {
+    result = {
         "available": True,
         "source": "Open-Meteo Historical Weather API",
         "period": {"start": start.isoformat(), "end": end.isoformat(), "days": len(rows)},
@@ -110,6 +119,8 @@ async def historical_weather(request: HistoricalRequest):
         },
         "daily": rows,
     }
+    _weather_cache[cache_key] = (now_utc, result)
+    return result
 
 
 @router.post("/satellite-scenes")
