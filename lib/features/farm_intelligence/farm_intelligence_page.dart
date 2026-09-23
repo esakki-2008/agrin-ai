@@ -229,10 +229,12 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
         );
         if(mounted)setState(()=>advisory=ai);
       } catch(e) {
-        if(mounted)setState(() {
-          advisoryUnavailable=true;
-          advisoryError=e.toString().replaceFirst('Exception: ','');
-        });
+        if (mounted) {
+          setState(() {
+            advisoryUnavailable=true;
+            advisoryError=e.toString().replaceFirst('Exception: ','');
+          });
+        }
       }
 
       await sourceLoads;
@@ -345,7 +347,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
               const Row(
                 children: [
                   Icon(Icons.eco_outlined, color: Color(0xFF9EB6A5), size: 18),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Text(
                     'AGRI N / FIELD INTELLIGENCE',
                     style: TextStyle(
@@ -838,20 +840,20 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              Icon(Icons.auto_awesome_rounded, color: Colors.white),
+            const Row(children: [
+              const Icon(Icons.auto_awesome_rounded, color: Colors.white),
               SizedBox(width: 10),
-              Text('AI Agro-Advisory', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+              const Text('AI Agro-Advisory', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
             ]),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               'AI Advisory is currently unavailable. Live environmental intelligence remains available from the connected data sources.',
               style: TextStyle(color: Color(0xFFD4DDD7), height: 1.55),
             ),
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
             Text(
               'No generated recommendation is shown while the AI provider is unavailable. ${advisoryError ?? ''}',
-              style: TextStyle(color: Color(0xFF9FB0A4), fontSize: 11),
+              style: const TextStyle(color: Color(0xFF9FB0A4), fontSize: 11),
             ),
           ],
         ),
