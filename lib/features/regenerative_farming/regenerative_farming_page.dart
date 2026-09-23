@@ -129,7 +129,7 @@ class _RegenerativeFarmingPageState extends State<RegenerativeFarmingPage> {
   Widget _form()=>_card('Farm context',Column(children:[
     TextField(controller:location,decoration:decoration('Village / district / location',Icons.location_on_outlined)).animate().fadeIn(delay:100.ms,duration:350.ms),
     const SizedBox(height:15),
-    DropdownButtonFormField<String>(initialValue:crop,decoration:decoration('Primary crop',Icons.grass_rounded),items:const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:(x)=>setState(()=>crop=x??crop)),
+    DropdownButtonFormField<String>(value:crop,decoration:decoration('Primary crop',Icons.grass_rounded),items:const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:(x)=>setState(()=>crop=x??crop)),
     const SizedBox(height:20),
     SizedBox(width:double.infinity,child:ElevatedButton.icon(onPressed:loading?null:buildPlan,icon:loading?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.eco_rounded),label:Padding(padding:const EdgeInsets.symmetric(vertical:15),child:Text(loading?'Building live plan...':'Build regenerative plan')),style:ElevatedButton.styleFrom(backgroundColor:green,foregroundColor:Colors.white,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.zero)))),
   ])).animate().fadeIn(duration:550.ms).slideX(begin:-.04,end:0);
