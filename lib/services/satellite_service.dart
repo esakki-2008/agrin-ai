@@ -112,20 +112,16 @@ class SatelliteService {
     int days = 180,
     double maxCloudCover = 30,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/satellite/intelligence'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
+    final json = await const ApiClient().postJson(
+      '/satellite/intelligence',
+      body: {
         'latitude': latitude,
         'longitude': longitude,
         'days': days,
         'max_cloud_cover': maxCloudCover,
-      }),
-    ).timeout(const Duration(seconds: 120));
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode != 200) {
-      throw Exception(json['detail']?.toString() ?? 'Advanced satellite intelligence failed.');
-    }
+      },
+      timeout: const Duration(seconds: 120),
+    );
     return AdvancedSatelliteData.fromJson(json);
   }
 }
