@@ -19,7 +19,15 @@ class WeatherData {
   }
 }
 class WeatherService {
+  static final Map<String, ({DateTime expires, WeatherData data})> _cache = {};
+  static const _cacheDuration = Duration(minutes: 10);
+
   Future<WeatherData> fetch(String place) async {
+    final key = place.trim().toLowerCase();
+    final cached = _cache[key];
+    if (cached != null && DateTime.now().isBefore(cached.expires)) {
+      return cached.data;
+    }
     final geoUri=Uri.https('geocoding-api.open-meteo.com','/v1/search',{'name':place,'count':'1','language':'en','format':'json','countryCode':'IN'});
     final geoResponse=await http.get(geoUri).timeout(const Duration(seconds:10));
     if(geoResponse.statusCode!=200) throw Exception('Location search failed.');
@@ -35,6 +43,11 @@ class WeatherService {
     });
     final weatherResponse=await http.get(weatherUri).timeout(const Duration(seconds:10));
     if(weatherResponse.statusCode!=200) throw Exception('Weather service failed.');
-    return WeatherData.fromJson(jsonDecode(weatherResponse.body) as Map<String,dynamic>,resolved);
+    final data = WeatherData.fromJson(
+      jsonDecode(weatherResponse.body) as Map<String,dynamic>,
+      resolved,
+    );
+    _cache[key] = (expires: DateTime.now().add(_cacheDuration), data: data);
+    return data;
   }
 }
