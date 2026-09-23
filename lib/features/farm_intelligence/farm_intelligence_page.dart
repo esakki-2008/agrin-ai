@@ -9,6 +9,9 @@ import '../../services/soil_intelligence_service.dart';
 import '../../services/water_intelligence_service.dart';
 import '../../services/voice_service.dart';
 import '../../theme/agri_n_design.dart';
+import '../../l10n/app_language.dart';
+import '../../l10n/language_controller.dart';
+import '../../l10n/language_picker.dart';
 
 class FarmIntelligencePage extends StatefulWidget {
   const FarmIntelligencePage({super.key});
@@ -35,6 +38,14 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   String voiceLanguage='en-IN';
   String responseLanguage='English';
 
+  @override
+  void initState() {
+    super.initState();
+    final language = languageController.language;
+    voiceLanguage = language.speechLocale;
+    responseLanguage = language.aiName;
+  }
+
   @override void dispose(){
     location.dispose();
     size.dispose();
@@ -42,16 +53,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     super.dispose();
   }
 
-  String _languageName(String code) {
-    const names={
-      'en-IN':'English','as-IN':'Assamese','bn-IN':'Bengali','brx-IN':'Bodo','doi-IN':'Dogri',
-      'gu-IN':'Gujarati','hi-IN':'Hindi','kn-IN':'Kannada','ks-IN':'Kashmiri','kok-IN':'Konkani',
-      'ml-IN':'Malayalam','mni-IN':'Manipuri','mr-IN':'Marathi','mai-IN':'Maithili','ne-IN':'Nepali',
-      'or-IN':'Odia','pa-IN':'Punjabi','sa-IN':'Sanskrit','sat-IN':'Santali','sd-IN':'Sindhi',
-      'ta-IN':'Tamil','te-IN':'Telugu','ur-IN':'Urdu',
-    };
-    return names[code] ?? 'English';
-  }
+  String _languageName(String code) => supportedLanguages.firstWhere((language) => language.speechLocale == code, orElse: () => supportedLanguages.first).aiName;
 
   Future<void> toggleVoiceInput() async {
     if (voiceListening) {
@@ -564,39 +566,9 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     Row(children:[
       const Icon(Icons.translate_outlined,size:15,color:muted),
       const SizedBox(width:7),
-      const Text('Voice language',style:TextStyle(fontSize:11,color:muted)),
+      const Text('Language',style:TextStyle(fontSize:11,color:muted)),
       const SizedBox(width:10),
-      Expanded(child:DropdownButton<String>(
-        value:voiceLanguage,
-        isExpanded:true,
-        underline:const SizedBox.shrink(),
-        items:const [
-          DropdownMenuItem(value:'en-IN',child:Text('English')),
-          DropdownMenuItem(value:'as-IN',child:Text('Assamese')),
-          DropdownMenuItem(value:'bn-IN',child:Text('Bengali')),
-          DropdownMenuItem(value:'brx-IN',child:Text('Bodo')),
-          DropdownMenuItem(value:'doi-IN',child:Text('Dogri')),
-          DropdownMenuItem(value:'gu-IN',child:Text('Gujarati')),
-          DropdownMenuItem(value:'hi-IN',child:Text('Hindi')),
-          DropdownMenuItem(value:'kn-IN',child:Text('Kannada')),
-          DropdownMenuItem(value:'ks-IN',child:Text('Kashmiri')),
-          DropdownMenuItem(value:'kok-IN',child:Text('Konkani')),
-          DropdownMenuItem(value:'ml-IN',child:Text('Malayalam')),
-          DropdownMenuItem(value:'mni-IN',child:Text('Manipuri')),
-          DropdownMenuItem(value:'mr-IN',child:Text('Marathi')),
-          DropdownMenuItem(value:'mai-IN',child:Text('Maithili')),
-          DropdownMenuItem(value:'ne-IN',child:Text('Nepali')),
-          DropdownMenuItem(value:'or-IN',child:Text('Odia')),
-          DropdownMenuItem(value:'pa-IN',child:Text('Punjabi')),
-          DropdownMenuItem(value:'sa-IN',child:Text('Sanskrit')),
-          DropdownMenuItem(value:'sat-IN',child:Text('Santali')),
-          DropdownMenuItem(value:'sd-IN',child:Text('Sindhi')),
-          DropdownMenuItem(value:'ta-IN',child:Text('Tamil')),
-          DropdownMenuItem(value:'te-IN',child:Text('Telugu')),
-          DropdownMenuItem(value:'ur-IN',child:Text('Urdu')),
-        ],
-        onChanged:(x)=>setState(() { voiceLanguage=x??voiceLanguage; responseLanguage=_languageName(voiceLanguage); }),
-      )),
+      const Expanded(child:LanguagePicker(compact:true)),
     ]),
     const SizedBox(height:15),
     DropdownButtonFormField<String>(value:crop,decoration:decoration('Primary crop',Icons.grass_rounded),
