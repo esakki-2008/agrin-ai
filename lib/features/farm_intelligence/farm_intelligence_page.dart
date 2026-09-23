@@ -835,7 +835,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
         width: double.infinity,
         padding: const EdgeInsets.all(22),
         decoration: const BoxDecoration(color: dark, borderRadius: BorderRadius.zero),
-        child: const Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
