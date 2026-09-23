@@ -214,10 +214,11 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
         loadWater(),
       ]);
 
-      // AI can start as soon as the core observations needed by the advisory
-      // are available. It no longer blocks the environmental intelligence UI.
+      // Start AI in parallel with the slower environmental sources.
+      // Weather is already available, while soil/satellite are optional inputs.
+      // This keeps the first advisory responsive instead of waiting for
+      // satellite processing to finish.
       try {
-        await Future.wait<void>([soilLoad,satelliteLoad]);
         final ai=await AdvisoryService().fetch(
           location:location.text.trim(),
           crop:crop,
