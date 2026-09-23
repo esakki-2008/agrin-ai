@@ -93,7 +93,7 @@ class AdvisoryService {
         'satellite_cloud_cover_percent':satellite?.cloudCover,
         'satellite_source':satellite?.source,
       }),
-    ).timeout(const Duration(seconds:60));
+    ).timeout(const Duration(seconds:8));
     final json=jsonDecode(response.body) as Map<String,dynamic>;
     if(response.statusCode!=200) throw Exception(json['detail']?.toString()??'AI advisory service failed.');
     return AdvisoryData.fromJson(json);
