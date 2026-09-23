@@ -139,5 +139,5 @@ async def generate_json(
                     await asyncio.sleep(2**attempt)
 
     raise AIProviderError(
-        f"All configured Gemini providers failed. Last error: {last_error}"
+        "AI service is temporarily unavailable. Please try again later."
     )
