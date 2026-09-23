@@ -9,7 +9,6 @@ import '../../services/soil_intelligence_service.dart';
 import '../../services/water_intelligence_service.dart';
 import '../../services/voice_service.dart';
 import '../../theme/agri_n_design.dart';
-import '../../l10n/app_language.dart';
 import '../../l10n/language_controller.dart';
 import '../../l10n/language_picker.dart';
 
