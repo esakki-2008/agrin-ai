@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../theme/agri_n_design.dart';
+import '../../l10n/language_picker.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -56,6 +57,8 @@ class DashboardPage extends StatelessWidget {
           _link(context, 'NETWORK', '/brics-network'),
         ],
         const SizedBox(width: 16),
+        const LanguagePicker(compact: true),
+        const SizedBox(width: 14),
         Text('INDIA', style: Theme.of(context).textTheme.labelSmall),
       ],
     ).animate().fadeIn(duration: 500.ms).slideY(begin: -.12, end: 0);
