@@ -7,6 +7,7 @@ import '../../services/advisory_service.dart';
 import '../../services/climate_service.dart';
 import '../../services/soil_intelligence_service.dart';
 import '../../services/water_intelligence_service.dart';
+import '../../services/voice_service.dart';
 import '../../theme/agri_n_design.dart';
 
 class FarmIntelligencePage extends StatefulWidget {
@@ -28,8 +29,60 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   AdvisoryData? advisory;
   String? error;
   bool advisoryUnavailable=false;
+  final VoiceService voiceService = VoiceService();
+  bool voiceListening=false;
+  String voiceLanguage='en-IN';
 
-  @override void dispose(){location.dispose();size.dispose();super.dispose();}
+  @override void dispose(){
+    location.dispose();
+    size.dispose();
+    voiceService.dispose();
+    super.dispose();
+  }
+
+  Future<void> toggleVoiceInput() async {
+    if (voiceListening) {
+      await voiceService.stopListening();
+      if (mounted) setState(() => voiceListening=false);
+      return;
+    }
+    try {
+      final available = await voiceService.initialize(
+        onStatus: (status) {
+          if (!mounted) return;
+          if (status == 'done' || status == 'notListening') {
+            setState(() => voiceListening=false);
+          }
+        },
+        onError: (_) {
+          if (mounted) setState(() => voiceListening=false);
+        },
+      );
+      if (!available) throw Exception('Speech recognition is unavailable on this device.');
+      if (mounted) setState(() => voiceListening=true);
+      await voiceService.startListening(
+        localeId: voiceLanguage,
+        onResult: (text) {
+          if (text.trim().isEmpty || !mounted) return;
+          setState(() => location.text=text.trim());
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => voiceListening=false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        );
+      }
+    }
+  }
+
+  Future<void> speakAdvisory() async {
+    final data=advisory;
+    if (data==null) return;
+    final spoken=data.summary+' '+data.actions.map((a)=>a.title+'. '+a.reason).join(' ');
+    await voiceService.speak(spoken, language: voiceLanguage);
+  }
 
   Future<void> pickDate() async {
     final d=await showDatePicker(context:context,firstDate:DateTime(2020),lastDate:DateTime.now(),initialDate:date??DateTime.now());
@@ -466,7 +519,37 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   }
 
   Widget _form()=>_card('Farm profile',Column(children:[
-    TextField(controller:location,decoration:decoration('Village / district / location',Icons.location_on_outlined)),
+    Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Expanded(child:TextField(controller:location,decoration:decoration('Village / district / location',Icons.location_on_outlined))),
+      const SizedBox(width:8),
+      SizedBox(width:52,height:56,child:IconButton(
+        tooltip:voiceListening?'Stop listening':'Speak location',
+        onPressed:toggleVoiceInput,
+        style:IconButton.styleFrom(backgroundColor:voiceListening?const Color(0xFFFFE8E5):const Color(0xFFEAF4EC),foregroundColor:voiceListening?Colors.deepOrange:green),
+        icon:Icon(voiceListening?Icons.stop_rounded:Icons.mic_none_rounded),
+      )),
+    ]),
+    const SizedBox(height:10),
+    Row(children:[
+      const Icon(Icons.translate_outlined,size:15,color:muted),
+      const SizedBox(width:7),
+      const Text('Voice language',style:TextStyle(fontSize:11,color:muted)),
+      const SizedBox(width:10),
+      Expanded(child:DropdownButton<String>(
+        value:voiceLanguage,
+        isExpanded:true,
+        underline:const SizedBox.shrink(),
+        items:const [
+          DropdownMenuItem(value:'en-IN',child:Text('English (India)')),
+          DropdownMenuItem(value:'hi-IN',child:Text('Hindi')),
+          DropdownMenuItem(value:'mr-IN',child:Text('Marathi')),
+          DropdownMenuItem(value:'ta-IN',child:Text('Tamil')),
+          DropdownMenuItem(value:'te-IN',child:Text('Telugu')),
+          DropdownMenuItem(value:'kn-IN',child:Text('Kannada')),
+        ],
+        onChanged:(x)=>setState(()=>voiceLanguage=x??voiceLanguage),
+      )),
+    ]),
     const SizedBox(height:15),
     DropdownButtonFormField<String>(value:crop,decoration:decoration('Primary crop',Icons.grass_rounded),
       items:const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),
