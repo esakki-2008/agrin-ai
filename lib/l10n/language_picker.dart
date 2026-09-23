@@ -3,8 +3,11 @@ import 'app_language.dart';
 import 'language_controller.dart';
 
 class LanguagePicker extends StatelessWidget {
-  const LanguagePicker({super.key, this.compact = false});
+  const LanguagePicker({super.key, this.compact = false, this.onChanged});
+
   final bool compact;
+  final ValueChanged<AppLanguage>? onChanged;
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -18,9 +21,17 @@ class LanguagePicker extends StatelessWidget {
             icon: const Icon(Icons.language_rounded, size: 18),
             items: supportedLanguages.map((language) => DropdownMenuItem<AppLanguage>(
               value: language,
-              child: Text(compact ? language.nativeName : language.nativeName + '  ·  ' + language.name, style: const TextStyle(fontSize: 13)),
+              child: Text(
+                compact ? language.nativeName : language.nativeName + '  ·  ' + language.name,
+                style: const TextStyle(fontSize: 13),
+              ),
             )).toList(),
-            onChanged: (language) { if (language != null) languageController.setLanguage(language); },
+            onChanged: (language) {
+              if (language != null) {
+                languageController.setLanguage(language);
+                onChanged?.call(language);
+              }
+            },
           ),
         );
       },
