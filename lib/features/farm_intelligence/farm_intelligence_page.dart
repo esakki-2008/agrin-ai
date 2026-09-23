@@ -40,71 +40,158 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     if(location.text.trim().isEmpty||size.text.trim().isEmpty||date==null){
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Please complete your farm details first.'))); return;
     }
-    setState(() { analyzing=true; error=null; weather=null; soil=null; satellite=null; advancedSatellite=null; climate=null; soilProfile=null; waterIntelligence=null; advisory=null; advisoryUnavailable=false; showResults=false; });
+
+    setState(() {
+      analyzing=true;
+      error=null;
+      weather=null;
+      soil=null;
+      satellite=null;
+      advancedSatellite=null;
+      climate=null;
+      soilProfile=null;
+      waterIntelligence=null;
+      advisory=null;
+      advisoryUnavailable=false;
+      showResults=false;
+    });
+
     try {
+      // Resolve the location first. Everything else can then load concurrently.
       final liveWeather=await WeatherService().fetch(location.text.trim());
-      if(mounted)setState(()=>weather=liveWeather);
-      final liveSoil=await SoilService().fetch(latitude:liveWeather.latitude, longitude:liveWeather.longitude);
-      if(mounted)setState(()=>soil=liveSoil);
-      try {
-        final liveSatellite=await SatelliteService().fetch(latitude:liveWeather.latitude, longitude:liveWeather.longitude);
-        if(mounted)setState(()=>satellite=liveSatellite);
-      } catch(e) {
-        if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+      if(!mounted)return;
+      setState(() {
+        weather=liveWeather;
+        // Render the page as soon as the first real observation arrives.
+        // Remaining live sources stream into the already-visible result view.
+        showResults=true;
+      });
+
+      final acres=double.tryParse(size.text.trim());
+      if(acres==null) throw Exception('Farm size must be a valid number.');
+
+      Future<void> loadSoil() async {
+        try {
+          final value=await SoilService().fetch(
+            latitude:liveWeather.latitude,
+            longitude:liveWeather.longitude,
+          );
+          if(mounted)setState(()=>soil=value);
+        } catch(e) {
+          if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+        }
       }
+
+      Future<void> loadSatellite() async {
+        try {
+          final value=await SatelliteService().fetch(
+            latitude:liveWeather.latitude,
+            longitude:liveWeather.longitude,
+          );
+          if(mounted)setState(()=>satellite=value);
+        } catch(e) {
+          if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+        }
+      }
+
+      Future<void> loadAdvancedSatellite() async {
+        try {
+          final value=await SatelliteService().fetchIntelligence(
+            latitude:liveWeather.latitude,
+            longitude:liveWeather.longitude,
+            days:180,
+            maxCloudCover:30,
+          );
+          if(mounted)setState(()=>advancedSatellite=value);
+        } catch(e) {
+          if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+        }
+      }
+
+      Future<void> loadClimate() async {
+        try {
+          final value=await ClimateService().fetch(
+            latitude:liveWeather.latitude,
+            longitude:liveWeather.longitude,
+            forecastDays:7,
+          );
+          if(mounted)setState(()=>climate=value);
+        } catch(e) {
+          if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+        }
+      }
+
+      Future<void> loadSoilProfile() async {
+        try {
+          final value=await SoilIntelligenceService().fetch(
+            latitude:liveWeather.latitude,
+            longitude:liveWeather.longitude,
+          );
+          if(mounted)setState(()=>soilProfile=value);
+        } catch(e) {
+          if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+        }
+      }
+
+      Future<void> loadWater() async {
+        try {
+          final value=await WaterIntelligenceService().fetch(
+            latitude:liveWeather.latitude,
+            longitude:liveWeather.longitude,
+            forecastDays:7,
+          );
+          if(mounted)setState(()=>waterIntelligence=value);
+        } catch(e) {
+          if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+        }
+      }
+
+      // These sources are independent after geocoding, so don't wait for them
+      // one-by-one. Each section appears as soon as its real response arrives.
+      final sourceLoads=Future.wait<void>([
+        loadSoil(),
+        loadSatellite(),
+        loadAdvancedSatellite(),
+        loadClimate(),
+        loadSoilProfile(),
+        loadWater(),
+      ]);
+
+      // AI can start as soon as the core observations needed by the advisory
+      // are available. It no longer blocks the environmental intelligence UI.
       try {
-        final advanced=await SatelliteService().fetchIntelligence(
-          latitude:liveWeather.latitude,
-          longitude:liveWeather.longitude,
-          days:180,
-          maxCloudCover:30,
+        final coreLoads=await Future.wait<void>([
+          loadSoil(),
+          loadSatellite(),
+        ]);
+        coreLoads;
+        final ai=await AdvisoryService().fetch(
+          location:location.text.trim(),
+          crop:crop,
+          farmSizeAcres:acres,
+          sowingDate:date!,
+          weather:liveWeather,
+          soil:soil,
+          satellite:satellite,
         );
-        if(mounted)setState(()=>advancedSatellite=advanced);
-      } catch(e) {
-        if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
-      }
-      try {
-        final climateData=await ClimateService().fetch(
-          latitude:liveWeather.latitude,
-          longitude:liveWeather.longitude,
-          forecastDays:7,
-        );
-        if(mounted)setState(()=>climate=climateData);
-      } catch(e) {
-        if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
-      }
-      try {
-        final profile=await SoilIntelligenceService().fetch(
-          latitude:liveWeather.latitude,
-          longitude:liveWeather.longitude,
-        );
-        if(mounted)setState(()=>soilProfile=profile);
-      } catch(e) {
-        if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
-      }
-      try {
-        final water=await WaterIntelligenceService().fetch(
-          latitude:liveWeather.latitude,
-          longitude:liveWeather.longitude,
-          forecastDays:7,
-        );
-        if(mounted)setState(()=>waterIntelligence=water);
-      } catch(e) {
-        if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
-      }
-      try {
-        final acres=double.tryParse(size.text.trim());
-        if(acres==null) throw Exception('Farm size must be a valid number.');
-        final ai=await AdvisoryService().fetch(location:location.text.trim(),crop:crop,farmSizeAcres:acres,sowingDate:date!,weather:liveWeather,soil:soil,satellite:satellite);
         if(mounted)setState(()=>advisory=ai);
       } catch(e) {
         if(mounted)setState(()=>advisoryUnavailable=true);
       }
+
+      await sourceLoads;
     } catch(e) {
-      if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+      if(mounted){
+        setState(() {
+          error=e.toString().replaceFirst('Exception: ','');
+          analyzing=false;
+          showResults=weather!=null;
+        });
+      }
+      return;
     }
+
     if(mounted)setState(()=>analyzing=false);
-    if(mounted && weather!=null)setState(()=>showResults=true);
   }
 
   InputDecoration decoration(String label,IconData icon)=>InputDecoration(
