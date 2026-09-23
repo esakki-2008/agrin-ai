@@ -23,7 +23,9 @@ from water_intelligence import router as water_intelligence_router
 from farm_twin import router as farm_twin_router
 from agri_network import router as agri_network_router
 
+load_dotenv()
 load_dotenv(dotenv_path=Path(__file__).resolve().parent / '.env')
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / '.env')
 
 app = FastAPI(
     title="AgriN AI Data API",
