@@ -4,7 +4,7 @@ from typing import Any
 import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from data_sources import sample
+from data_sources import sample, _get_http_client
 from satellite_intelligence import _search_features, _choose, _analyze_scene
 
 router = APIRouter(prefix="/farm-twin", tags=["Farm Digital Twin"])
@@ -16,8 +16,12 @@ class FarmTwinRequest(BaseModel):
 
 async def _geocode(location: str) -> dict[str, Any]:
     try:
-        async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
-            r=await client.get("https://geocoding-api.open-meteo.com/v1/search",params={"name":location,"count":1,"language":"en","format":"json"})
+        client = await _get_http_client()
+        r=await client.get(
+            "https://geocoding-api.open-meteo.com/v1/search",
+            params={"name":location,"count":1,"language":"en","format":"json"},
+            timeout=20,
+        )
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502,detail=f"Location lookup failed: {exc}") from exc
     if r.status_code!=200:
@@ -40,10 +44,14 @@ async def build_farm_twin(request: FarmTwinRequest):
 
     weather={}
     try:
-        async with httpx.AsyncClient(timeout=25,follow_redirects=True) as client:
-            r=await client.get("https://api.open-meteo.com/v1/forecast",params={
+        client = await _get_http_client()
+        r=await client.get(
+            "https://api.open-meteo.com/v1/forecast",
+            params={
                 "latitude":lat,"longitude":lon,"current":"temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code","timezone":"auto"
-            })
+            },
+            timeout=25,
+        )
         if r.status_code==200:
             weather=r.json()
     except httpx.HTTPError:
