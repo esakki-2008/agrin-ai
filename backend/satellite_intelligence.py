@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta, timezone
+import asyncio
 from typing import Any
 
 import httpx
 import rasterio
 from fastapi import APIRouter, HTTPException
+from data_sources import _get_http_client
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/satellite", tags=["Advanced Satellite Intelligence"])
@@ -38,13 +40,13 @@ async def _search_features(lat: float, lon: float, days: int) -> list[dict[str, 
         "limit": 100,
     }
     try:
-        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            response = await client.post(STAC_URL, json=payload)
+        client = await _get_http_client()
+        response = await client.post(STAC_URL, json=payload, timeout=30)
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Satellite catalog request failed: {exc}") from exc
+        raise HTTPException(status_code=502, detail="Satellite catalog request failed.") from exc
 
     if response.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"Satellite catalog returned HTTP {response.status_code}.")
+        raise HTTPException(status_code=502, detail="Satellite catalog returned an error.")
     try:
         return response.json().get("features", [])
     except ValueError as exc:
@@ -139,13 +141,13 @@ async def _load_item(feature: dict[str, Any]) -> dict[str, Any]:
 
     item_url = f"https://earth-search.aws.element84.com/v1/collections/{COLLECTION}/items/{item_id}"
     try:
-        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            response = await client.get(item_url)
+        client = await _get_http_client()
+        response = await client.get(item_url, timeout=30)
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Satellite item request failed: {exc}") from exc
+        raise HTTPException(status_code=502, detail="Satellite item request failed.") from exc
 
     if response.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"Satellite item returned HTTP {response.status_code}.")
+        raise HTTPException(status_code=502, detail="Satellite item returned an error.")
     return response.json()
 
 
@@ -233,13 +235,20 @@ async def satellite_intelligence(request: SatelliteIntelligenceRequest):
             },
         }
 
+    results = await asyncio.gather(
+        *(
+            _analyze_scene(feature, request.latitude, request.longitude)
+            for feature in selected
+        ),
+        return_exceptions=True,
+    )
     scenes: list[dict[str, Any]] = []
     errors: list[str] = []
-    for feature in selected:
-        try:
-            scenes.append(await _analyze_scene(feature, request.latitude, request.longitude))
-        except Exception as exc:
-            errors.append(f"{feature.get('id', 'unknown')}: {exc}")
+    for result in results:
+        if isinstance(result, Exception):
+            errors.append("One selected Sentinel-2 scene could not be analyzed.")
+        else:
+            scenes.append(result)
 
     if not scenes:
         raise HTTPException(status_code=502, detail="Selected Sentinel-2 scenes could not be sampled.")
