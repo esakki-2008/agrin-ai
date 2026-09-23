@@ -290,7 +290,7 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
-          initialValue: crop,
+          value: crop,
           decoration: const InputDecoration(
             labelText: 'Crop',
             prefixIcon: Icon(Icons.grass_outlined, color: green),
