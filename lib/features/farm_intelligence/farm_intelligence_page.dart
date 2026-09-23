@@ -27,6 +27,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   WaterIntelligenceData? waterIntelligence;
   AdvisoryData? advisory;
   String? error;
+  bool advisoryUnavailable=false;
 
   @override void dispose(){location.dispose();size.dispose();super.dispose();}
 
@@ -39,7 +40,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     if(location.text.trim().isEmpty||size.text.trim().isEmpty||date==null){
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Please complete your farm details first.'))); return;
     }
-    setState(() { analyzing=true; error=null; weather=null; soil=null; satellite=null; advancedSatellite=null; climate=null; soilProfile=null; waterIntelligence=null; advisory=null; showResults=false; });
+    setState(() { analyzing=true; error=null; weather=null; soil=null; satellite=null; advancedSatellite=null; climate=null; soilProfile=null; waterIntelligence=null; advisory=null; advisoryUnavailable=false; showResults=false; });
     try {
       final liveWeather=await WeatherService().fetch(location.text.trim());
       if(mounted)setState(()=>weather=liveWeather);
@@ -97,7 +98,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
         final ai=await AdvisoryService().fetch(location:location.text.trim(),crop:crop,farmSizeAcres:acres,sowingDate:date!,weather:liveWeather,soil:soil,satellite:satellite);
         if(mounted)setState(()=>advisory=ai);
       } catch(e) {
-        if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
+        if(mounted)setState(()=>advisoryUnavailable=true);
       }
     } catch(e) {
       if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ',''));
@@ -656,6 +657,34 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   }
 
   Widget _advisory() {
+    if (advisoryUnavailable) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(color: dark, borderRadius: BorderRadius.zero),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Icon(Icons.auto_awesome_rounded, color: Colors.white),
+              SizedBox(width: 10),
+              Text('AI Agro-Advisory', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+            ]),
+            SizedBox(height: 16),
+            Text(
+              'AI Advisory is currently unavailable because no AI provider is configured. Live environmental intelligence remains available from the connected data sources.',
+              style: TextStyle(color: Color(0xFFD4DDD7), height: 1.55),
+            ),
+            SizedBox(height: 14),
+            Text(
+              'No generated recommendation is shown while the AI provider is unavailable.',
+              style: TextStyle(color: Color(0xFF9FB0A4), fontSize: 11),
+            ),
+          ],
+        ),
+      );
+    }
+    return Container(
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
