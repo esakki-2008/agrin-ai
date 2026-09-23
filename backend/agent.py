@@ -126,6 +126,8 @@ async def geocode(location: str):
 # ============================================================
 
 async def weather(lat: float, lon: float):
+    from data_sources import _get_http_client
+
     params = {
         "latitude": lat,
         "longitude": lon,
@@ -141,57 +143,160 @@ async def weather(lat: float, lon: float):
         "timezone": "auto",
     }
 
-    async with httpx.AsyncClient(
-        timeout=20,
-        follow_redirects=True,
-    ) as client:
+    client = await _get_http_client()
+
+    # --------------------------------------------------------
+    # PRIMARY: OPEN-METEO
+    # --------------------------------------------------------
+
+    try:
         response = await client.get(
             "https://api.open-meteo.com/v1/forecast",
             params=params,
+            timeout=20,
         )
 
-    if response.status_code != 200:
-        raise HTTPException(
-            status_code=502,
-            detail="Weather service failed.",
+        if response.status_code == 200:
+            body = response.json()
+
+            current = body.get("current", {})
+
+            probabilities = (
+                body.get("hourly", {})
+                .get("precipitation_probability", [])
+            )
+
+            rain_probability = (
+                probabilities[0]
+                if probabilities
+                else None
+            )
+
+            return {
+                "source": "Open-Meteo",
+                "temperature_c": current.get(
+                    "temperature_2m"
+                ),
+                "humidity_percent": current.get(
+                    "relative_humidity_2m"
+                ),
+                "precipitation_mm": current.get(
+                    "precipitation"
+                ),
+                "weather_code": current.get(
+                    "weather_code"
+                ),
+                "wind_speed_kmh": current.get(
+                    "wind_speed_10m"
+                ),
+                "rain_probability_percent": rain_probability,
+                "observed_at": current.get("time"),
+            }
+
+    except (
+        httpx.HTTPError,
+        ValueError,
+        KeyError,
+        TypeError,
+    ):
+        pass
+
+    # --------------------------------------------------------
+    # FALLBACK: MET NORWAY
+    # --------------------------------------------------------
+
+    try:
+        response = await client.get(
+            "https://api.met.no/weatherapi/locationforecast/2.0/compact",
+            params={
+                "lat": round(lat, 4),
+                "lon": round(lon, 4),
+            },
+            headers={
+                "User-Agent": (
+                    "AgriN-AI/1.0 "
+                    "(https://github.com/esakki-2008/agrin-ai)"
+                ),
+            },
+            timeout=20,
         )
 
-    body = response.json()
+        if response.status_code == 200:
+            body = response.json()
 
-    current = body.get("current", {})
+            timeseries = (
+                body.get("properties", {})
+                .get("timeseries", [])
+            )
 
-    probabilities = (
-        body.get("hourly", {})
-        .get("precipitation_probability", [])
+            if timeseries:
+                current = timeseries[0]
+
+                instant = (
+                    current.get("data", {})
+                    .get("instant", {})
+                    .get("details", {})
+                )
+
+                next_hour = (
+                    current.get("data", {})
+                    .get("next_1_hours", {})
+                    .get("details", {})
+                )
+
+                temperature = instant.get(
+                    "air_temperature"
+                )
+
+                humidity = instant.get(
+                    "relative_humidity"
+                )
+
+                wind_speed_ms = instant.get(
+                    "wind_speed"
+                )
+
+                precipitation = next_hour.get(
+                    "precipitation_amount"
+                )
+
+                rain_probability = next_hour.get(
+                    "probability_of_precipitation"
+                )
+
+                return {
+                    "source": (
+                        "MET Norway Locationforecast"
+                    ),
+                    "temperature_c": temperature,
+                    "humidity_percent": humidity,
+                    "precipitation_mm": precipitation,
+                    "weather_code": None,
+                    "wind_speed_kmh": (
+                        wind_speed_ms * 3.6
+                        if wind_speed_ms is not None
+                        else None
+                    ),
+                    "rain_probability_percent": (
+                        rain_probability
+                    ),
+                    "observed_at": current.get(
+                        "time"
+                    ),
+                }
+
+    except (
+        httpx.HTTPError,
+        ValueError,
+        KeyError,
+        TypeError,
+    ):
+        pass
+
+    raise HTTPException(
+        status_code=502,
+        detail="Weather service failed.",
     )
-
-    rain_probability = (
-        probabilities[0]
-        if probabilities
-        else None
-    )
-
-    return {
-        "source": "Open-Meteo",
-        "temperature_c": current.get(
-            "temperature_2m"
-        ),
-        "humidity_percent": current.get(
-            "relative_humidity_2m"
-        ),
-        "precipitation_mm": current.get(
-            "precipitation"
-        ),
-        "weather_code": current.get(
-            "weather_code"
-        ),
-        "wind_speed_kmh": current.get(
-            "wind_speed_10m"
-        ),
-        "rain_probability_percent": rain_probability,
-        "observed_at": current.get("time"),
-    }
-
 
 # ============================================================
 # GEMINI EVIDENCE ENGINE
