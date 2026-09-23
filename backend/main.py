@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import asyncio
 from pathlib import Path
 import base64
 import json
@@ -11,7 +12,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from data_sources import sample, find_satellite_scene, close_http_client
+from data_sources import sample, find_satellite_scene, _get_http_client, close_http_client
 from ai_gateway import close_client as close_ai_client
 
 from regenerative import router as regenerative_router
@@ -98,32 +99,11 @@ async def soil(request: SoilRequest):
         )
 
     try:
-        ph_raw = await sample(
-            "phh2o",
-            "phh2o_0-5cm_Q0.5",
-            request.longitude,
-            request.latitude,
-        )
-
-        soc_raw = await sample(
-            "soc",
-            "soc_0-5cm_Q0.5",
-            request.longitude,
-            request.latitude,
-        )
-
-        nitrogen_raw = await sample(
-            "nitrogen",
-            "nitrogen_0-5cm_Q0.5",
-            request.longitude,
-            request.latitude,
-        )
-
-        clay_raw = await sample(
-            "clay",
-            "clay_0-5cm_Q0.5",
-            request.longitude,
-            request.latitude,
+        ph_raw, soc_raw, nitrogen_raw, clay_raw = await asyncio.gather(
+            sample("phh2o", "phh2o_0-5cm_Q0.5", request.longitude, request.latitude),
+            sample("soc", "soc_0-5cm_Q0.5", request.longitude, request.latitude),
+            sample("nitrogen", "nitrogen_0-5cm_Q0.5", request.longitude, request.latitude),
+            sample("clay", "clay_0-5cm_Q0.5", request.longitude, request.latitude),
         )
 
         return {
@@ -206,30 +186,23 @@ async def satellite_search(request: SatelliteRequest):
     }
 
     try:
-        async with httpx.AsyncClient(
+        client = await _get_http_client()
+        response = await client.post(
+            stac_url,
+            json=payload,
             timeout=30,
-            follow_redirects=True,
-        ) as client:
-            response = await client.post(
-                stac_url,
-                json=payload,
-            )
+        )
 
     except httpx.HTTPError as exc:
         raise HTTPException(
             status_code=502,
-            detail=(
-                f"Satellite catalog request failed: {exc}"
-            ),
+            detail="Satellite catalog request failed.",
         ) from exc
 
     if response.status_code != 200:
         raise HTTPException(
             status_code=502,
-            detail=(
-                "Satellite catalog returned HTTP "
-                f"{response.status_code}."
-            ),
+            detail="Satellite catalog returned an error.",
         )
 
     try:
@@ -359,29 +332,22 @@ async def satellite_ndvi(request: SatelliteRequest):
     )
 
     try:
-        async with httpx.AsyncClient(
+        client = await _get_http_client()
+        item_response = await client.get(
+            item_url,
             timeout=30,
-            follow_redirects=True,
-        ) as client:
-            item_response = await client.get(
-                item_url
-            )
+        )
 
     except httpx.HTTPError as exc:
         raise HTTPException(
             status_code=502,
-            detail=(
-                f"Satellite item request failed: {exc}"
-            ),
+            detail="Satellite item request failed.",
         ) from exc
 
     if item_response.status_code != 200:
         raise HTTPException(
             status_code=502,
-            detail=(
-                "Satellite item returned HTTP "
-                f"{item_response.status_code}."
-            ),
+            detail="Satellite item returned an error.",
         )
 
     try:
@@ -499,20 +465,15 @@ async def satellite_ndvi(request: SatelliteRequest):
             ) from exc
 
     try:
-        red = sample_cog(
-            red_href,
-            red_asset,
-        )
-
-        nir = sample_cog(
-            nir_href,
-            nir_asset,
+        red, nir = await asyncio.gather(
+            asyncio.to_thread(sample_cog, red_href, red_asset),
+            asyncio.to_thread(sample_cog, nir_href, nir_asset),
         )
 
     except RuntimeError as exc:
         raise HTTPException(
             status_code=502,
-            detail="AI service is temporarily unavailable. Please try again later.",
+            detail="Satellite raster processing failed.",
         ) from exc
 
     denominator = nir + red
@@ -719,7 +680,7 @@ Optional context:
     except AIProviderError as exc:
         raise HTTPException(
             status_code=503,
-            detail=str(exc),
+            detail="AI analysis service is temporarily unavailable.",
         ) from exc
 
     return {
@@ -754,12 +715,12 @@ class AdvisoryRequest(BaseModel):
     organic_carbon_g_kg: float | None = Field(default=None, ge=0, le=1000)
     nitrogen_g_kg: float | None = Field(default=None, ge=0, le=1000)
     clay_percent: float | None = Field(default=None, ge=0, le=100)
-    soil_source: str | None = None
+    soil_source: str | None = Field(default=None, max_length=120)
 
     ndvi: float | None = Field(default=None, ge=-1, le=1)
-    satellite_date: str | None = None
+    satellite_date: str | None = Field(default=None, max_length=40)
     satellite_cloud_cover_percent: float | None = Field(default=None, ge=0, le=100)
-    satellite_source: str | None = None
+    satellite_source: str | None = Field(default=None, max_length=120)
     response_language: str = Field(default="English", min_length=1, max_length=30)
 
 
@@ -904,7 +865,7 @@ Measured farm data:
     except AIProviderError as exc:
         raise HTTPException(
             status_code=503,
-            detail=str(exc),
+            detail="AI advisory service is temporarily unavailable.",
         ) from exc
 
     return {
