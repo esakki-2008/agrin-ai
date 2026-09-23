@@ -7,7 +7,6 @@ import '../../services/advisory_service.dart';
 import '../../theme/agri_n_design.dart';
 import '../../l10n/language_picker.dart';
 import '../../l10n/language_controller.dart';
-import '../../l10n/app_language.dart';
 
 class AiAdvisoryPage extends StatefulWidget {
   const AiAdvisoryPage({super.key});
@@ -60,7 +59,7 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('DECISION ENGINE / 03', style: TextStyle(color: Color(0xFF9EB6A5), fontSize: 9, letterSpacing: 1.9, fontWeight: FontWeight.w800)),
         const SizedBox(height: 20),
-        Text('Advice with\nevidence behind it.', style: Theme.of(context).textTheme.displayMedium?.copyWith(color: Colors.white, fontSize: 52, height: .9)),
+        Text('Advice with\\nevidence behind it.', style: Theme.of(context).textTheme.displayMedium?.copyWith(color: Colors.white, fontSize: 52, height: .9)),
         const SizedBox(height: 18),
         const Text('AgriN gathers the farm signals first, then turns the available evidence into practical actions — with data limits kept visible.', style: TextStyle(color: Color(0xCCDDE9DF), fontSize: 13, height: 1.6)),
       ])),
