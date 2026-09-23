@@ -9,7 +9,7 @@ import rasterio
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from data_sources import sample, find_satellite_scene, close_http_client
 from ai_gateway import close_client as close_ai_client
@@ -512,7 +512,7 @@ async def satellite_ndvi(request: SatelliteRequest):
     except RuntimeError as exc:
         raise HTTPException(
             status_code=502,
-            detail=str(exc),
+            detail="AI service is temporarily unavailable. Please try again later.",
         ) from exc
 
     denominator = nir + red
@@ -583,10 +583,10 @@ async def satellite_ndvi(request: SatelliteRequest):
 # ============================================================
 
 class DiseaseRequest(BaseModel):
-    image_base64: str
-    mime_type: str = "image/jpeg"
-    crop: str = ""
-    location: str = ""
+    image_base64: str = Field(..., max_length=23_000_000)
+    mime_type: str = Field(default="image/jpeg", max_length=40)
+    crop: str = Field(default="", max_length=80)
+    location: str = Field(default="", max_length=120)
 
 
 @app.post("/disease/analyze")
@@ -739,28 +739,28 @@ Optional context:
 # ============================================================
 
 class AdvisoryRequest(BaseModel):
-    location: str
-    crop: str
-    farm_size_acres: float
-    sowing_date: str
+    location: str = Field(..., min_length=1, max_length=120)
+    crop: str = Field(..., min_length=1, max_length=80)
+    farm_size_acres: float = Field(..., gt=0, le=100000)
+    sowing_date: str = Field(..., min_length=1, max_length=40)
 
-    temperature_c: float
-    humidity_percent: float
-    wind_kmh: float
-    rain_probability_percent: float
-    weather_condition: str
+    temperature_c: float = Field(..., ge=-80, le=70)
+    humidity_percent: float = Field(..., ge=0, le=100)
+    wind_kmh: float = Field(..., ge=0, le=300)
+    rain_probability_percent: float = Field(..., ge=0, le=100)
+    weather_condition: str = Field(..., min_length=1, max_length=80)
 
-    soil_ph: float | None = None
-    organic_carbon_g_kg: float | None = None
-    nitrogen_g_kg: float | None = None
-    clay_percent: float | None = None
+    soil_ph: float | None = Field(default=None, ge=0, le=14)
+    organic_carbon_g_kg: float | None = Field(default=None, ge=0, le=1000)
+    nitrogen_g_kg: float | None = Field(default=None, ge=0, le=1000)
+    clay_percent: float | None = Field(default=None, ge=0, le=100)
     soil_source: str | None = None
 
-    ndvi: float | None = None
+    ndvi: float | None = Field(default=None, ge=-1, le=1)
     satellite_date: str | None = None
-    satellite_cloud_cover_percent: float | None = None
+    satellite_cloud_cover_percent: float | None = Field(default=None, ge=0, le=100)
     satellite_source: str | None = None
-    response_language: str = "English"
+    response_language: str = Field(default="English", min_length=1, max_length=30)
 
 
 @app.post("/advisory")
