@@ -3,7 +3,6 @@ import '../config/api_config.dart';
 import 'weather_service.dart';
 import 'soil_service.dart';
 import 'satellite_service.dart';
-import '../l10n/language_controller.dart';
 
 class AdvisoryAction {
   final String title;
@@ -69,7 +68,6 @@ class AdvisoryService {
     required WeatherData weather,
     SoilData? soil,
     SatelliteData? satellite,
-    String? responseLanguage,
   }) async {
     final json = await const ApiClient().postJson(
       '/advisory',
@@ -92,9 +90,8 @@ class AdvisoryService {
         'satellite_date':satellite?.observationDate,
         'satellite_cloud_cover_percent':satellite?.cloudCover,
         'satellite_source':satellite?.source,
-        'response_language':responseLanguage ?? languageController.language.aiName,
       },
-      timeout: const Duration(seconds:60),
+      timeout: const Duration(seconds:8),
     );
     return AdvisoryData.fromJson(json);
   }
