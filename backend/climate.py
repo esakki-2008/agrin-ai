@@ -1,7 +1,8 @@
-from datetime import datetime, timezone
 from typing import Any
 
 import logging
+from collections import defaultdict
+from datetime import datetime, timezone
 
 import httpx
 from data_sources import _get_http_client
@@ -25,37 +26,138 @@ def _validate(request: ClimateRequest) -> None:
         raise HTTPException(status_code=400, detail="forecast_days must be between 1 and 16.")
 
 
-async def _fetch_forecast(client: httpx.AsyncClient, params: dict[str, Any]) -> httpx.Response:
-    last_response: httpx.Response | None = None
-    for attempt in range(3):
-        try:
-            response = await client.get(
-                "https://api.open-meteo.com/v1/forecast",
-                params=params,
-                timeout=30,
-            )
-        except httpx.HTTPError as exc:
-            if attempt == 2:
-                raise HTTPException(
-                    status_code=502,
-                    detail="Climate forecast request failed.",
-                ) from exc
+async def _fetch_met_norway_forecast(
+    client: httpx.AsyncClient,
+    latitude: float,
+    longitude: float,
+    forecast_days: int,
+) -> dict[str, Any]:
+    url = "https://api.met.no/weatherapi/locationforecast/2.0/compact"
+    params = {
+        "lat": round(latitude, 4),
+        "lon": round(longitude, 4),
+    }
+    headers = {
+        "User-Agent": "AgriN-AI/1.0 (https://github.com/esakki-2008/agrin-ai)",
+    }
+
+    try:
+        response = await client.get(
+            url,
+            params=params,
+            headers=headers,
+            timeout=30,
+        )
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="Climate forecast request failed.",
+        ) from exc
+
+    if response.status_code != 200:
+        logger.warning(
+            "MET Norway forecast failed: status=%s body=%s",
+            response.status_code,
+            response.text[:500].replace("\n", " "),
+        )
+        raise HTTPException(
+            status_code=502,
+            detail="Climate forecast service returned an error.",
+        )
+
+    try:
+        payload = response.json()
+        timeseries = payload["properties"]["timeseries"]
+    except (ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="Climate forecast returned an invalid response.",
+        ) from exc
+
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+
+    for item in timeseries:
+        timestamp = item.get("time")
+        if not timestamp:
             continue
+        try:
+            day = datetime.fromisoformat(
+                timestamp.replace("Z", "+00:00")
+            ).date().isoformat()
+        except ValueError:
+            continue
+        grouped[day].append(item)
 
-        last_response = response
-        if response.status_code == 200:
-            return response
+    rows: list[dict[str, Any]] = []
+    for day in sorted(grouped)[:forecast_days]:
+        items = grouped[day]
+        temperatures: list[float] = []
+        precipitation: list[float] = []
+        wind: list[float] = []
+        rain_prob: list[float] = []
+        symbols: list[str] = []
 
-        if response.status_code not in {429, 500, 502, 503, 504}:
-            return response
+        for item in items:
+            details = (
+                item.get("data", {})
+                .get("instant", {})
+                .get("details", {})
+            )
+            if details.get("air_temperature") is not None:
+                temperatures.append(float(details["air_temperature"]))
+            if details.get("wind_speed") is not None:
+                wind.append(float(details["wind_speed"]) * 3.6)
 
-    if last_response is not None:
-        return last_response
+            for period_key in ("next_1_hours", "next_6_hours"):
+                period = item.get("data", {}).get(period_key, {})
+                period_details = period.get("details", {})
+                if period_details.get("precipitation_amount") is not None:
+                    precipitation.append(
+                        float(period_details["precipitation_amount"])
+                    )
+                if period_details.get("probability_of_precipitation") is not None:
+                    rain_prob.append(
+                        float(period_details["probability_of_precipitation"])
+                    )
+                symbol = period.get("summary", {}).get("symbol_code")
+                if symbol:
+                    symbols.append(symbol)
 
-    raise HTTPException(
-        status_code=502,
-        detail="Climate forecast request failed.",
-    )
+        rows.append({
+            "date": day,
+            "temperature_mean_c": (
+                round(sum(temperatures) / len(temperatures), 2)
+                if temperatures else None
+            ),
+            "temperature_max_c": round(max(temperatures), 2) if temperatures else None,
+            "temperature_min_c": round(min(temperatures), 2) if temperatures else None,
+            "precipitation_mm": round(sum(precipitation), 2) if precipitation else 0.0,
+            "precipitation_probability_percent": (
+                round(max(rain_prob), 2) if rain_prob else None
+            ),
+            "wind_max_kmh": round(max(wind), 2) if wind else None,
+            "et0_mm": None,
+            "weather_code": symbols[0] if symbols else None,
+        })
+
+    if not rows:
+        raise HTTPException(
+            status_code=502,
+            detail="Climate forecast returned no usable data.",
+        )
+
+    return {
+        "available": True,
+        "source": "MET Norway Locationforecast",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "coordinates": {
+            "latitude": latitude,
+            "longitude": longitude,
+        },
+        "timezone": "UTC",
+        "forecast_days": len(rows),
+        "daily": rows,
+    }
 
 
 @router.post("/intelligence")
