@@ -8,10 +8,12 @@ from pydantic import BaseModel
 
 router = APIRouter(prefix="/climate", tags=["Climate & Weather Intelligence"])
 
+
 class ClimateRequest(BaseModel):
     latitude: float
     longitude: float
     forecast_days: int = 7
+
 
 def _validate(request: ClimateRequest) -> None:
     if not (-90 <= request.latitude <= 90 and -180 <= request.longitude <= 180):
@@ -19,84 +21,139 @@ def _validate(request: ClimateRequest) -> None:
     if not 1 <= request.forecast_days <= 16:
         raise HTTPException(status_code=400, detail="forecast_days must be between 1 and 16.")
 
+
+async def _fetch_forecast(client: httpx.AsyncClient, params: dict[str, Any]) -> httpx.Response:
+    last_response: httpx.Response | None = None
+    for attempt in range(3):
+        try:
+            response = await client.get(
+                "https://api.open-meteo.com/v1/forecast",
+                params=params,
+                timeout=30,
+            )
+        except httpx.HTTPError as exc:
+            if attempt == 2:
+                raise HTTPException(
+                    status_code=502,
+                    detail="Climate forecast request failed.",
+                ) from exc
+            continue
+
+        last_response = response
+        if response.status_code == 200:
+            return response
+
+        if response.status_code not in {429, 500, 502, 503, 504}:
+            return response
+
+    if last_response is not None:
+        return last_response
+
+    raise HTTPException(
+        status_code=502,
+        detail="Climate forecast request failed.",
+    )
+
+
 @router.post("/intelligence")
 async def climate_intelligence(request: ClimateRequest):
     _validate(request)
+
+    daily_fields = ",".join([
+        "temperature_2m_mean",
+        "temperature_2m_max",
+        "temperature_2m_min",
+        "precipitation_sum",
+        "precipitation_probability_max",
+        "wind_speed_10m_max",
+        "et0_fao_evapotranspiration",
+        "weather_code",
+    ])
+
     params = {
         "latitude": request.latitude,
         "longitude": request.longitude,
         "forecast_days": request.forecast_days,
-        "daily": ",".join([
-            "temperature_2m_mean",
-            "temperature_2m_max",
-            "temperature_2m_min",
-            "precipitation_sum",
-            "precipitation_probability_max",
-            "wind_speed_10m_max",
-            "et0_fao_evapotranspiration",
-            "weather_code",
-        ]),
-        "hourly": "relative_humidity_2m",
+        "daily": daily_fields,
         "timezone": "auto",
     }
+
     try:
         client = await _get_http_client()
-        response = None
-        for attempt in range(3):
-            try:
-                response = await client.get(
-                    "https://api.open-meteo.com/v1/forecast",
-                    params=params,
-                    timeout=30,
-                )
-            except httpx.HTTPError as exc:
-                if attempt == 2:
-                    raise HTTPException(
-                        status_code=502,
-                        detail="Climate forecast request failed.",
-                    ) from exc
-                continue
+        response = await _fetch_forecast(client, params)
+
+        # If the extended daily request is rejected by the provider, retry with
+        # a minimal forecast payload. This keeps the endpoint resilient to
+        # provider-side variable/model changes.
+        if response.status_code != 200:
+            fallback_params = {
+                "latitude": request.latitude,
+                "longitude": request.longitude,
+                "forecast_days": request.forecast_days,
+                "daily": ",".join([
+                    "temperature_2m_max",
+                    "temperature_2m_min",
+                    "precipitation_sum",
+                    "wind_speed_10m_max",
+                    "weather_code",
+                ]),
+                "timezone": "auto",
+            }
+            response = await _fetch_forecast(client, fallback_params)
+
             if response.status_code == 200:
-                break
-            if response.status_code not in {429, 500, 502, 503, 504} or attempt == 2:
-                raise HTTPException(
-                    status_code=502,
-                    detail="Climate forecast service returned an error.",
-                )
-        if response is None or response.status_code != 200:
+                daily_fields = fallback_params["daily"]
+
+        if response.status_code != 200:
             raise HTTPException(
                 status_code=502,
                 detail="Climate forecast service returned an error.",
             )
     except HTTPException:
         raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="Climate forecast request failed.",
+        ) from exc
+
     try:
         body = response.json()
         daily = body["daily"]
     except (ValueError, KeyError, TypeError) as exc:
-        raise HTTPException(status_code=502, detail="Climate forecast returned an invalid response.") from exc
+        raise HTTPException(
+            status_code=502,
+            detail="Climate forecast returned an invalid response.",
+        ) from exc
 
-    fields = [
-        "time", "temperature_2m_mean", "temperature_2m_max", "temperature_2m_min",
-        "precipitation_sum", "precipitation_probability_max", "wind_speed_10m_max",
-        "et0_fao_evapotranspiration", "weather_code",
-    ]
+    times = daily.get("time", [])
     rows: list[dict[str, Any]] = []
-    for i, day in enumerate(daily.get("time", [])):
-        rows.append({
-            "date": day,
-            "temperature_mean_c": daily["temperature_2m_mean"][i],
-            "temperature_max_c": daily["temperature_2m_max"][i],
-            "temperature_min_c": daily["temperature_2m_min"][i],
-            "precipitation_mm": daily["precipitation_sum"][i],
-            "precipitation_probability_percent": daily["precipitation_probability_max"][i],
-            "wind_max_kmh": daily["wind_speed_10m_max"][i],
-            "et0_mm": daily["et0_fao_evapotranspiration"][i],
-            "weather_code": daily["weather_code"][i],
-        })
+
+    for i, day in enumerate(times):
+        row: dict[str, Any] = {"date": day}
+
+        def get_value(key: str) -> Any:
+            values = daily.get(key) or []
+            return values[i] if i < len(values) else None
+
+        row["temperature_mean_c"] = get_value("temperature_2m_mean")
+        row["temperature_max_c"] = get_value("temperature_2m_max")
+        row["temperature_min_c"] = get_value("temperature_2m_min")
+        row["precipitation_mm"] = get_value("precipitation_sum")
+        row["precipitation_probability_percent"] = get_value(
+            "precipitation_probability_max"
+        )
+        row["wind_max_kmh"] = get_value("wind_speed_10m_max")
+        row["et0_mm"] = get_value("et0_fao_evapotranspiration")
+        row["weather_code"] = get_value("weather_code")
+        rows.append(row)
 
     def values(key: str) -> list[float]:
-        return [float(r[key]) for r in rows if r[key] is not None]
+        return [
+            float(r[key])
+            for r in rows
+            if r.get(key) is not None
+        ]
 
     rain = values("precipitation_mm")
     et0 = values("et0_mm")
@@ -150,7 +207,10 @@ async def climate_intelligence(request: ClimateRequest):
         "available": True,
         "source": "Open-Meteo Forecast API",
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "coordinates": {"latitude": request.latitude, "longitude": request.longitude},
+        "coordinates": {
+            "latitude": request.latitude,
+            "longitude": request.longitude,
+        },
         "timezone": body.get("timezone"),
         "forecast_days": len(rows),
         "summary": {
