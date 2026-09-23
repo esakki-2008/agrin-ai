@@ -80,7 +80,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   Future<void> speakAdvisory() async {
     final data=advisory;
     if (data==null) return;
-    final spoken=data.summary+' '+data.actions.map((a)=>a.title+'. '+a.reason).join(' ');
+    final spoken='${data.summary} ${data.actions.map((a)=>'${a.title}. ${a.reason}').join(' ')}';
     await voiceService.speak(spoken, language: voiceLanguage);
   }
 
