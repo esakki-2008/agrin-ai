@@ -806,6 +806,14 @@ Never invent:
 
 Create a practical advisory for the farmer.
 
+LANGUAGE REQUIREMENT (STRICT):
+- Write every human-readable value in the requested RESPONSE_LANGUAGE.
+- Do not mix English into the advisory prose unless a proper noun, source name, scientific abbreviation, unit, or JSON field name requires it.
+- Translate the summary, observations, action titles, action reasons, watch items, and data-limit messages.
+- Keep only the JSON field names and fixed machine-readable enum values (high, medium, low) in English.
+- If RESPONSE_LANGUAGE is Marathi, write natural standard Marathi in Devanagari script, not transliterated Marathi and not a Marathi-English mixture.
+- Preserve measured numbers and units exactly; translate the surrounding explanation.
+
 Respond entirely in the requested RESPONSE_LANGUAGE. Keep JSON field names in English, but translate all human-readable values.
 
 Distinguish measured facts from recommendations.
