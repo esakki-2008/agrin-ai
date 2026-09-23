@@ -94,7 +94,7 @@ class AdvisoryService {
         'satellite_source':satellite?.source,
         'response_language':responseLanguage ?? languageController.language.aiName,
       },
-      timeout: const Duration(seconds:8),
+      timeout: const Duration(seconds:60),
     );
     return AdvisoryData.fromJson(json);
   }
