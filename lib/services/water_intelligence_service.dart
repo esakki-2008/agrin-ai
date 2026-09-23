@@ -1,6 +1,4 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../config/api_config.dart';
+import 'api_client.dart';
 
 class WaterIntelligenceData {
   final bool available;
@@ -39,13 +37,11 @@ class WaterIntelligenceService {
   WaterIntelligenceService({String? baseUrl}):baseUrl=baseUrl??ApiConfig.baseUrl;
 
   Future<WaterIntelligenceData> fetch({required double latitude,required double longitude,int forecastDays=7}) async {
-    final response=await http.post(
-      Uri.parse('$baseUrl/water/intelligence'),
-      headers:{'Content-Type':'application/json'},
-      body:jsonEncode({'latitude':latitude,'longitude':longitude,'forecast_days':forecastDays}),
-    ).timeout(const Duration(seconds:60));
-    final json=jsonDecode(response.body) as Map<String,dynamic>;
-    if(response.statusCode!=200) throw Exception(json['detail']?.toString()??'Water intelligence failed.');
+    final json = await const ApiClient().postJson(
+      '/water/intelligence',
+      body: {'latitude':latitude,'longitude':longitude,'forecast_days':forecastDays},
+      timeout: const Duration(seconds:60),
+    );
     return WaterIntelligenceData.fromJson(json);
   }
 }
