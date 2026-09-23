@@ -7,9 +7,32 @@ import httpx
 
 TRANSIENT_STATUS_CODES = {429, 500, 502, 503, 504}
 
+_client: httpx.AsyncClient | None = None
+
 
 class AIProviderError(Exception):
     """Raised when all configured Gemini providers fail."""
+
+
+async def _get_client() -> httpx.AsyncClient:
+    global _client
+    if _client is None or _client.is_closed:
+        _client = httpx.AsyncClient(
+            follow_redirects=True,
+            limits=httpx.Limits(
+                max_connections=20,
+                max_keepalive_connections=10,
+                keepalive_expiry=30,
+            ),
+        )
+    return _client
+
+
+async def close_client() -> None:
+    global _client
+    if _client is not None and not _client.is_closed:
+        await _client.aclose()
+    _client = None
 
 
 def _providers() -> list[dict[str, str]]:
@@ -45,6 +68,7 @@ async def generate_json(
     if not providers:
         raise AIProviderError("No Gemini API credentials are configured.")
 
+    client = await _get_client()
     last_error = "Unknown Gemini error."
 
     for provider in providers:
@@ -71,18 +95,15 @@ async def generate_json(
 
         for attempt in range(3):
             try:
-                async with httpx.AsyncClient(
+                response = await client.post(
+                    endpoint,
+                    headers={
+                        "x-goog-api-key": provider["key"],
+                        "Content-Type": "application/json",
+                    },
+                    json=payload,
                     timeout=timeout,
-                    follow_redirects=True,
-                ) as client:
-                    response = await client.post(
-                        endpoint,
-                        headers={
-                            "x-goog-api-key": provider["key"],
-                            "Content-Type": "application/json",
-                        },
-                        json=payload,
-                    )
+                )
 
                 if response.status_code == 200:
                     body = response.json()
