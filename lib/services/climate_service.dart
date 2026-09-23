@@ -1,6 +1,4 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../config/api_config.dart';
+import 'api_client.dart';
 
 class ClimateIntelligenceData {
   final bool available;
@@ -45,20 +43,15 @@ class ClimateService {
     required double longitude,
     int forecastDays = 7,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/climate/intelligence'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
+    final json = await const ApiClient().postJson(
+      '/climate/intelligence',
+      body: {
         'latitude': latitude,
         'longitude': longitude,
         'forecast_days': forecastDays,
-      }),
-    ).timeout(const Duration(seconds: 60));
-
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode != 200) {
-      throw Exception(json['detail']?.toString() ?? 'Climate intelligence failed.');
-    }
+      },
+      timeout: const Duration(seconds: 60),
+    );
     return ClimateIntelligenceData.fromJson(json);
   }
 }
