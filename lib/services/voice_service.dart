@@ -33,16 +33,25 @@ class VoiceService {
     if (_speechLocales.isEmpty) return requested;
 
     final normalized = requested.replaceAll('_', '-').toLowerCase();
+
+    // LocaleName in speech_to_text 7.x exposes localeId rather than id.
     final exact = _speechLocales.where(
-      (locale) => locale.id.replaceAll('_', '-').toLowerCase() == normalized,
+      (locale) =>
+          locale.localeId.replaceAll('_', '-').toLowerCase() == normalized,
     );
-    if (exact.isNotEmpty) return exact.first.id;
+    if (exact.isNotEmpty) return exact.first.localeId;
 
     final language = normalized.split('-').first;
     final sameLanguage = _speechLocales.where(
-      (locale) => locale.id.replaceAll('_', '-').toLowerCase().split('-').first == language,
+      (locale) =>
+          locale.localeId
+              .replaceAll('_', '-')
+              .toLowerCase()
+              .split('-')
+              .first ==
+          language,
     );
-    if (sameLanguage.isNotEmpty) return sameLanguage.first.id;
+    if (sameLanguage.isNotEmpty) return sameLanguage.first.localeId;
 
     return null;
   }
