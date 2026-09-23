@@ -14,8 +14,16 @@ router = APIRouter(
 class AgentRequest(BaseModel):
     location: str = Field(..., min_length=1, max_length=120)
     crop: str = Field(..., min_length=1, max_length=80)
-    farm_size_acres: float | None = Field(default=None, gt=0, le=100000)
-    historical_days: int = Field(default=30, ge=7, le=92)
+    farm_size_acres: float | None = Field(
+        default=None,
+        gt=0,
+        le=100000,
+    )
+    historical_days: int = Field(
+        default=30,
+        ge=7,
+        le=92,
+    )
 
 
 # ============================================================
@@ -26,7 +34,13 @@ async def geocode(location: str):
     from data_sources import _get_http_client
 
     client = await _get_http_client()
-    response = await client.get(
+
+    # --------------------------------------------------------
+    # PRIMARY: OPEN-METEO
+    # --------------------------------------------------------
+
+    try:
+        response = await client.get(
             "https://geocoding-api.open-meteo.com/v1/search",
             params={
                 "name": location,
@@ -36,29 +50,75 @@ async def geocode(location: str):
             },
         )
 
-    if response.status_code != 200:
-        raise HTTPException(
-            status_code=502,
-            detail="Location geocoding failed.",
+        if response.status_code == 200:
+            results = response.json().get("results") or []
+
+            if results:
+                item = results[0]
+
+                return {
+                    "name": item.get("name"),
+                    "admin1": item.get("admin1"),
+                    "country": item.get("country"),
+                    "latitude": item["latitude"],
+                    "longitude": item["longitude"],
+                }
+
+    except (
+        httpx.HTTPError,
+        ValueError,
+        KeyError,
+        TypeError,
+    ):
+        pass
+
+    # --------------------------------------------------------
+    # FALLBACK: NOMINATIM / OPENSTREETMAP
+    # --------------------------------------------------------
+
+    try:
+        response = await client.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={
+                "q": location,
+                "format": "jsonv2",
+                "limit": 1,
+            },
+            headers={
+                "User-Agent": (
+                    "AgriN-AI/1.0 "
+                    "(https://github.com/esakki-2008/agrin-ai)"
+                ),
+            },
+            timeout=20,
         )
 
-    results = response.json().get("results") or []
+        if response.status_code == 200:
+            results = response.json()
 
-    if not results:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No location found for '{location}'.",
-        )
+            if results:
+                item = results[0]
 
-    item = results[0]
+                return {
+                    "name": item.get("display_name"),
+                    "admin1": None,
+                    "country": None,
+                    "latitude": float(item["lat"]),
+                    "longitude": float(item["lon"]),
+                }
 
-    return {
-        "name": item.get("name"),
-        "admin1": item.get("admin1"),
-        "country": item.get("country"),
-        "latitude": item["latitude"],
-        "longitude": item["longitude"],
-    }
+    except (
+        httpx.HTTPError,
+        ValueError,
+        KeyError,
+        TypeError,
+    ):
+        pass
+
+    raise HTTPException(
+        status_code=404,
+        detail=f"No location found for '{location}'.",
+    )
 
 
 # ============================================================
@@ -610,7 +670,7 @@ async def analyze(request: AgentRequest):
                 ),
             }
 
-    except Exception as exc:
+    except Exception:
         satellite_data = {
             "available": False,
             "source": (
@@ -633,7 +693,7 @@ async def analyze(request: AgentRequest):
             )
         )
 
-    except Exception as exc:
+    except Exception:
         historical_data = {
             "available": False,
             "message": "Historical weather unavailable.",
@@ -654,10 +714,13 @@ async def analyze(request: AgentRequest):
             )
         )
 
-    except Exception as exc:
+    except Exception:
         historical_ndvi = {
             "available": False,
-            "message": "Historical satellite observations unavailable.",
+            "message": (
+                "Historical satellite observations "
+                "unavailable."
+            ),
         }
 
     # --------------------------------------------------------
