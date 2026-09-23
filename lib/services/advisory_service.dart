@@ -68,6 +68,7 @@ class AdvisoryService {
     required WeatherData weather,
     SoilData? soil,
     SatelliteData? satellite,
+    String responseLanguage = 'English',
   }) async {
     final json = await const ApiClient().postJson(
       '/advisory',
@@ -90,6 +91,7 @@ class AdvisoryService {
         'satellite_date':satellite?.observationDate,
         'satellite_cloud_cover_percent':satellite?.cloudCover,
         'satellite_source':satellite?.source,
+        'response_language':responseLanguage,
       },
       timeout: const Duration(seconds:8),
     );
