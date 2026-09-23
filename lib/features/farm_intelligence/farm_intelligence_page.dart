@@ -347,7 +347,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
               const Row(
                 children: [
                   Icon(Icons.eco_outlined, color: Color(0xFF9EB6A5), size: 18),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Text(
                     'AGRI N / FIELD INTELLIGENCE',
                     style: TextStyle(
@@ -841,9 +841,9 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Row(children: [
-              const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+              Icon(Icons.auto_awesome_rounded, color: Colors.white),
               SizedBox(width: 10),
-              const Text('AI Agro-Advisory', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+              Text('AI Agro-Advisory', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
             ]),
             const SizedBox(height: 16),
             const Text(
