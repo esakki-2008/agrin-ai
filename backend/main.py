@@ -747,6 +747,7 @@ class AdvisoryRequest(BaseModel):
     satellite_date: str | None = None
     satellite_cloud_cover_percent: float | None = None
     satellite_source: str | None = None
+    response_language: str = "English"
 
 
 @app.post("/advisory")
@@ -805,6 +806,8 @@ Never invent:
 
 Create a practical advisory for the farmer.
 
+Respond entirely in the requested RESPONSE_LANGUAGE. Keep JSON field names in English, but translate all human-readable values.
+
 Distinguish measured facts from recommendations.
 
 If a value is null, explicitly say that it is unavailable
@@ -862,6 +865,10 @@ Do not give chemical pesticide or fertilizer dosage.
 For irrigation, recommend checking field soil moisture before
 deciding an irrigation amount unless a measured soil-moisture
 value is actually provided.
+
+RESPONSE_LANGUAGE
+
+""" + request.response_language + """
 
 Measured farm data:
 """ + json.dumps(
