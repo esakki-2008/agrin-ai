@@ -1,12 +1,15 @@
 from datetime import datetime, timezone
 from typing import Any
 
+import logging
+
 import httpx
 from data_sources import _get_http_client
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/climate", tags=["Climate & Weather Intelligence"])
+logger = logging.getLogger(__name__)
 
 
 class ClimateRequest(BaseModel):
@@ -105,13 +108,25 @@ async def climate_intelligence(request: ClimateRequest):
                 daily_fields = fallback_params["daily"]
 
         if response.status_code != 200:
+            logger.warning(
+                "Open-Meteo forecast failed: status=%s body=%s",
+                response.status_code,
+                response.text[:500].replace("\\n", " "),
+            )
             raise HTTPException(
                 status_code=502,
                 detail="Climate forecast service returned an error.",
             )
     except HTTPException:
         raise
+    except httpx.HTTPError as exc:
+        logger.warning("Open-Meteo forecast transport failure: %s", type(exc).__name__)
+        raise HTTPException(
+            status_code=502,
+            detail="Climate forecast request failed.",
+        ) from exc
     except Exception as exc:
+        logger.exception("Climate forecast unexpected failure: %s", type(exc).__name__)
         raise HTTPException(
             status_code=502,
             detail="Climate forecast request failed.",
