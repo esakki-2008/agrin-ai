@@ -148,9 +148,11 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
 
       // These sources are independent after geocoding, so don't wait for them
       // one-by-one. Each section appears as soon as its real response arrives.
+      final soilLoad=loadSoil();
+      final satelliteLoad=loadSatellite();
       final sourceLoads=Future.wait<void>([
-        loadSoil(),
-        loadSatellite(),
+        soilLoad,
+        satelliteLoad,
         loadAdvancedSatellite(),
         loadClimate(),
         loadSoilProfile(),
@@ -160,11 +162,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       // AI can start as soon as the core observations needed by the advisory
       // are available. It no longer blocks the environmental intelligence UI.
       try {
-        final coreLoads=await Future.wait<void>([
-          loadSoil(),
-          loadSatellite(),
-        ]);
-        coreLoads;
+        await Future.wait<void>([soilLoad,satelliteLoad]);
         final ai=await AdvisoryService().fetch(
           location:location.text.trim(),
           crop:crop,
