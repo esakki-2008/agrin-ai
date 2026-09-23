@@ -1,6 +1,4 @@
-import 'dart:convert';
-import '../config/api_config.dart';
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 import 'weather_service.dart';
 import 'soil_service.dart';
 import 'satellite_service.dart';
@@ -70,10 +68,9 @@ class AdvisoryService {
     SoilData? soil,
     SatelliteData? satellite,
   }) async {
-    final response=await http.post(
-      Uri.parse('$baseUrl/advisory'),
-      headers:{'Content-Type':'application/json'},
-      body:jsonEncode({
+    final json = await const ApiClient().postJson(
+      '/advisory',
+      body: {
         'location':location,
         'crop':crop,
         'farm_size_acres':farmSizeAcres,
@@ -92,10 +89,9 @@ class AdvisoryService {
         'satellite_date':satellite?.observationDate,
         'satellite_cloud_cover_percent':satellite?.cloudCover,
         'satellite_source':satellite?.source,
-      }),
-    ).timeout(const Duration(seconds:8));
-    final json=jsonDecode(response.body) as Map<String,dynamic>;
-    if(response.statusCode!=200) throw Exception(json['detail']?.toString()??'AI advisory service failed.');
+      },
+      timeout: const Duration(seconds:8),
+    );
     return AdvisoryData.fromJson(json);
   }
 }
