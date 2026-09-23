@@ -98,7 +98,7 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
   }
   Widget _crop() {
     return DropdownButtonFormField<String>(
-      initialValue: crop,
+      value: crop,
       decoration: dec('Crop', Icons.grass_rounded),
       items: const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
       onChanged: (x) => setState(() => crop = x ?? crop),
