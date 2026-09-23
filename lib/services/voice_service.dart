@@ -6,7 +6,6 @@ class VoiceService {
   final FlutterTts _tts = FlutterTts();
 
   bool _initialized = false;
-  List<LocaleName> _speechLocales = const [];
 
   bool get isListening => _speech.isListening;
 
@@ -21,44 +20,13 @@ class VoiceService {
       onError: onError,
     );
 
-    if (available) {
-      _speechLocales = await _speech.locales();
-    }
-
     _initialized = available;
     return available;
   }
 
-  String? _matchSpeechLocale(String requested) {
-    if (_speechLocales.isEmpty) return requested;
-
-    final normalized = requested.replaceAll('_', '-').toLowerCase();
-
-    // LocaleName in speech_to_text 7.x exposes localeId rather than id.
-    final exact = _speechLocales.where(
-      (locale) =>
-          locale.localeId.replaceAll('_', '-').toLowerCase() == normalized,
-    );
-    if (exact.isNotEmpty) return exact.first.localeId;
-
-    final language = normalized.split('-').first;
-    final sameLanguage = _speechLocales.where(
-      (locale) =>
-          locale.localeId
-              .replaceAll('_', '-')
-              .toLowerCase()
-              .split('-')
-              .first ==
-          language,
-    );
-    if (sameLanguage.isNotEmpty) return sameLanguage.first.localeId;
-
-    return null;
-  }
-
   Future<void> startListening({
     required void Function(String text) onResult,
-    String localeId = 'en-IN',
+    String localeId = 'en_IN',
   }) async {
     if (!_initialized) {
       final available = await initialize();
@@ -67,13 +35,8 @@ class VoiceService {
       }
     }
 
-    final resolvedLocale = _matchSpeechLocale(localeId);
-    if (resolvedLocale == null) {
-      throw Exception('Speech recognition for $localeId is not available on this device/browser.');
-    }
-
     await _speech.listen(
-      listenOptions: SpeechListenOptions(localeId: resolvedLocale),
+      listenOptions: SpeechListenOptions(localeId: localeId),
       onResult: (result) {
         onResult(result.recognizedWords);
       },
@@ -90,34 +53,7 @@ class VoiceService {
   }) async {
     if (text.trim().isEmpty) return;
 
-    final availableLanguages = await _tts.getLanguages;
-    final normalized = language.replaceAll('_', '-').toLowerCase();
-
-    String? resolvedLanguage;
-    for (final item in availableLanguages) {
-      final value = item.toString();
-      if (value.replaceAll('_', '-').toLowerCase() == normalized) {
-        resolvedLanguage = value;
-        break;
-      }
-    }
-
-    if (resolvedLanguage == null) {
-      final languageOnly = normalized.split('-').first;
-      for (final item in availableLanguages) {
-        final value = item.toString();
-        if (value.replaceAll('_', '-').toLowerCase().split('-').first == languageOnly) {
-          resolvedLanguage = value;
-          break;
-        }
-      }
-    }
-
-    if (resolvedLanguage == null) {
-      throw Exception('Text-to-speech for $language is not available on this device/browser.');
-    }
-
-    await _tts.setLanguage(resolvedLanguage);
+    await _tts.setLanguage(language);
     await _tts.setSpeechRate(0.48);
     await _tts.setPitch(1.0);
     await _tts.speak(text);
