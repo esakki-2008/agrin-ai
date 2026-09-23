@@ -42,46 +42,52 @@ async def build_farm_twin(request: FarmTwinRequest):
     place=await _geocode(request.location)
     lat,lon=place["latitude"],place["longitude"]
 
-    weather={}
-    try:
-        client = await _get_http_client()
-        r=await client.get(
-            "https://api.open-meteo.com/v1/forecast",
-            params={
-                "latitude":lat,"longitude":lon,"current":"temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code","timezone":"auto"
-            },
-            timeout=25,
-        )
-        if r.status_code==200:
-            weather=r.json()
-    except httpx.HTTPError:
-        weather={}
+    async def fetch_weather():
+        try:
+            client = await _get_http_client()
+            r=await client.get(
+                "https://api.open-meteo.com/v1/forecast",
+                params={
+                    "latitude":lat,"longitude":lon,"current":"temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code","timezone":"auto"
+                },
+                timeout=25,
+            )
+            return r.json().get("current",{}) if r.status_code==200 else {}
+        except httpx.HTTPError:
+            return {}
 
-    soil={}
-    try:
-        ph_raw, soc_raw, nitrogen_raw, clay_raw = await asyncio.gather(
-            sample("phh2o","phh2o_0-5cm_Q0.5",lon,lat),
-            sample("soc","soc_0-5cm_Q0.5",lon,lat),
-            sample("nitrogen","nitrogen_0-5cm_Q0.5",lon,lat),
-            sample("clay","clay_0-5cm_Q0.5",lon,lat),
-        )
-        soil={
-            "ph":round(ph_raw/10,2),
-            "organic_carbon_g_kg":round(soc_raw/10,2),
-            "nitrogen_g_kg":round(nitrogen_raw/100,3),
-            "clay_percent":round(clay_raw/10,2),
-        }
-    except Exception:
-        soil={}
+    async def fetch_soil():
+        try:
+            ph_raw, soc_raw, nitrogen_raw, clay_raw = await asyncio.gather(
+                sample("phh2o","phh2o_0-5cm_Q0.5",lon,lat),
+                sample("soc","soc_0-5cm_Q0.5",lon,lat),
+                sample("nitrogen","nitrogen_0-5cm_Q0.5",lon,lat),
+                sample("clay","clay_0-5cm_Q0.5",lon,lat),
+            )
+            return {
+                "ph":round(ph_raw/10,2),
+                "organic_carbon_g_kg":round(soc_raw/10,2),
+                "nitrogen_g_kg":round(nitrogen_raw/100,3),
+                "clay_percent":round(clay_raw/10,2),
+            }
+        except Exception:
+            return {}
 
-    satellite={}
-    try:
-        features=await _search_features(lat,lon,180)
-        selected=_choose(features,30)
-        if selected:
-            satellite=await _analyze_scene(selected[0],lat,lon)
-    except Exception:
-        satellite={}
+    async def fetch_satellite():
+        try:
+            features=await _search_features(lat,lon,180)
+            selected=_choose(features,30)
+            if selected:
+                return await _analyze_scene(selected[0],lat,lon)
+        except Exception:
+            pass
+        return {}
+
+    weather, soil, satellite = await asyncio.gather(
+        fetch_weather(),
+        fetch_soil(),
+        fetch_satellite(),
+    )
 
     return {
         "available":True,
