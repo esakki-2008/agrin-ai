@@ -55,12 +55,12 @@ async def historical_weather(request: HistoricalRequest):
                 params=params,
             )
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Historical weather request failed: {exc}") from exc
+        raise HTTPException(status_code=502, detail="Historical weather request failed.") from exc
 
     if response.status_code != 200:
         raise HTTPException(
             status_code=502,
-            detail=f"Historical weather service returned HTTP {response.status_code}.",
+            detail="Historical weather service returned an error.",
         )
 
     try:
