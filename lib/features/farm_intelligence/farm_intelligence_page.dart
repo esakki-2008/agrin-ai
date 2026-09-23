@@ -67,8 +67,19 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
             setState(() => voiceListening=false);
           }
         },
-        onError: (_) {
-          if (mounted) setState(() => voiceListening=false);
+        onError: (error) {
+          if (!mounted) return;
+          setState(() => voiceListening=false);
+          final message = error.toString().trim();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                message.isEmpty
+                    ? 'Microphone or speech recognition is unavailable. Check the browser microphone permission.'
+                    : message,
+              ),
+            ),
+          );
         },
       );
       if (!available) throw Exception('Speech recognition is unavailable on this device.');
