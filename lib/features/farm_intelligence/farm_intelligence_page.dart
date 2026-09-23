@@ -468,7 +468,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   Widget _form()=>_card('Farm profile',Column(children:[
     TextField(controller:location,decoration:decoration('Village / district / location',Icons.location_on_outlined)),
     const SizedBox(height:15),
-    DropdownButtonFormField<String>(initialValue:crop,decoration:decoration('Primary crop',Icons.grass_rounded),
+    DropdownButtonFormField<String>(value:crop,decoration:decoration('Primary crop',Icons.grass_rounded),
       items:const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),
       onChanged:(x)=>setState(()=>crop=x??crop)),
     const SizedBox(height:15),
