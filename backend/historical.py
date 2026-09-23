@@ -196,23 +196,40 @@ async def historical_satellite_ndvi(request: HistoricalRequest):
     }
 
     try:
-        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            response = await client.post(
-                "https://earth-search.aws.element84.com/v1/search",
-                json=payload,
-            )
+        client = await _get_http_client()
+        response = await client.post(
+            "https://earth-search.aws.element84.com/v1/search",
+            json=payload,
+            timeout=30,
+        )
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Historical satellite search failed: {exc}") from exc
+        raise HTTPException(
+            status_code=502,
+            detail="Historical satellite search failed.",
+        ) from exc
 
     if response.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"Historical satellite catalog returned HTTP {response.status_code}.")
+        raise HTTPException(
+            status_code=502,
+            detail="Historical satellite catalog request failed.",
+        )
 
-    features = response.json().get("features", [])
+    try:
+        features = response.json().get("features", [])
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="Historical satellite catalog returned an invalid response.",
+        ) from exc
+
     candidates = []
     for feature in features:
         cloud = feature.get("properties", {}).get("eo:cloud_cover")
-        if cloud is not None and float(cloud) <= 60:
-            candidates.append(feature)
+        try:
+            if cloud is not None and float(cloud) <= 60:
+                candidates.append(feature)
+        except (TypeError, ValueError):
+            continue
 
     candidates.sort(
         key=lambda feature: feature.get("properties", {}).get("datetime") or "",
@@ -224,24 +241,35 @@ async def historical_satellite_ndvi(request: HistoricalRequest):
 
     async def process_scene(feature):
         item_id = feature.get("id")
-        item_url = f"https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/{item_id}"
+        if not item_id:
+            return []
+
+        item_url = (
+            "https://earth-search.aws.element84.com/v1/"
+            f"collections/sentinel-2-c1-l2a/items/{item_id}"
+        )
+
         try:
-        item_response = await client.get(item_url, timeout=45)
+            item_response = await client.get(item_url, timeout=45)
             if item_response.status_code != 200:
-                continue
+                return []
+
             item = item_response.json()
             assets = item.get("assets", {})
             red_asset = assets.get("red")
             nir_asset = assets.get("nir")
             if not red_asset or not nir_asset:
-                continue
-             red_href = red_asset.get("href")
+                return []
+
+            red_href = red_asset.get("href")
             nir_href = nir_asset.get("href")
             if not red_href or not nir_href:
-                continue
-             def read_reflectance(href: str, asset: dict) -> float:
+                return []
+
+            def read_reflectance(href: str, asset: dict) -> float:
                 with rasterio.open(href) as dataset:
                     from rasterio.warp import transform
+
                     xs, ys = transform(
                         "EPSG:4326",
                         dataset.crs,
@@ -256,43 +284,83 @@ async def historical_satellite_ndvi(request: HistoricalRequest):
                         5,
                         5,
                     )
-                    values = dataset.read(1, window=window, masked=True).astype("float64")
+                    values = dataset.read(
+                        1,
+                        window=window,
+                        masked=True,
+                    ).astype("float64")
                     valid = values.compressed()
                     valid = valid[valid >= 0]
                     if len(valid) == 0:
                         raise ValueError("No valid pixels.")
+
                     bands = asset.get("raster:bands", [])
-                    scale = (bands[0].get("scale", 1.0) or 1.0) if bands else 1.0
-                    offset = (bands[0].get("offset", 0.0) or 0.0) if bands else 0.0
-                    return float((valid * scale + offset).mean())
-             red = read_reflectance(red_href, red_asset)
+                    scale = (
+                        bands[0].get("scale", 1.0) or 1.0
+                    ) if bands else 1.0
+                    offset = (
+                        bands[0].get("offset", 0.0) or 0.0
+                    ) if bands else 0.0
+
+                    return float(
+                        (valid * scale + offset).mean()
+                    )
+
+            red = read_reflectance(red_href, red_asset)
             nir = read_reflectance(nir_href, nir_asset)
             denominator = nir + red
             if denominator == 0:
-                continue
-             ndvi = max(-1.0, min(1.0, (nir - red) / denominator))
+                return []
+
+            ndvi = max(
+                -1.0,
+                min(1.0, (nir - red) / denominator),
+            )
+
             properties = feature.get("properties", {})
-            observations.append({
+            cloud = properties.get("eo:cloud_cover")
+            return [{
                 "scene_id": item_id,
                 "date": properties.get("datetime"),
-                "cloud_cover_percent": round(float(properties.get("eo:cloud_cover")), 2),
+                "cloud_cover_percent": (
+                    round(float(cloud), 2)
+                    if cloud is not None
+                    else None
+                ),
                 "red_reflectance": round(red, 6),
                 "nir_reflectance": round(nir, 6),
                 "ndvi": round(ndvi, 6),
-            })
+            }]
         except Exception:
-            continue
+            return []
 
-    observations = [item for result in await asyncio.gather(*(process_scene(feature) for feature in candidates)) for item in result]
+    observations = [
+        item
+        for result in await asyncio.gather(
+            *(process_scene(feature) for feature in candidates)
+        )
+        for item in result
+    ]
     observations.sort(key=lambda x: x.get("date") or "")
+
     return {
         "available": len(observations) > 0,
         "source": "Sentinel-2 Collection 1 L2A / AWS Open Data",
         "collection": "sentinel-2-c1-l2a",
-        "coordinates": {"latitude": request.latitude, "longitude": request.longitude},
+        "coordinates": {
+            "latitude": request.latitude,
+            "longitude": request.longitude,
+        },
         "days": request.days,
         "max_cloud_cover_used_percent": 60,
         "count": len(observations),
         "observations": observations,
-        "message": None if observations else "No usable Sentinel-2 NDVI observations were available for this period and cloud threshold.",
+        "message": (
+            None
+            if observations
+            else (
+                "No usable Sentinel-2 NDVI observations were "
+                "available for this period and cloud threshold."
+            )
+        ),
     }
