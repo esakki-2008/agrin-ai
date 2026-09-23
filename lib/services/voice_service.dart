@@ -36,7 +36,7 @@ class VoiceService {
     }
 
     await _speech.listen(
-      options: SpeechListenOptions(localeId: localeId),
+      listenOptions: SpeechListenOptions(localeId: localeId),
       onResult: (result) {
         onResult(result.recognizedWords);
       },
