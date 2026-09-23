@@ -49,11 +49,12 @@ async def historical_weather(request: HistoricalRequest):
     }
 
     try:
-        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            response = await client.get(
-                "https://archive-api.open-meteo.com/v1/archive",
-                params=params,
-            )
+        client = await _get_http_client()
+        response = await client.get(
+            "https://archive-api.open-meteo.com/v1/archive",
+            params=params,
+            timeout=30,
+        )
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail="Historical weather request failed.") from exc
 
@@ -148,12 +149,12 @@ async def historical_satellite_scenes(request: HistoricalRequest):
             timeout=30,
         )
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Historical satellite search failed: {exc}") from exc
+        raise HTTPException(status_code=502, detail="Historical satellite search failed.") from exc
 
     if response.status_code != 200:
         raise HTTPException(
             status_code=502,
-            detail=f"Historical satellite catalog returned HTTP {response.status_code}.",
+            detail="Historical satellite catalog returned an error.",
         )
 
     scenes = []
