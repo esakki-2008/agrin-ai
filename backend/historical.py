@@ -1,6 +1,8 @@
 from datetime import date, datetime, timedelta, timezone
 
+import asyncio
 import httpx
+from data_sources import _get_http_client
 import rasterio
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -128,11 +130,12 @@ async def historical_satellite_scenes(request: HistoricalRequest):
     }
 
     try:
-        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            response = await client.post(
-                "https://earth-search.aws.element84.com/v1/search",
-                json=payload,
-            )
+        client = await _get_http_client()
+        response = await client.post(
+            "https://earth-search.aws.element84.com/v1/search",
+            json=payload,
+            timeout=30,
+        )
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail=f"Historical satellite search failed: {exc}") from exc
 
@@ -206,74 +209,70 @@ async def historical_satellite_ndvi(request: HistoricalRequest):
     )
     candidates = candidates[:8]
 
-    observations = []
+    client = await _get_http_client()
 
-    async with httpx.AsyncClient(timeout=45, follow_redirects=True) as client:
-        for feature in candidates:
-            item_id = feature.get("id")
-            item_url = f"https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/{item_id}"
-            try:
-                item_response = await client.get(item_url)
-                if item_response.status_code != 200:
-                    continue
-                item = item_response.json()
-                assets = item.get("assets", {})
-                red_asset = assets.get("red")
-                nir_asset = assets.get("nir")
-                if not red_asset or not nir_asset:
-                    continue
-
-                red_href = red_asset.get("href")
-                nir_href = nir_asset.get("href")
-                if not red_href or not nir_href:
-                    continue
-
-                def read_reflectance(href: str, asset: dict) -> float:
-                    with rasterio.open(href) as dataset:
-                        from rasterio.warp import transform
-                        xs, ys = transform(
-                            "EPSG:4326",
-                            dataset.crs,
-                            [request.longitude],
-                            [request.latitude],
-                        )
-                        row, col = dataset.index(xs[0], ys[0])
-                        half = 2
-                        window = rasterio.windows.Window(
-                            max(0, col - half),
-                            max(0, row - half),
-                            5,
-                            5,
-                        )
-                        values = dataset.read(1, window=window, masked=True).astype("float64")
-                        valid = values.compressed()
-                        valid = valid[valid >= 0]
-                        if len(valid) == 0:
-                            raise ValueError("No valid pixels.")
-                        bands = asset.get("raster:bands", [])
-                        scale = (bands[0].get("scale", 1.0) or 1.0) if bands else 1.0
-                        offset = (bands[0].get("offset", 0.0) or 0.0) if bands else 0.0
-                        return float((valid * scale + offset).mean())
-
-                red = read_reflectance(red_href, red_asset)
-                nir = read_reflectance(nir_href, nir_asset)
-                denominator = nir + red
-                if denominator == 0:
-                    continue
-
-                ndvi = max(-1.0, min(1.0, (nir - red) / denominator))
-                properties = feature.get("properties", {})
-                observations.append({
-                    "scene_id": item_id,
-                    "date": properties.get("datetime"),
-                    "cloud_cover_percent": round(float(properties.get("eo:cloud_cover")), 2),
-                    "red_reflectance": round(red, 6),
-                    "nir_reflectance": round(nir, 6),
-                    "ndvi": round(ndvi, 6),
-                })
-            except Exception:
+    async def process_scene(feature):
+        item_id = feature.get("id")
+        item_url = f"https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/{item_id}"
+        try:
+        item_response = await client.get(item_url, timeout=45)
+            if item_response.status_code != 200:
                 continue
+            item = item_response.json()
+            assets = item.get("assets", {})
+            red_asset = assets.get("red")
+            nir_asset = assets.get("nir")
+            if not red_asset or not nir_asset:
+                continue
+             red_href = red_asset.get("href")
+            nir_href = nir_asset.get("href")
+            if not red_href or not nir_href:
+                continue
+             def read_reflectance(href: str, asset: dict) -> float:
+                with rasterio.open(href) as dataset:
+                    from rasterio.warp import transform
+                    xs, ys = transform(
+                        "EPSG:4326",
+                        dataset.crs,
+                        [request.longitude],
+                        [request.latitude],
+                    )
+                    row, col = dataset.index(xs[0], ys[0])
+                    half = 2
+                    window = rasterio.windows.Window(
+                        max(0, col - half),
+                        max(0, row - half),
+                        5,
+                        5,
+                    )
+                    values = dataset.read(1, window=window, masked=True).astype("float64")
+                    valid = values.compressed()
+                    valid = valid[valid >= 0]
+                    if len(valid) == 0:
+                        raise ValueError("No valid pixels.")
+                    bands = asset.get("raster:bands", [])
+                    scale = (bands[0].get("scale", 1.0) or 1.0) if bands else 1.0
+                    offset = (bands[0].get("offset", 0.0) or 0.0) if bands else 0.0
+                    return float((valid * scale + offset).mean())
+             red = read_reflectance(red_href, red_asset)
+            nir = read_reflectance(nir_href, nir_asset)
+            denominator = nir + red
+            if denominator == 0:
+                continue
+             ndvi = max(-1.0, min(1.0, (nir - red) / denominator))
+            properties = feature.get("properties", {})
+            observations.append({
+                "scene_id": item_id,
+                "date": properties.get("datetime"),
+                "cloud_cover_percent": round(float(properties.get("eo:cloud_cover")), 2),
+                "red_reflectance": round(red, 6),
+                "nir_reflectance": round(nir, 6),
+                "ndvi": round(ndvi, 6),
+            })
+        except Exception:
+            continue
 
+    observations = [item for result in await asyncio.gather(*(process_scene(feature) for feature in candidates)) for item in result]
     observations.sort(key=lambda x: x.get("date") or "")
     return {
         "available": len(observations) > 0,
