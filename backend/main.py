@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+import asyncio
 import base64
 import json
 
@@ -85,32 +86,11 @@ async def soil(request: SoilRequest):
         )
 
     try:
-        ph_raw = await sample(
-            "phh2o",
-            "phh2o_0-5cm_Q0.5",
-            request.longitude,
-            request.latitude,
-        )
-
-        soc_raw = await sample(
-            "soc",
-            "soc_0-5cm_Q0.5",
-            request.longitude,
-            request.latitude,
-        )
-
-        nitrogen_raw = await sample(
-            "nitrogen",
-            "nitrogen_0-5cm_Q0.5",
-            request.longitude,
-            request.latitude,
-        )
-
-        clay_raw = await sample(
-            "clay",
-            "clay_0-5cm_Q0.5",
-            request.longitude,
-            request.latitude,
+        ph_raw, soc_raw, nitrogen_raw, clay_raw = await asyncio.gather(
+            sample("phh2o", "phh2o_0-5cm_Q0.5", request.longitude, request.latitude),
+            sample("soc", "soc_0-5cm_Q0.5", request.longitude, request.latitude),
+            sample("nitrogen", "nitrogen_0-5cm_Q0.5", request.longitude, request.latitude),
+            sample("clay", "clay_0-5cm_Q0.5", request.longitude, request.latitude),
         )
 
         return {
