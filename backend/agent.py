@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import datetime, timezone
 
@@ -665,32 +666,31 @@ async def analyze(request: AgentRequest):
     # --------------------------------------------------------
 
     try:
-        ph = await sample(
-            "phh2o",
-            "phh2o_0-5cm_Q0.5",
-            lon,
-            lat,
-        )
-
-        organic_carbon = await sample(
-            "soc",
-            "soc_0-5cm_Q0.5",
-            lon,
-            lat,
-        )
-
-        nitrogen = await sample(
-            "nitrogen",
-            "nitrogen_0-5cm_Q0.5",
-            lon,
-            lat,
-        )
-
-        clay = await sample(
-            "clay",
-            "clay_0-5cm_Q0.5",
-            lon,
-            lat,
+        ph, organic_carbon, nitrogen, clay = await asyncio.gather(
+            sample(
+                "phh2o",
+                "phh2o_0-5cm_Q0.5",
+                lon,
+                lat,
+            ),
+            sample(
+                "soc",
+                "soc_0-5cm_Q0.5",
+                lon,
+                lat,
+            ),
+            sample(
+                "nitrogen",
+                "nitrogen_0-5cm_Q0.5",
+                lon,
+                lat,
+            ),
+            sample(
+                "clay",
+                "clay_0-5cm_Q0.5",
+                lon,
+                lat,
+            ),
         )
 
         soil_data = {
