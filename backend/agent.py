@@ -41,38 +41,61 @@ async def geocode(location: str):
     # PRIMARY: OPEN-METEO
     # --------------------------------------------------------
 
-    try:
-        response = await client.get(
-            "https://geocoding-api.open-meteo.com/v1/search",
-            params={
-                "name": location,
-                "count": 1,
-                "language": "en",
-                "format": "json",
-            },
-        )
+    # Try increasingly specific queries so short Indian place names
+    # are resolved consistently by Open-Meteo.
+    geocode_queries = [
+        location.strip(),
+        f"{location.strip()}, Maharashtra, India",
+        f"{location.strip()}, India",
+    ]
 
-        if response.status_code == 200:
-            results = response.json().get("results") or []
+    for query in geocode_queries:
+        try:
+            response = await client.get(
+                "https://geocoding-api.open-meteo.com/v1/search",
+                params={
+                    "name": query,
+                    "count": 5,
+                    "language": "en",
+                    "format": "json",
+                },
+                timeout=10,
+            )
 
-            if results:
-                item = results[0]
+            if response.status_code == 200:
+                results = response.json().get("results") or []
 
-                return {
-                    "name": item.get("name"),
-                    "admin1": item.get("admin1"),
-                    "country": item.get("country"),
-                    "latitude": item["latitude"],
-                    "longitude": item["longitude"],
-                }
+                # Prefer India/Maharashtra when multiple matches exist.
+                ranked = sorted(
+                    results,
+                    key=lambda item: (
+                        0
+                        if str(item.get("country_code", "")).upper() == "IN"
+                        else 1,
+                        0
+                        if "Maharashtra" in str(item.get("admin1", ""))
+                        else 1,
+                    ),
+                )
 
-    except (
-        httpx.HTTPError,
-        ValueError,
-        KeyError,
-        TypeError,
-    ):
-        pass
+                if ranked:
+                    item = ranked[0]
+
+                    return {
+                        "name": item.get("name"),
+                        "admin1": item.get("admin1"),
+                        "country": item.get("country"),
+                        "latitude": item["latitude"],
+                        "longitude": item["longitude"],
+                    }
+
+        except (
+            httpx.HTTPError,
+            ValueError,
+            KeyError,
+            TypeError,
+        ):
+            continue
 
     # --------------------------------------------------------
     # FALLBACK: NOMINATIM / OPENSTREETMAP
@@ -126,11 +149,6 @@ async def geocode(location: str):
             TypeError,
         ):
             continue
-
-    raise HTTPException(
-        status_code=404,
-        detail=f"No location found for '{location}'.",
-    )
 
     raise HTTPException(
         status_code=404,
