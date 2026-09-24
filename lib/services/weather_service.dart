@@ -30,8 +30,8 @@ class WeatherService {
     }
     final queries = <String>[
       place.trim(),
-      if (!place.contains(',')) place.trim() + ', Maharashtra, India',
-      if (!place.contains(',')) place.trim() + ', India',
+      if (!place.contains(',')) `${place.trim()}, Maharashtra, India`,
+      if (!place.contains(',')) `${place.trim()}, India`,
     ];
 
     Map<String,dynamic>? item;
@@ -61,7 +61,7 @@ class WeatherService {
     }
 
     if(item==null) throw Exception('Location not found in India.');
-    final resolvedItem=item!;
+    final resolvedItem=item;
     final lat=(resolvedItem['latitude'] as num).toDouble(), lon=(resolvedItem['longitude'] as num).toDouble();
     final resolved=[resolvedItem['name'],resolvedItem['admin1'],resolvedItem['country']].where((x)=>x!=null&&x.toString().isNotEmpty).join(', ');
     final weatherUri=Uri.https('api.open-meteo.com','/v1/forecast',{
