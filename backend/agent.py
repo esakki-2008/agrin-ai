@@ -127,6 +127,62 @@ async def geocode(location: str):
         ):
             continue
 
+    # --------------------------------------------------------
+    # FALLBACK: PHOTON / KOMOOT
+    # --------------------------------------------------------
+
+    photon_queries = [
+        location.strip(),
+        f"{location.strip()}, Maharashtra, India",
+        f"{location.strip()}, India",
+    ]
+
+    for query in photon_queries:
+        try:
+            response = await client.get(
+                "https://photon.komoot.io/api/",
+                params={
+                    "q": query,
+                    "limit": 1,
+                },
+                headers={
+                    "User-Agent": (
+                        "AgriN-AI/1.0 "
+                        "(https://github.com/esakki-2008/agrin-ai)"
+                    ),
+                },
+                timeout=10,
+            )
+
+            if response.status_code == 200:
+                features = response.json().get("features") or []
+
+                if features:
+                    feature = features[0]
+                    geometry = feature.get("geometry") or {}
+                    coordinates = geometry.get("coordinates") or []
+                    properties = feature.get("properties") or {}
+
+                    if len(coordinates) >= 2:
+                        return {
+                            "name": properties.get("name")
+                            or properties.get("city")
+                            or location.strip(),
+                            "admin1": properties.get("state"),
+                            "country": properties.get("country"),
+                            "latitude": float(coordinates[1]),
+                            "longitude": float(coordinates[0]),
+                        }
+
+        except (
+            httpx.HTTPError,
+            ValueError,
+            KeyError,
+            TypeError,
+            IndexError,
+        ):
+            continue
+
     raise HTTPException(
         status_code=404,
         detail=f"No location found for '{location}'.",
