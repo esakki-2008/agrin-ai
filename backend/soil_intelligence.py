@@ -1,6 +1,9 @@
+import asyncio
 from typing import Any
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
 from data_sources import sample
 
 router = APIRouter(prefix="/soil-intelligence", tags=["Soil Intelligence"])
@@ -14,43 +17,93 @@ DEPTHS = {
     "100-200cm": "100-200cm",
 }
 
+MAX_CONCURRENT_SOIL_REQUESTS = 8
+
+
 class SoilIntelligenceRequest(BaseModel):
     latitude: float
     longitude: float
 
-async def _depth_values(lat: float, lon: float, depth: str) -> dict[str, float]:
+
+async def _depth_values(
+    lat: float,
+    lon: float,
+    depth: str,
+    semaphore: asyncio.Semaphore,
+) -> dict[str, float]:
+    async def fetch(
+        property_name: str,
+        coverage: str,
+        divisor: float,
+        decimals: int,
+    ) -> float:
+        async with semaphore:
+            value = await sample(property_name, coverage, lon, lat)
+            return round(value / divisor, decimals)
+
+    ph, organic_carbon, nitrogen, clay = await asyncio.gather(
+        fetch("phh2o", f"phh2o_{depth}_Q0.5", 10, 2),
+        fetch("soc", f"soc_{depth}_Q0.5", 10, 2),
+        fetch("nitrogen", f"nitrogen_{depth}_Q0.5", 100, 3),
+        fetch("clay", f"clay_{depth}_Q0.5", 10, 2),
+    )
+
     return {
-        "ph": round((await sample("phh2o", f"phh2o_{depth}_Q0.5", lon, lat)) / 10, 2),
-        "organic_carbon_g_kg": round((await sample("soc", f"soc_{depth}_Q0.5", lon, lat)) / 10, 2),
-        "nitrogen_g_kg": round((await sample("nitrogen", f"nitrogen_{depth}_Q0.5", lon, lat)) / 100, 3),
-        "clay_percent": round((await sample("clay", f"clay_{depth}_Q0.5", lon, lat)) / 10, 2),
+        "ph": ph,
+        "organic_carbon_g_kg": organic_carbon,
+        "nitrogen_g_kg": nitrogen,
+        "clay_percent": clay,
     }
+
 
 @router.post("/profile")
 async def soil_profile(request: SoilIntelligenceRequest):
     if not (-90 <= request.latitude <= 90 and -180 <= request.longitude <= 180):
         raise HTTPException(status_code=400, detail="Invalid coordinates.")
 
+    semaphore = asyncio.Semaphore(MAX_CONCURRENT_SOIL_REQUESTS)
+
+    async def fetch_depth(label: str, depth: str):
+        try:
+            values = await _depth_values(
+                request.latitude,
+                request.longitude,
+                depth,
+                semaphore,
+            )
+            return label, values, None
+        except HTTPException as exc:
+            return label, None, exc.detail
+        except Exception as exc:
+            return label, None, str(exc)
+
+    results = await asyncio.gather(
+        *(fetch_depth(label, depth) for label, depth in DEPTHS.items())
+    )
+
     profile: list[dict[str, Any]] = []
     errors: list[str] = []
 
-    for label, depth in DEPTHS.items():
-        try:
-            values = await _depth_values(request.latitude, request.longitude, depth)
+    for label, values, error in results:
+        if values is not None:
             profile.append({"depth": label, **values})
-        except HTTPException as exc:
-            errors.append(f"{label}: {exc.detail}")
-        except Exception as exc:
-            errors.append(f"{label}: {exc}")
+        elif error:
+            errors.append(f"{label}: {error}")
 
     if not profile:
-        raise HTTPException(status_code=502, detail="No SoilGrids depth profile could be retrieved.")
+        raise HTTPException(
+            status_code=502,
+            detail="No SoilGrids depth profile could be retrieved.",
+        )
 
     return {
         "available": True,
         "source": "ISRIC SoilGrids 2.0",
         "resolution_m": 250,
-        "coordinates": {"latitude": request.latitude, "longitude": request.longitude},
+        "coordinates": {
+            "latitude": request.latitude,
+            "longitude": request.longitude,
+        },
         "profile": profile,
         "errors": errors,
         "interpretation": {
@@ -66,10 +119,12 @@ async def soil_profile(request: SoilIntelligenceRequest):
         ],
     }
 
+
 @router.post("/texture")
 async def soil_texture(request: SoilIntelligenceRequest):
     result = await soil_profile(request)
     rows = result["profile"]
+
     return {
         "available": True,
         "source": result["source"],
@@ -87,5 +142,8 @@ async def soil_texture(request: SoilIntelligenceRequest):
             }
             for row in rows
         ],
-        "limitation": "This is a relative profile signal, not a formal USDA/FAO texture classification.",
+        "limitation": (
+            "This is a relative profile signal, not a formal USDA/FAO texture classification."
+        ),
     }
+}
