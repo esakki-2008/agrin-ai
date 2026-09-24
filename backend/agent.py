@@ -652,181 +652,89 @@ async def analyze(request: AgentRequest):
         historical_satellite_ndvi,
     )
 
-    # --------------------------------------------------------
-    # CURRENT WEATHER
-    # --------------------------------------------------------
-
-    weather_data = await weather(
-        lat,
-        lon,
-    )
-
-    # --------------------------------------------------------
-    # SOILGRIDS
-    # --------------------------------------------------------
-
-    try:
-        ph, organic_carbon, nitrogen, clay = await asyncio.gather(
-            sample(
-                "phh2o",
-                "phh2o_0-5cm_Q0.5",
-                lon,
-                lat,
-            ),
-            sample(
-                "soc",
-                "soc_0-5cm_Q0.5",
-                lon,
-                lat,
-            ),
-            sample(
-                "nitrogen",
-                "nitrogen_0-5cm_Q0.5",
-                lon,
-                lat,
-            ),
-            sample(
-                "clay",
-                "clay_0-5cm_Q0.5",
-                lon,
-                lat,
-            ),
-        )
-
-        soil_data = {
-            "source": "ISRIC SoilGrids 2.0",
-            "resolution_m": 250,
-            "depth": "0-5cm",
-            "pH": round(
-                ph / 10,
-                2,
-            ),
-            "organic_carbon_g_kg": round(
-                organic_carbon / 10,
-                2,
-            ),
-            "nitrogen_g_kg": round(
-                nitrogen / 100,
-                3,
-            ),
-            "clay_percent": round(
-                clay / 10,
-                2,
-            ),
-        }
-
-    except HTTPException:
-        raise
-
-    except Exception as exc:
-        raise HTTPException(
-            status_code=502,
-            detail="Soil data unavailable.",
-        ) from exc
-
-    # --------------------------------------------------------
-    # CURRENT SATELLITE
-    # --------------------------------------------------------
-
-    satellite_data = None
-
-    try:
-        feature = await find_satellite_scene(
-            lat,
-            lon,
-            30,
-            30,
-        )
-
-        if feature:
-            props = feature.get(
-                "properties",
-                {},
+    async def fetch_soil():
+        try:
+            ph, organic_carbon, nitrogen, clay = await asyncio.gather(
+                sample("phh2o", "phh2o_0-5cm_Q0.5", lon, lat),
+                sample("soc", "soc_0-5cm_Q0.5", lon, lat),
+                sample("nitrogen", "nitrogen_0-5cm_Q0.5", lon, lat),
+                sample("clay", "clay_0-5cm_Q0.5", lon, lat),
             )
-
-            satellite_data = {
-                "available": True,
-                "source": (
-                    "Sentinel-2 Collection 1 L2A / "
-                    "AWS Open Data"
-                ),
-                "scene_id": feature.get(
-                    "id"
-                ),
-                "observation_date": props.get(
-                    "datetime"
-                ),
-                "cloud_cover_percent": props.get(
-                    "eo:cloud_cover"
-                ),
+            return {
+                "source": "ISRIC SoilGrids 2.0",
+                "resolution_m": 250,
+                "depth": "0-5cm",
+                "pH": round(ph / 10, 2),
+                "organic_carbon_g_kg": round(organic_carbon / 10, 2),
+                "nitrogen_g_kg": round(nitrogen / 100, 3),
+                "clay_percent": round(clay / 10, 2),
             }
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail="Soil data unavailable.") from exc
 
-        else:
-            satellite_data = {
+    async def fetch_satellite():
+        try:
+            feature = await find_satellite_scene(lat, lon, 30, 30)
+            if feature:
+                props = feature.get("properties", {})
+                return {
+                    "available": True,
+                    "source": "Sentinel-2 Collection 1 L2A / AWS Open Data",
+                    "scene_id": feature.get("id"),
+                    "observation_date": props.get("datetime"),
+                    "cloud_cover_percent": props.get("eo:cloud_cover"),
+                }
+            return {
                 "available": False,
-                "source": (
-                    "AWS Open Data / "
-                    "Earth Search STAC"
-                ),
-                "message": (
-                    "No suitable Sentinel-2 scene "
-                    "was found within the selected "
-                    "cloud threshold."
-                ),
+                "source": "AWS Open Data / Earth Search STAC",
+                "message": "No suitable Sentinel-2 scene was found within the selected cloud threshold.",
+            }
+        except Exception:
+            return {
+                "available": False,
+                "source": "AWS Open Data / Earth Search STAC",
+                "message": "Satellite observation unavailable.",
             }
 
-    except Exception:
-        satellite_data = {
-            "available": False,
-            "source": (
-                "AWS Open Data / "
-                "Earth Search STAC"
-            ),
-            "message": "Satellite observation unavailable.",
-        }
-
-    # --------------------------------------------------------
-    # HISTORICAL WEATHER
-    # --------------------------------------------------------
-
-    try:
-        historical_data = await historical_weather(
-            HistoricalRequest(
-                latitude=lat,
-                longitude=lon,
-                days=request.historical_days,
-            )
-        )
-
-    except Exception:
-        historical_data = {
-            "available": False,
-            "message": "Historical weather unavailable.",
-        }
-
-    # --------------------------------------------------------
-    # HISTORICAL NDVI
-    # --------------------------------------------------------
-
-    try:
-        historical_ndvi = (
-            await historical_satellite_ndvi(
+    async def fetch_historical_weather():
+        try:
+            return await historical_weather(
                 HistoricalRequest(
                     latitude=lat,
                     longitude=lon,
                     days=request.historical_days,
                 )
             )
-        )
+        except Exception:
+            return {
+                "available": False,
+                "message": "Historical weather unavailable.",
+            }
 
-    except Exception:
-        historical_ndvi = {
-            "available": False,
-            "message": (
-                "Historical satellite observations "
-                "unavailable."
-            ),
-        }
+    async def fetch_historical_ndvi():
+        try:
+            return await historical_satellite_ndvi(
+                HistoricalRequest(
+                    latitude=lat,
+                    longitude=lon,
+                    days=request.historical_days,
+                )
+            )
+        except Exception:
+            return {
+                "available": False,
+                "message": "Historical satellite observations unavailable.",
+            }
+
+    weather_data, soil_data, satellite_data, historical_data, historical_ndvi = await asyncio.gather(
+        weather(lat, lon),
+        fetch_soil(),
+        fetch_satellite(),
+        fetch_historical_weather(),
+        fetch_historical_ndvi(),
+    )
 
     # --------------------------------------------------------
     # EVIDENCE PACK
