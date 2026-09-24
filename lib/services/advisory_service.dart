@@ -91,7 +91,7 @@ class AdvisoryService {
         'satellite_cloud_cover_percent':satellite?.cloudCover,
         'satellite_source':satellite?.source,
       },
-      timeout: const Duration(seconds:60),
+      timeout: const Duration(seconds:75),
     );
     return AdvisoryData.fromJson(json);
   }
