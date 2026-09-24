@@ -12,14 +12,27 @@ class AgentData {
 
   const AgentData({required this.agent,required this.version,required this.generatedAt,required this.evidence,required this.report,required this.sources});
 
-  factory AgentData.fromJson(Map<String,dynamic> j)=>AgentData(
-    agent:j['agent']?.toString()??'AgriN Farm Intelligence Agent',
-    version:j['version']?.toString()??'',
-    generatedAt:j['generated_at']?.toString()??'',
-    evidence:Map<String,dynamic>.from(j['evidence'] as Map? ?? {}),
-    report:Map<String,dynamic>.from(j['report'] as Map? ?? {}),
-    sources:(j['sources'] as List? ?? []).map((e)=>e.toString()).toList(),
-  );
+  factory AgentData.fromJson(Map<String,dynamic> j) {
+    final rawReport = Map<String,dynamic>.from(
+      j['report'] as Map? ?? {},
+    );
+
+    // The backend wraps the Gemini payload as:
+    // report: { report: { summary, recommendations, ... }, provider: {...} }
+    // Unwrap the inner report so the UI can read the AI fields directly.
+    final parsedReport = rawReport['report'] is Map
+        ? Map<String,dynamic>.from(rawReport['report'] as Map)
+        : rawReport;
+
+    return AgentData(
+      agent:j['agent']?.toString()??'AgriN Farm Intelligence Agent',
+      version:j['version']?.toString()??'',
+      generatedAt:j['generated_at']?.toString()??'',
+      evidence:Map<String,dynamic>.from(j['evidence'] as Map? ?? {}),
+      report:parsedReport,
+      sources:(j['sources'] as List? ?? []).map((e)=>e.toString()).toList(),
+    );
+  }
 }
 
 class AgentService {
