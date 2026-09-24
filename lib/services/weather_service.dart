@@ -30,8 +30,8 @@ class WeatherService {
     }
     final queries = <String>[
       place.trim(),
-      if (!place.contains(',')) `${place.trim()}, Maharashtra, India`,
-      if (!place.contains(',')) `${place.trim()}, India`,
+      if (!place.contains(',')) '${place.trim()}, Maharashtra, India',
+      if (!place.contains(',')) '${place.trim()}, India',
     ];
 
     Map<String,dynamic>? item;
