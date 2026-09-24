@@ -93,7 +93,10 @@ async def generate_json(
             },
         }
 
-        for attempt in range(3):
+        # Try each configured provider once. A slow/failed primary provider
+        # should fail over quickly to the backup instead of consuming the
+        # entire frontend request timeout through repeated retries.
+        for attempt in range(1):
             try:
                 response = await client.post(
                     endpoint,
@@ -130,14 +133,10 @@ async def generate_json(
                 if response.status_code not in TRANSIENT_STATUS_CODES:
                     break
 
-                if attempt < 2:
-                    await asyncio.sleep(2**attempt)
-
+                # Move directly to the next configured provider.
             except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
                 last_error = str(exc)
-                if attempt < 2:
-                    await asyncio.sleep(2**attempt)
-
+                # Move directly to the next configured provider.
     raise AIProviderError(
         "AI service is temporarily unavailable. Please try again later."
     )
