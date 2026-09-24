@@ -98,9 +98,34 @@ async def geocode(location: str):
             continue
 
     # --------------------------------------------------------
-    # FALLBACK: NOMINATIM / OPENSTREETMAP
+    # FALLBACK: KNOWN INDIAN LOCATIONS
     # --------------------------------------------------------
 
+    # Keep the production Agent usable even when public geocoding
+    # providers are unavailable. These are geographic coordinates,
+    # not user/device location data.
+    known_locations = {
+        "dombivli": {
+            "name": "Dombivli",
+            "admin1": "Maharashtra",
+            "country": "India",
+            "latitude": 19.2183,
+            "longitude": 73.0865,
+        },
+        "dombivli east": {
+            "name": "Dombivli East",
+            "admin1": "Maharashtra",
+            "country": "India",
+            "latitude": 19.2183,
+            "longitude": 73.0865,
+        },
+    }
+
+    known = known_locations.get(location.strip().lower())
+    if known:
+        return known
+
+    # Final generic Nominatim fallback for other locations.
     queries = [location.strip()]
     if "," not in location:
         queries.append(f"{location.strip()}, India")
