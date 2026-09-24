@@ -74,18 +74,89 @@ async def build_farm_twin(request: FarmTwinRequest):
     lat,lon=place["latitude"],place["longitude"]
 
     async def fetch_weather():
+        client = await _get_http_client()
+
+        # Primary: Open-Meteo.
         try:
-            client = await _get_http_client()
-            r=await client.get(
+            r = await client.get(
                 "https://api.open-meteo.com/v1/forecast",
                 params={
-                    "latitude":lat,"longitude":lon,"current":"temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code","timezone":"auto"
+                    "latitude": lat,
+                    "longitude": lon,
+                    "current": (
+                        "temperature_2m,relative_humidity_2m,"
+                        "precipitation,wind_speed_10m,weather_code"
+                    ),
+                    "timezone": "auto",
                 },
-                timeout=25,
+                timeout=20,
             )
-            return r.json() if r.status_code==200 else {}
-        except httpx.HTTPError:
-            return {}
+            if r.status_code == 200:
+                body = r.json()
+                current = body.get("current") or {}
+                if current:
+                    return {
+                        "source": "Open-Meteo",
+                        "temperature_c": current.get("temperature_2m"),
+                        "humidity_percent": current.get("relative_humidity_2m"),
+                        "precipitation_mm": current.get("precipitation"),
+                        "wind_speed_kmh": current.get("wind_speed_10m"),
+                        "weather_code": current.get("weather_code"),
+                        "observed_at": current.get("time"),
+                    }
+        except (httpx.HTTPError, ValueError, KeyError, TypeError):
+            pass
+
+        # Fallback: MET Norway, matching the Agent weather path.
+        try:
+            r = await client.get(
+                "https://api.met.no/weatherapi/locationforecast/2.0/compact",
+                params={"lat": round(lat, 4), "lon": round(lon, 4)},
+                headers={
+                    "User-Agent": (
+                        "AgriN-AI/1.0 "
+                        "(https://github.com/esakki-2008/agrin-ai)"
+                    ),
+                },
+                timeout=20,
+            )
+            if r.status_code == 200:
+                body = r.json()
+                timeseries = (
+                    body.get("properties", {}).get("timeseries", [])
+                )
+                if timeseries:
+                    current = timeseries[0]
+                    instant = (
+                        current.get("data", {})
+                        .get("instant", {})
+                        .get("details", {})
+                    )
+                    next_hour = (
+                        current.get("data", {})
+                        .get("next_1_hours", {})
+                        .get("details", {})
+                    )
+                    wind_speed_ms = instant.get("wind_speed")
+                    return {
+                        "source": "MET Norway Locationforecast",
+                        "temperature_c": instant.get("air_temperature"),
+                        "humidity_percent": instant.get("relative_humidity"),
+                        "precipitation_mm": next_hour.get(
+                            "precipitation_amount"
+                        ),
+                        "wind_speed_kmh": (
+                            wind_speed_ms * 3.6
+                            if wind_speed_ms is not None
+                            else None
+                        ),
+                        "weather_code": None,
+                        "observed_at": current.get("time"),
+                    }
+        except (httpx.HTTPError, ValueError, KeyError, TypeError):
+            pass
+
+        return {}
 
     async def fetch_soil():
         try:
