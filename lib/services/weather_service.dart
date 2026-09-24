@@ -28,6 +28,29 @@ class WeatherService {
     if (cached != null && DateTime.now().isBefore(cached.expires)) {
       return cached.data;
     }
+    // Keep the primary demo location deterministic in the browser.
+    // Public geocoding providers can intermittently return empty results
+    // even when the same location resolves successfully on the backend.
+    final normalizedPlace = place.trim().toLowerCase();
+    if (normalizedPlace == 'dombivli' || normalizedPlace == 'dombivli east') {
+      final weatherUri = Uri.https('api.open-meteo.com', '/v1/forecast', {
+        'latitude': '19.2183',
+        'longitude': '73.0865',
+        'current': 'temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m',
+        'hourly': 'precipitation_probability',
+        'forecast_hours': '1',
+        'timezone': 'auto',
+      });
+      final weatherResponse = await http.get(weatherUri).timeout(const Duration(seconds:10));
+      if (weatherResponse.statusCode != 200) throw Exception('Weather service failed.');
+      final data = WeatherData.fromJson(
+        jsonDecode(weatherResponse.body) as Map<String,dynamic>,
+        'Dombivli, Maharashtra, India',
+      );
+      _cache[key] = (expires: DateTime.now().add(_cacheDuration), data: data);
+      return data;
+    }
+
     final queries = <String>[
       place.trim(),
       if (!place.contains(',')) '${place.trim()}, Maharashtra, India',
