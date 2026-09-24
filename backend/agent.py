@@ -78,44 +78,59 @@ async def geocode(location: str):
     # FALLBACK: NOMINATIM / OPENSTREETMAP
     # --------------------------------------------------------
 
-    try:
-        response = await client.get(
-            "https://nominatim.openstreetmap.org/search",
-            params={
-                "q": location,
-                "format": "jsonv2",
-                "limit": 1,
-            },
-            headers={
-                "User-Agent": (
-                    "AgriN-AI/1.0 "
-                    "(https://github.com/esakki-2008/agrin-ai)"
-                ),
-            },
-            timeout=20,
-        )
+    queries = [location.strip()]
+    if "," not in location:
+        queries.append(f"{location.strip()}, India")
 
-        if response.status_code == 200:
-            results = response.json()
+    for query in queries:
+        try:
+            response = await client.get(
+                "https://nominatim.openstreetmap.org/search",
+                params={
+                    "q": query,
+                    "format": "jsonv2",
+                    "limit": 1,
+                    "addressdetails": 1,
+                },
+                headers={
+                    "User-Agent": (
+                        "AgriN-AI/1.0 "
+                        "(https://github.com/esakki-2008/agrin-ai)"
+                    ),
+                },
+                timeout=10,
+            )
 
-            if results:
-                item = results[0]
+            if response.status_code == 200:
+                results = response.json()
 
-                return {
-                    "name": item.get("display_name"),
-                    "admin1": None,
-                    "country": None,
-                    "latitude": float(item["lat"]),
-                    "longitude": float(item["lon"]),
-                }
+                if results:
+                    item = results[0]
+                    address = item.get("address") or {}
 
-    except (
-        httpx.HTTPError,
-        ValueError,
-        KeyError,
-        TypeError,
-    ):
-        pass
+                    return {
+                        "name": item.get("display_name"),
+                        "admin1": (
+                            address.get("state")
+                            or address.get("state_district")
+                        ),
+                        "country": address.get("country"),
+                        "latitude": float(item["lat"]),
+                        "longitude": float(item["lon"]),
+                    }
+
+        except (
+            httpx.HTTPError,
+            ValueError,
+            KeyError,
+            TypeError,
+        ):
+            continue
+
+    raise HTTPException(
+        status_code=404,
+        detail=f"No location found for '{location}'.",
+    )
 
     raise HTTPException(
         status_code=404,
