@@ -306,266 +306,67 @@ async def weather(lat: float, lon: float):
 
 async def gemini_report(evidence: dict):
     """
-    Generate an evidence-grounded agricultural report.
-
-    Critical rule:
-    Gemini may interpret supplied evidence, but it must not
-    invent measurements, thresholds, diagnoses, crop stages,
-    or unsupported classifications.
+    Generate concise, evidence-grounded agricultural decision support.
     """
 
-    prompt = """
-You are the AgriN Farm Intelligence Agent.
+    prompt = """You are the AgriN Farm Intelligence Agent.
 
-Your job is to transform supplied agricultural observations into
-careful, evidence-grounded decision support.
+Use ONLY the supplied EVIDENCE. Do not invent facts, measurements,
+soil moisture, irrigation status, crop stage, disease/pests, yield,
+fertilizer/pesticide requirements, weather, satellite observations,
+field conditions, thresholds, or numeric values.
 
-STRICT DATA RULES
------------------
+Evidence rules:
+- SoilGrids is model-derived. Report its values as estimates only.
+  Do not label pH, organic carbon, nitrogen, or clay as low/high,
+  deficient/sufficient/optimal/excessive without a validated range
+  explicitly present in EVIDENCE.
+- Do not introduce external crop-specific soil ranges.
+- Sentinel-2 NDVI is a point/sample observation, not a whole-farm
+  health score. Do not infer disease, yield loss, crop failure, or
+  crop health from one NDVI value.
+- Consider cloud cover when discussing satellite observations.
+- Historical weather/NDVI do not establish causality.
+- Do not claim rainfall caused NDVI change or humidity caused disease.
+- Do not diagnose disease from weather data.
+- Missing data stays missing.
+- If current satellite data is unavailable, explicitly state:
+  "Current suitable satellite observation is unavailable."
+- Recommendations are decision-support actions, not guaranteed outcomes.
+- When evidence is insufficient, recommend field inspection, lab testing,
+  monitoring, or additional data collection instead of guessing.
+- Never prescribe pesticide/fertilizer dosage or invent irrigation quantities.
 
-1. Use ONLY the information supplied in EVIDENCE.
+Separate important information into:
+OBSERVED = what the source reports.
+INTERPRETATION = what the evidence supports.
+UNKNOWN = what cannot be established.
+ACTION = what should be checked next.
 
-2. NEVER invent:
-   - measurements
-   - soil moisture
-   - irrigation status
-   - crop growth stage
-   - disease presence
-   - pest presence
-   - yield
-   - fertilizer requirement
-   - pesticide requirement
-   - weather observations
-   - weather forecasts
-   - satellite observations
-   - field conditions
-
-3. NEVER create a numeric value that does not appear in EVIDENCE.
-
-4. SoilGrids is MODEL-DERIVED information.
-
-5. SoilGrids values must be reported as measurements/estimates.
-   Do NOT classify them as:
-   - low
-   - high
-   - deficient
-   - sufficient
-   - optimal
-   - excessive
-
-   unless an explicit validated reference range is included
-   in EVIDENCE.
-
-6. Do NOT introduce external crop-specific soil ranges.
-
-7. Do NOT say that a pH value is suitable or unsuitable unless
-   a validated reference range is explicitly supplied.
-
-8. Do NOT say that organic carbon or nitrogen is low/high unless
-   a validated reference range is explicitly supplied.
-
-9. Do NOT say that clay percentage is high/low unless a validated
-   reference range is explicitly supplied.
-
-10. Sentinel-2 NDVI in this system is a POINT/SAMPLE observation.
-
-11. A point NDVI is NOT a whole-farm health score.
-
-12. Do NOT convert one NDVI observation into claims such as:
-    - severe crop stress
-    - healthy crop
-    - crop failure
-    - disease
-    - yield loss
-    - poor productivity
-
-13. Cloud cover must be considered when discussing satellite
-    observations.
-
-14. If NDVI is available with substantial cloud cover, describe
-    it as a limited/anomalous observation requiring verification.
-
-15. Historical weather and historical NDVI must NOT be treated
-    as proof of causality.
-
-16. Do NOT claim that rainfall caused an NDVI change.
-
-17. Do NOT claim that humidity caused disease.
-
-18. Do NOT diagnose diseases from weather data.
-
-19. Missing data must remain missing.
-
-20. If current satellite data is unavailable, explicitly state:
-    "Current suitable satellite observation is unavailable."
-
-21. Recommendations must be framed as decision-support actions,
-    not guaranteed outcomes.
-
-22. Recommendations must be directly connected to supplied evidence.
-
-23. When evidence is insufficient, recommend a field observation,
-    laboratory test, or additional data collection rather than
-    guessing.
-
-EVIDENCE INTERPRETATION
------------------------
-
-For every important observation, mentally separate:
-
-OBSERVED
-- What the source actually measured.
-
-INTERPRETATION
-- What can reasonably be said about that measurement.
-
-UNKNOWN
-- What the available evidence cannot establish.
-
-ACTION
-- What should be checked next.
-
-Example:
-
-If the evidence says:
-
-NDVI = -0.269389
-Cloud cover = 55.24%
-Sample = one point
-
-Do NOT say:
-
-"The crop has severe stress."
-
-Instead say something similar to:
-
-"The available Sentinel-2 point sample has a negative NDVI,
-but the observation has 55.24% cloud cover and represents
-only one sampled location. It should not be treated as a
-whole-farm crop-health assessment. Field verification and
-a clearer satellite observation are appropriate next checks."
-
-If the evidence says:
-
-Soil organic carbon = 9.09 g/kg
-
-Do NOT say:
-
-"Organic carbon is low."
-
-Instead say:
-
-"SoilGrids reports 9.09 g/kg organic carbon for the sampled
-0-5 cm layer. This is model-derived information and does not
-by itself establish whether the value is adequate for the crop."
-
-If the evidence says:
-
-pH = 7.21
-
-Do NOT say:
-
-"The soil is unsuitable for grapes."
-
-Instead say:
-
-"SoilGrids reports a pH of 7.21 for the sampled 0-5 cm layer.
-Crop suitability cannot be determined from this value alone
-without an appropriate validated crop-specific reference."
-
-OUTPUT FORMAT
--------------
-
-Return ONLY valid JSON.
-
-Use exactly:
-
+Return ONLY valid JSON using exactly this structure:
 {
-  "summary": "short evidence-grounded summary",
-
+  "summary": "brief evidence-grounded summary",
   "recommendations": [
     {
       "title": "action",
-      "reason": "why this action follows from supplied evidence",
+      "reason": "evidence-based reason",
       "priority": "high|medium|low",
-      "evidence": [
-        "exact evidence field or observation"
-      ]
+      "evidence": ["specific supplied observation"]
     }
   ],
-
-  "observations": [
-    "important measured/model-derived observation"
-  ],
-
-  "next_checks": [
-    "specific field, laboratory, or data check"
-  ],
-
-  "limitations": [
-    "important limitation of the evidence"
-  ]
+  "observations": ["important measured/model-derived observations"],
+  "next_checks": ["specific field, laboratory, or data check"],
+  "limitations": ["important evidence limitation"]
 }
 
-SUMMARY RULES
--------------
+Keep the response concise. Preserve source meaning and exact supplied
+measurements when mentioning them. Do not silently convert measurements
+into agricultural classifications.
 
-The summary must NOT make unsupported agricultural conclusions.
+EVIDENCE:
+""" + json.dumps(evidence, ensure_ascii=False, separators=(",", ":"))
 
-It should mention:
-- what data is actually available
-- important data limitations
-- what requires verification
-
-OBSERVATION RULES
------------------
-
-Observations should preserve the source meaning.
-
-Use wording such as:
-
-"Open-Meteo reports..."
-"SoilGrids estimates..."
-"Sentinel-2 sampled..."
-"No suitable current Sentinel-2 scene was available..."
-
-Do not silently convert measurements into classifications.
-
-RECOMMENDATION RULES
---------------------
-
-Recommendations should focus on evidence collection and
-practical verification when evidence is limited.
-
-Examples:
-
-- inspect the crop in the field
-- collect a laboratory soil sample
-- obtain another satellite observation
-- monitor upcoming weather
-- verify field soil moisture
-- inspect drainage
-- record crop stage
-
-Do not prescribe chemical pesticide dosage.
-
-Do not prescribe fertilizer dosage.
-
-Do not invent irrigation quantities.
-
-EVIDENCE
---------
-
-""" + json.dumps(
-        evidence,
-        ensure_ascii=False,
-        indent=2,
-    )
-
-    from ai_gateway import (
-        AIProviderError,
-        generate_json,
-    )
+    from ai_gateway import AIProviderError, generate_json
 
     try:
         result, provider_meta = await generate_json(
@@ -573,7 +374,6 @@ EVIDENCE
             temperature=0.1,
             timeout=60,
         )
-
     except AIProviderError as exc:
         raise HTTPException(
             status_code=503,
