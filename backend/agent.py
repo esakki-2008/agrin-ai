@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 from datetime import datetime, timezone
 
 import httpx
@@ -591,6 +592,7 @@ EVIDENCE
 
 @router.post("/analyze")
 async def analyze(request: AgentRequest):
+    request_started = time.perf_counter()
 
     # --------------------------------------------------------
     # VALIDATION
@@ -630,9 +632,13 @@ async def analyze(request: AgentRequest):
     # LOCATION
     # --------------------------------------------------------
 
+    geocode_started = time.perf_counter()
+
     place = await geocode(
         request.location.strip()
     )
+
+    geocode_ms = round((time.perf_counter() - geocode_started) * 1000, 1)
 
     lat = place["latitude"]
     lon = place["longitude"]
@@ -728,6 +734,8 @@ async def analyze(request: AgentRequest):
                 "message": "Historical satellite observations unavailable.",
             }
 
+    data_started = time.perf_counter()
+
     weather_data, soil_data, satellite_data, historical_data, historical_ndvi = await asyncio.gather(
         weather(lat, lon),
         fetch_soil(),
@@ -735,6 +743,8 @@ async def analyze(request: AgentRequest):
         fetch_historical_weather(),
         fetch_historical_ndvi(),
     )
+
+    data_ms = round((time.perf_counter() - data_started) * 1000, 1)
 
     # --------------------------------------------------------
     # EVIDENCE PACK
@@ -767,8 +777,26 @@ async def analyze(request: AgentRequest):
     # AI REASONING
     # --------------------------------------------------------
 
+    gemini_started = time.perf_counter()
+
     report = await gemini_report(
         evidence
+    )
+
+    gemini_ms = round((time.perf_counter() - gemini_started) * 1000, 1)
+    total_ms = round((time.perf_counter() - request_started) * 1000, 1)
+
+    print(
+        json.dumps(
+            {
+                "event": "agent_timing",
+                "geocode_ms": geocode_ms,
+                "data_ms": data_ms,
+                "gemini_ms": gemini_ms,
+                "total_ms": total_ms,
+            },
+            separators=(",", ":"),
+        )
     )
 
     # --------------------------------------------------------
