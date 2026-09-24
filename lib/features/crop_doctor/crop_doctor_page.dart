@@ -28,7 +28,7 @@ class _CropDoctorPageState extends State<CropDoctorPage> with SingleTickerProvid
   void dispose() { crop.dispose(); location.dispose(); _scanController.dispose(); super.dispose(); }
 
   Future<void> choose(ImageSource source) async {
-    final x = await picker.pickImage(source: source, imageQuality: 88, maxWidth: 1600, maxHeight: 1600);
+    final x = await picker.pickImage(source: source, imageQuality: 72, maxWidth: 1024, maxHeight: 1024);
     if (x == null) return;
     setState(() { image = x; result = null; error = null; });
     bytes = await x.readAsBytes();
