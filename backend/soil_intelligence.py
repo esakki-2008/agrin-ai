@@ -146,4 +146,3 @@ async def soil_texture(request: SoilIntelligenceRequest):
             "This is a relative profile signal, not a formal USDA/FAO texture classification."
         ),
     }
-}
