@@ -430,7 +430,7 @@ EVIDENCE:
         result, provider_meta = await generate_json(
             prompt,
             temperature=0.1,
-            timeout=60,
+            timeout=25,
         )
     except AIProviderError as exc:
         raise HTTPException(
