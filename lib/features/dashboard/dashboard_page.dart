@@ -54,6 +54,7 @@ class DashboardPage extends StatelessWidget {
           _link(context, 'DOCTOR', '/crop-doctor'),
           _link(context, 'HISTORY', '/historical-intelligence'),
           _link(context, 'NETWORK', '/brics-network'),
+          _link(context, 'TWIN', '/farm-digital-twin'),
         ],
         const SizedBox(width: 16),
         Text('INDIA', style: Theme.of(context).textTheme.labelSmall),
@@ -179,6 +180,7 @@ class DashboardPage extends StatelessWidget {
       ('04', 'CROP DOCTOR', 'Inspect a crop image with evidence-aware visual analysis.', '/crop-doctor'),
       ('05', 'REGENERATIVE FARMING', 'Explore soil-cover, rotation and resilience practices.', '/regenerative-farming'),
       ('06', 'HISTORICAL INTELLIGENCE', 'Compare observed weather and Sentinel-2 change over time.', '/historical-intelligence'),
+      ('07', 'FARM DIGITAL TWIN', 'Build a refreshable farm state from weather, soil and satellite observations.', '/farm-digital-twin'),
     ];
 
     return Column(
@@ -248,7 +250,7 @@ class DashboardPage extends StatelessWidget {
       const SizedBox(height: 22),
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('NETWORK / 07', style: Theme.of(context).textTheme.labelSmall),
+          Text('NETWORK / 08', style: Theme.of(context).textTheme.labelSmall),
           const SizedBox(height: 15),
           Text('OPEN AGRICULTURAL\nOBSERVATIONS.', style: TextStyle(fontFamily: 'Cormorant Garamond', fontSize: wide ? 54 : 38, height: .9, color: AgriNDesign.ink)),
         ])),
