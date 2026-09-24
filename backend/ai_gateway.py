@@ -129,6 +129,13 @@ async def generate_json(
                     )
 
                 last_error = error_message
+                print(
+                    f"Gemini provider failed: "
+                    f"provider={provider['name']} "
+                    f"model={provider['model']} "
+                    f"status={response.status_code} "
+                    f"error={error_message[:300]}"
+                )
 
                 if response.status_code not in TRANSIENT_STATUS_CODES:
                     break
@@ -136,6 +143,12 @@ async def generate_json(
                 # Move directly to the next configured provider.
             except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
                 last_error = str(exc)
+                print(
+                    f"Gemini provider exception: "
+                    f"provider={provider['name']} "
+                    f"model={provider['model']} "
+                    f"error={last_error[:300]}"
+                )
                 # Move directly to the next configured provider.
     raise AIProviderError(
         "AI service is temporarily unavailable. Please try again later."
