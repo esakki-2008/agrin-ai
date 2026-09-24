@@ -859,7 +859,7 @@ Measured farm data:
         result, provider_meta = await generate_json(
             prompt,
             temperature=0.2,
-            timeout=45,
+            timeout=25,
         )
 
     except AIProviderError as exc:
