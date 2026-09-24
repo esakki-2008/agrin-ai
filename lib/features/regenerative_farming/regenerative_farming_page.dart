@@ -129,9 +129,9 @@ class _RegenerativeFarmingPageState extends State<RegenerativeFarmingPage> {
   Widget _form()=>_card('Farm context',Column(children:[
     TextField(controller:location,decoration:decoration('Village / district / location',Icons.location_on_outlined)).animate().fadeIn(delay:100.ms,duration:350.ms),
     const SizedBox(height:15),
-    DropdownButtonFormField<String>(value:crop,decoration:decoration('Primary crop',Icons.grass_rounded),items:const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:(x)=>setState(()=>crop=x??crop)),
+    DropdownButtonFormField<String>(initialValue:crop,decoration:decoration('Primary crop',Icons.grass_rounded),items:const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:(x)=>setState(()=>crop=x??crop)),
     const SizedBox(height:20),
-    SizedBox(width:double.infinity,child:ElevatedButton.icon(onPressed:loading?null:buildPlan,icon:loading?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.eco_rounded),label:Padding(padding:const EdgeInsets.symmetric(vertical:15),child:Text(loading?'Building live plan...':'Build regenerative plan')),style:ElevatedButton.styleFrom(backgroundColor:green,foregroundColor:Colors.white,shape:RoundedRectangleBorder(borderRadius:BorderRadius.zero)))),
+    SizedBox(width:double.infinity,child:ElevatedButton.icon(onPressed:loading?null:buildPlan,icon:loading?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.eco_rounded),label:Padding(padding:const EdgeInsets.symmetric(vertical:15),child:Text(loading?'Building live plan...':'Build regenerative plan')),style:ElevatedButton.styleFrom(backgroundColor:green,foregroundColor:Colors.white,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.zero)))),
   ])).animate().fadeIn(duration:550.ms).slideX(begin:-.04,end:0);
 
   Widget _results(bool wide){
@@ -140,7 +140,7 @@ class _RegenerativeFarmingPageState extends State<RegenerativeFarmingPage> {
       const Text('LAND SYSTEM / DECISION PLAN',style:TextStyle(fontSize:9,letterSpacing:1.8,fontWeight:FontWeight.w800,color:green)),
       const SizedBox(height:8),
       Text('Regenerative intelligence',style:TextStyle(fontSize:wide?38:29,fontWeight:FontWeight.w800,color:dark)),
-      const SizedBox(height:6),Text(p.location+' • '+p.crop,style:const TextStyle(color:muted)),
+      const SizedBox(height:6),Text('${p.location} • ${p.crop}',style:const TextStyle(color:muted)),
       const SizedBox(height:18),if(weather!=null&&soil!=null)_liveContext(wide),
       const SizedBox(height:20),_sectionTitle('Recommended practices'),const SizedBox(height:10),
       ...p.practices.asMap().entries.map((e)=>_practice(e.value,e.key)),
@@ -151,30 +151,30 @@ class _RegenerativeFarmingPageState extends State<RegenerativeFarmingPage> {
   }
 
   Widget _liveContext(bool wide)=>GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:wide?4:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:1.55,children:[
-    _metric(weather!.temperature.toStringAsFixed(1)+'°C','Live temperature'),
-    _metric(weather!.humidity.toStringAsFixed(0)+'%','Live humidity'),
-    _metric(weather!.rainProbability.toString()+'%','Rain probability'),
+    _metric('${weather!.temperature.toStringAsFixed(1)}°C','Live temperature'),
+    _metric('${weather!.humidity.toStringAsFixed(0)}%','Live humidity'),
+    _metric('${weather!.rainProbability}%','Rain probability'),
     _metric(soil!.organicCarbon.toStringAsFixed(1),'Soil organic C g/kg'),
   ]);
 
   Widget _metric(String value,String label)=>Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(2),border:Border.all(color:AgriNDesign.line)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisAlignment:MainAxisAlignment.center,children:[Text(value,style:const TextStyle(fontSize:22,fontWeight:FontWeight.w800,color:dark)),const SizedBox(height:4),Text(label,style:const TextStyle(fontSize:11,color:muted))])).animate().fadeIn(duration:350.ms).scale(begin:const Offset(.96,.96),end:const Offset(1,1));
 
   Widget _practice(RegenerativePractice item,int index)=>Container(margin:const EdgeInsets.only(bottom:10),padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.zero,border:Border.all(color:const Color(0xFFE5EAE5))),child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    Container(width:42,height:42,decoration:BoxDecoration(color:const Color(0xFFEAF4EC),borderRadius:BorderRadius.zero),child:const Icon(Icons.eco_outlined,color:green)),
+    Container(width:42,height:42,decoration:const BoxDecoration(color:Color(0xFFEAF4EC),borderRadius:BorderRadius.zero),child:const Icon(Icons.eco_outlined,color:green)),
     const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       Text(item.title,style:const TextStyle(fontWeight:FontWeight.w800,color:dark)),const SizedBox(height:5),
       Text(item.reason,style:const TextStyle(color:muted,fontSize:12,height:1.45)),const SizedBox(height:7),
-      Text(item.priority.toUpperCase()+' • '+item.basis,style:const TextStyle(color:green,fontSize:10,fontWeight:FontWeight.w700)),
+      Text('${item.priority.toUpperCase()} • ${item.basis}',style:const TextStyle(color:green,fontSize:10,fontWeight:FontWeight.w700)),
     ])),
   ])).animate(delay:(70*index).ms).fadeIn(duration:350.ms).slideY(begin:.04,end:0);
 
-  Widget _evidence(RegenerativeEvidence item)=>Container(margin:const EdgeInsets.only(bottom:10),padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:const Color(0xFFF7F9F5),borderRadius:BorderRadius.zero),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    Text(item.signal+': '+item.value,style:const TextStyle(fontWeight:FontWeight.w700,color:dark)),const SizedBox(height:4),
+  Widget _evidence(RegenerativeEvidence item)=>Container(margin:const EdgeInsets.only(bottom:10),padding:const EdgeInsets.all(16),decoration:const BoxDecoration(color:Color(0xFFF7F9F5),borderRadius:BorderRadius.zero),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Text('${item.signal}: ${item.value}',style:const TextStyle(fontWeight:FontWeight.w700,color:dark)),const SizedBox(height:4),
     Text(item.interpretation,style:const TextStyle(color:muted,fontSize:12,height:1.4)),const SizedBox(height:4),
-    Text('Source: '+item.source,style:const TextStyle(color:muted,fontSize:10)),
+    Text('Source: ${item.source}',style:const TextStyle(color:muted,fontSize:10)),
   ]));
 
-  Widget _darkList(List<String> items)=>Container(width:double.infinity,padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:dark,borderRadius:BorderRadius.circular(20)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:items.map((x)=>Padding(padding:const EdgeInsets.only(bottom:7),child:Text('• '+x,style:const TextStyle(color:Color(0xFFD4DDD7),fontSize:11,height:1.4)))).toList()));
+  Widget _darkList(List<String> items)=>Container(width:double.infinity,padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:dark,borderRadius:BorderRadius.circular(20)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:items.map((x)=>Padding(padding:const EdgeInsets.only(bottom:7),child:Text('• $x',style:const TextStyle(color:Color(0xFFD4DDD7),fontSize:11,height:1.4)))).toList()));
   Widget _sectionTitle(String text)=>Text(text,style:const TextStyle(fontSize:21,fontWeight:FontWeight.w800,color:dark));
   Widget _error()=>Container(width:double.infinity,padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:const Color(0xFFFFF3F0),borderRadius:BorderRadius.circular(18)),child:Row(children:[const Icon(Icons.error_outline,color:Colors.deepOrange),const SizedBox(width:10),Expanded(child:Text(error!,style:const TextStyle(color:dark)))]));
   Widget _card(String title,Widget child)=>Container(width:double.infinity,padding:const EdgeInsets.all(22),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.zero,border:Border.all(color:const Color(0xFFE5EAE5))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(fontSize:19,fontWeight:FontWeight.w800,color:dark)),const SizedBox(height:18),child]));

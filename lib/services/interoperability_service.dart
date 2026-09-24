@@ -25,11 +25,11 @@ class InteroperabilityService {
 
   Future<InteroperabilityProfile> profile() async {
     final response = await http.get(
-      Uri.parse(baseUrl + '/interoperability/profile'),
+      Uri.parse('$baseUrl/interoperability/profile'),
     ).timeout(const Duration(seconds: 30));
 
     if (response.statusCode != 200) {
-      throw Exception('Interoperability profile unavailable (' + response.statusCode.toString() + ').');
+      throw Exception('Interoperability profile unavailable (${response.statusCode}).');
     }
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;
@@ -55,7 +55,7 @@ class InteroperabilityService {
     String? crop,
   }) async {
     final response = await http.post(
-      Uri.parse(baseUrl + '/interoperability/export'),
+      Uri.parse('$baseUrl/interoperability/export'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'country_code': countryCode,
@@ -71,21 +71,21 @@ class InteroperabilityService {
     ).timeout(const Duration(seconds: 60));
 
     if (response.statusCode != 200) {
-      throw Exception('Observation export failed (' + response.statusCode.toString() + ').');
+      throw Exception('Observation export failed (${response.statusCode}).');
     }
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> validateObservation(Map<String, dynamic> observation) async {
     final response = await http.post(
-      Uri.parse(baseUrl + '/interoperability/validate'),
+      Uri.parse('$baseUrl/interoperability/validate'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(observation),
     ).timeout(const Duration(seconds: 30));
 
     if (response.statusCode != 200) {
       final body = jsonDecode(response.body);
-      throw Exception(body['detail']?.toString() ?? 'Observation validation failed (' + response.statusCode.toString() + ').');
+      throw Exception(body['detail']?.toString() ?? 'Observation validation failed (${response.statusCode}).');
     }
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -99,7 +99,7 @@ class InteroperabilityService {
     String? crop,
   }) async {
     final response = await http.post(
-      Uri.parse(baseUrl + '/interoperability/validate'),
+      Uri.parse('$baseUrl/interoperability/validate'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'country_code': countryCode,
@@ -112,7 +112,7 @@ class InteroperabilityService {
     ).timeout(const Duration(seconds: 30));
 
     if (response.statusCode != 200) {
-      throw Exception('Observation validation failed (' + response.statusCode.toString() + ').');
+      throw Exception('Observation validation failed (${response.statusCode}).');
     }
 
     return jsonDecode(response.body) as Map<String, dynamic>;

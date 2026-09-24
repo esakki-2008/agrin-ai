@@ -76,7 +76,7 @@ class DiseaseService {
   }) async {
     final response = await http
         .post(
-          Uri.parse('${baseUrl}/disease/analyze'),
+          Uri.parse('$baseUrl/disease/analyze'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'image_base64': base64Encode(imageBytes),

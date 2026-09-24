@@ -71,11 +71,11 @@ class _IntelligenceAgentPageState extends State<IntelligenceAgentPage> {
     const SizedBox(height:22),
     TextField(controller:location,decoration:_dec('Village / district / location',Icons.location_on_outlined)),
     const SizedBox(height:13),
-    DropdownButtonFormField<String>(value:crop,decoration:_dec('Crop',Icons.grass_outlined),items:const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:loading?null:(x)=>setState(()=>crop=x??crop)),
+    DropdownButtonFormField<String>(initialValue:crop,decoration:_dec('Crop',Icons.grass_outlined),items:const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:loading?null:(x)=>setState(()=>crop=x??crop)),
     const SizedBox(height:13),
     TextField(controller:acres,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:_dec('Farm size (optional, acres)',Icons.straighten_outlined)),
     const SizedBox(height:13),
-    DropdownButtonFormField<int>(value:days,decoration:_dec('Historical window',Icons.history_outlined),items:const [7,14,30,60,90].map((x)=>DropdownMenuItem(value:x,child:Text(x.toString()+' days'))).toList(),onChanged:loading?null:(x)=>setState(()=>days=x??30)),
+    DropdownButtonFormField<int>(initialValue:days,decoration:_dec('Historical window',Icons.history_outlined),items:const [7,14,30,60,90].map((x)=>DropdownMenuItem(value:x,child:Text('$x days'))).toList(),onChanged:loading?null:(x)=>setState(()=>days=x??30)),
     const SizedBox(height:20),
     SizedBox(width:double.infinity,child:ElevatedButton(onPressed:loading?null:runAgent,style:ElevatedButton.styleFrom(backgroundColor:green,foregroundColor:Colors.white,padding:const EdgeInsets.symmetric(vertical:18),shape:const RoundedRectangleBorder(borderRadius:BorderRadius.zero)),child:Row(mainAxisAlignment:MainAxisAlignment.center,children:[if(loading)const SizedBox(width:16,height:16,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white))else const Icon(Icons.play_arrow,size:17),const SizedBox(width:9),Text(loading?'AGENT IS GATHERING EVIDENCE...':'RUN INTELLIGENCE AGENT',style:const TextStyle(fontSize:10,letterSpacing:1.3,fontWeight:FontWeight.w800))]))),
   ])).animate().fadeIn(duration:550.ms).slideX(begin:-.04,end:0);
@@ -83,16 +83,16 @@ class _IntelligenceAgentPageState extends State<IntelligenceAgentPage> {
   InputDecoration _dec(String label,IconData icon)=>InputDecoration(labelText:label,prefixIcon:Icon(icon,color:green,size:18),filled:true,fillColor:const Color(0xFFF8F8F3),border:const OutlineInputBorder(borderSide:BorderSide(color:AgriNDesign.line)),enabledBorder:const OutlineInputBorder(borderSide:BorderSide(color:AgriNDesign.line)),focusedBorder:const OutlineInputBorder(borderSide:BorderSide(color:green,width:1.3)));
 
   Widget _output()=>Container(padding:const EdgeInsets.all(26),decoration:BoxDecoration(color:AgriNDesign.paper2.withValues(alpha:.55),border:Border.all(color:AgriNDesign.line)),child:loading?_loadingPanel():data==null?_waiting():_report(data!));
-  Widget _waiting()=>SizedBox(height:520,child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
-    const Icon(Icons.hub_outlined,size:44,color:Color(0xFF7D8D82)),
-    const SizedBox(height:16),
-    const Text('AGENT OUTPUT',style:TextStyle(fontSize:9,letterSpacing:1.7,fontWeight:FontWeight.w800,color:muted)),
-    const SizedBox(height:8),
-    const Text('Run the agent to assemble a real evidence pack.',textAlign:TextAlign.center,style:TextStyle(color:muted,fontSize:12,height:1.5)),
+  Widget _waiting()=>const SizedBox(height:520,child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+    Icon(Icons.hub_outlined,size:44,color:Color(0xFF7D8D82)),
+    SizedBox(height:16),
+    Text('AGENT OUTPUT',style:TextStyle(fontSize:9,letterSpacing:1.7,fontWeight:FontWeight.w800,color:muted)),
+    SizedBox(height:8),
+    Text('Run the agent to assemble a real evidence pack.',textAlign:TextAlign.center,style:TextStyle(color:muted,fontSize:12,height:1.5)),
   ]));
 
   Widget _loadingPanel()=>SizedBox(height:520,child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
-    SizedBox(width:58,height:58,child:CircularProgressIndicator(strokeWidth:1.5,color:green,backgroundColor:const Color(0x22306B43))),
+    const SizedBox(width:58,height:58,child:CircularProgressIndicator(strokeWidth:1.5,color:green,backgroundColor:Color(0x22306B43))),
     const SizedBox(height:20),
     const Text('AGENT IS GATHERING EVIDENCE',style:TextStyle(fontSize:9,letterSpacing:1.6,fontWeight:FontWeight.w800,color:green)),
     const SizedBox(height:9),
@@ -137,7 +137,7 @@ class _IntelligenceAgentPageState extends State<IntelligenceAgentPage> {
       width:double.infinity,
       padding:const EdgeInsets.only(top:14),
       decoration:const BoxDecoration(border:Border(top:BorderSide(color:AgriNDesign.line))),
-      child:Text('SOURCES  /  '+d.sources.join(' • '),style:const TextStyle(color:muted,fontSize:9,height:1.55,letterSpacing:.25)),
+      child:Text('SOURCES  /  ${d.sources.join(' • ')}',style:const TextStyle(color:muted,fontSize:9,height:1.55,letterSpacing:.25)),
     ),
   ]);
 
@@ -186,7 +186,7 @@ class _IntelligenceAgentPageState extends State<IntelligenceAgentPage> {
     if(v==null)return 'Unavailable';
     if(v is Map){
       final entries=v.entries.where((e)=>e.value!=null).take(3);
-      final parts=entries.map((e)=>e.key.toString()+': '+e.value.toString()).toList();
+      final parts=entries.map((e)=>'${e.key}: ${e.value}').toList();
       return parts.isEmpty?'Unavailable':parts.join('\n');
     }
     return v.toString();
@@ -254,7 +254,7 @@ class _IntelligenceAgentPageState extends State<IntelligenceAgentPage> {
       const SizedBox(height:7),
       ...(raw is List?raw:const []).map((item)=>Padding(
         padding:const EdgeInsets.only(bottom:5),
-        child:Text('• '+item.toString(),style:const TextStyle(fontSize:9.5,height:1.45,color:muted)),
+        child:Text('• $item',style:const TextStyle(fontSize:9.5,height:1.45,color:muted)),
       )),
     ]),
   );
@@ -264,7 +264,7 @@ class _IntelligenceAgentPageState extends State<IntelligenceAgentPage> {
       final title=v['title']?.toString()??'';
       final reason=v['reason']?.toString()??'';
       final evidence=(v['evidence'] as List? ?? []).join(' • ');
-      return evidence.isEmpty?title+' — '+reason:title+' — '+reason+'\\nEvidence: '+evidence;
+      return evidence.isEmpty?'$title — $reason':'$title — $reason\\nEvidence: $evidence';
     }
     return v.toString();
   }

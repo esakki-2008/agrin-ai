@@ -12,3 +12,5 @@ __pycache__/
 *.backup
 test.png
 "@ | Add-Content .gitignore
+# Local Android SDK configuration
+android/local.properties

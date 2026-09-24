@@ -171,6 +171,6 @@ class HistoricalService {
       final body = jsonDecode(response.body);
       if (body is Map<String, dynamic> && body['detail'] != null) return body['detail'].toString();
     } catch (_) {}
-    return 'Historical intelligence request failed (' + response.statusCode.toString() + ').';
+    return 'Historical intelligence request failed (${response.statusCode}).';
   }
 }

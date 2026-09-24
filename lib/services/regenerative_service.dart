@@ -30,13 +30,13 @@ class RegenerativeService {
   final String baseUrl;
   RegenerativeService({String? baseUrl}) : baseUrl = baseUrl ?? ApiConfig.baseUrl;
   Future<RegenerativePlan> fetch({required String location,required String crop,required double temperature,required double humidity,required int rainProbability,required double ph,required double organicCarbon,required double nitrogen,required double clay,required String soilSource}) async {
-    final response=await http.post(Uri.parse(baseUrl+'/regenerative/plan'),headers:{'Content-Type':'application/json'},body:jsonEncode({
+    final response=await http.post(Uri.parse('$baseUrl/regenerative/plan'),headers:{'Content-Type':'application/json'},body:jsonEncode({
       'location':location,'crop':crop,'temperature_c':temperature,'humidity_percent':humidity,'rain_probability_percent':rainProbability,
       'soil_ph':ph,'organic_carbon_g_kg':organicCarbon,'nitrogen_g_kg':nitrogen,'clay_percent':clay,'soil_source':soilSource,
     })).timeout(const Duration(seconds:20));
     if(response.statusCode!=200) {
       try { final body=jsonDecode(response.body) as Map<String,dynamic>; throw Exception(body['detail']?.toString() ?? 'Regenerative plan failed.'); }
-      catch(_) { throw Exception('Regenerative plan failed ('+response.statusCode.toString()+').'); }
+      catch(_) { throw Exception('Regenerative plan failed (${response.statusCode}).'); }
     }
     return RegenerativePlan.fromJson(jsonDecode(response.body) as Map<String,dynamic>);
   }

@@ -165,7 +165,7 @@ class MotionOrb extends StatelessWidget {
                 child: Text(
                   label!,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontFamily: 'Inter', fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.1, color: AgriNDesign.ink),
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.1, color: AgriNDesign.ink),
                 ),
               ),
       ),

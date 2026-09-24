@@ -241,8 +241,8 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: const Color(0xFFEAF3EC),
+          decoration: const BoxDecoration(
+            color: Color(0xFFEAF3EC),
             borderRadius: BorderRadius.zero,
           ),
           child: const Text(
@@ -290,7 +290,7 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
-          value: crop,
+          initialValue: crop,
           decoration: const InputDecoration(
             labelText: 'Crop',
             prefixIcon: Icon(Icons.grass_outlined, color: green),
@@ -324,8 +324,8 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
             width: double.infinity,
             constraints: const BoxConstraints(maxHeight: 420),
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F7F4),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF5F7F4),
               borderRadius: BorderRadius.zero,
             ),
             child: SingleChildScrollView(
@@ -475,7 +475,7 @@ class _BricsNetworkPageState extends State<BricsNetworkPage> {
 
   Widget _error() => Container(
     padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(color: const Color(0xFFFFF3F0), borderRadius: BorderRadius.zero),
+    decoration: const BoxDecoration(color: Color(0xFFFFF3F0), borderRadius: BorderRadius.zero),
     child: Text(error!, style: const TextStyle(color: dark)),
   );
 }

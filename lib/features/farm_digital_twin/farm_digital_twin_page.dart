@@ -48,21 +48,21 @@ class _FarmDigitalTwinPageState extends State<FarmDigitalTwinPage>{
     const Text('BUILD OBSERVATION SNAPSHOT',style:TextStyle(color:green,fontSize:9,letterSpacing:1.7,fontWeight:FontWeight.w800)),const SizedBox(height:12),
     TextField(controller:location,decoration:const InputDecoration(labelText:'Farm location',prefixIcon:Icon(Icons.location_on_outlined))),
     const SizedBox(height:12),TextField(controller:size,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Farm size in acres (optional)',prefixIcon:Icon(Icons.square_foot_outlined))),
-    const SizedBox(height:12),DropdownButtonFormField<String>(value:crop,decoration:const InputDecoration(labelText:'Crop'),items:const ['Rice','Wheat','Cotton','Sugarcane','Vegetables','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:(v)=>setState(()=>crop=v??crop)),
+    const SizedBox(height:12),DropdownButtonFormField<String>(initialValue:crop,decoration:const InputDecoration(labelText:'Crop'),items:const ['Rice','Wheat','Cotton','Sugarcane','Vegetables','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:(v)=>setState(()=>crop=v??crop)),
     const SizedBox(height:18),SizedBox(width:double.infinity,child:ElevatedButton.icon(onPressed:loading?null:buildTwin,icon:loading?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.hub_outlined),label:Padding(padding:const EdgeInsets.symmetric(vertical:14),child:Text(loading?'Gathering live evidence...':'Build farm twin')))),
   ]));
   Widget _twin(bool wide)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    Row(children:[const Expanded(child:Text('CURRENT FARM STATE',style:TextStyle(fontSize:11,letterSpacing:2,fontWeight:FontWeight.w800))),Text('Twin '+twin!.version,style:const TextStyle(fontSize:10,color:muted))]),
+    Row(children:[const Expanded(child:Text('CURRENT FARM STATE',style:TextStyle(fontSize:11,letterSpacing:2,fontWeight:FontWeight.w800))),Text('Twin ${twin!.version}',style:const TextStyle(fontSize:10,color:muted))]),
     const SizedBox(height:12),
     GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:wide?3:1,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:2.0,children:[
       _stateCard('WEATHER',twin!.state['weather']?.toString()??'Unavailable',Icons.cloud_outlined),
       _stateCard('SOIL / SURFACE',twin!.state['soil_surface']?.toString()??'Unavailable',Icons.layers_outlined),
       _stateCard('SATELLITE',twin!.state['satellite']?.toString()??'Unavailable',Icons.satellite_alt_outlined),
     ]),
-    const SizedBox(height:14),_box('TWIN SEMANTICS',twin!.semantics.entries.map((e)=>e.key+': '+e.value.toString()).join('\n')),
-    const SizedBox(height:14),_box('NEXT ACTIONS',twin!.actions.map((x)=>'• '+x.toString()).join('\n')),
-    const SizedBox(height:14),_box('LIMITATIONS',twin!.limitations.map((x)=>'• '+x.toString()).join('\n')),
-    const SizedBox(height:14),Text('Generated '+twin!.generatedAt,style:const TextStyle(fontSize:10,color:muted)),
+    const SizedBox(height:14),_box('TWIN SEMANTICS',twin!.semantics.entries.map((e)=>'${e.key}: ${e.value}').join('\n')),
+    const SizedBox(height:14),_box('NEXT ACTIONS',twin!.actions.map((x)=>'• $x').join('\n')),
+    const SizedBox(height:14),_box('LIMITATIONS',twin!.limitations.map((x)=>'• $x').join('\n')),
+    const SizedBox(height:14),Text('Generated ${twin!.generatedAt}',style:const TextStyle(fontSize:10,color:muted)),
   ]);
   Widget _stateCard(String title,String value,IconData icon)=>Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:dark,border:Border.all(color:const Color(0x335B765F))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Icon(icon,color:const Color(0xFFAEC2B5),size:20),const SizedBox(height:8),Text(title,style:const TextStyle(color:Color(0xFF9EB6A5),fontSize:9,letterSpacing:1.4,fontWeight:FontWeight.w800)),const SizedBox(height:5),Expanded(child:Text(value,style:const TextStyle(color:Colors.white,fontSize:11,height:1.35),maxLines:5,overflow:TextOverflow.ellipsis))]));
   Widget _box(String title,String value)=>Container(width:double.infinity,padding:const EdgeInsets.all(20),decoration:BoxDecoration(color:Colors.white,border:Border.all(color:AgriNDesign.line)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(fontSize:10,letterSpacing:1.5,fontWeight:FontWeight.w800,color:green)),const SizedBox(height:10),Text(value,style:const TextStyle(fontSize:12,color:dark,height:1.55))]));

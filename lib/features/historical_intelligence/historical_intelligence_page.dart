@@ -102,7 +102,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
         TextField(controller: location, decoration: _decoration('Village / district / location', Icons.location_on_outlined)).animate().fadeIn(delay: 100.ms, duration: 350.ms),
         const SizedBox(height: 15),
         DropdownButtonFormField<int>(
-          value: days,
+          initialValue: days,
           decoration: _decoration('Period', Icons.date_range_rounded),
           items: const [30, 60, 90].map((x) => DropdownMenuItem(value: x, child: Text('$x days'))).toList(),
           onChanged: (x) => setState(() => days = x ?? days),
@@ -131,7 +131,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
         const SizedBox(height:8),
         Text('Historical farm intelligence', style: TextStyle(fontSize: wide ? 38 : 29, fontWeight: FontWeight.w800, color: dark)),
         const SizedBox(height: 6),
-        Text(h.startDate + ' → ' + h.endDate, style: const TextStyle(color: muted)),
+        Text('${h.startDate} → ${h.endDate}', style: const TextStyle(color: muted)),
         const SizedBox(height: 18),
         GridView.count(
           shrinkWrap: true,
@@ -141,9 +141,9 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
           mainAxisSpacing: 12,
           childAspectRatio: 1.45,
           children: [
-            _metric(h.summary.averageTemperature == null ? 'Unavailable' : h.summary.averageTemperature!.toStringAsFixed(1) + '°C', 'Average temperature'),
-            _metric(h.summary.totalPrecipitation == null ? 'Unavailable' : h.summary.totalPrecipitation!.toStringAsFixed(1) + ' mm', 'Total precipitation'),
-            _metric(h.summary.averageEt0 == null ? 'Unavailable' : h.summary.averageEt0!.toStringAsFixed(1) + ' mm', 'Average daily ET₀'),
+            _metric(h.summary.averageTemperature == null ? 'Unavailable' : '${h.summary.averageTemperature!.toStringAsFixed(1)}°C', 'Average temperature'),
+            _metric(h.summary.totalPrecipitation == null ? 'Unavailable' : '${h.summary.totalPrecipitation!.toStringAsFixed(1)} mm', 'Total precipitation'),
+            _metric(h.summary.averageEt0 == null ? 'Unavailable' : '${h.summary.averageEt0!.toStringAsFixed(1)} mm', 'Average daily ET₀'),
             _metric(h.summary.temperatureTrend, 'Temperature trend'),
           ],
         ),
@@ -157,7 +157,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
         if (s == null || s.scenes.isEmpty)
           _empty('No Sentinel-2 scenes were returned for this period.')
         else ...[
-          Text(s.count.toString() + ' scenes found • ' + s.source, style: const TextStyle(fontSize: 11, color: muted)),
+          Text('${s.count} scenes found • ${s.source}', style: const TextStyle(fontSize: 11, color: muted)),
           const SizedBox(height: 10),
           ...s.scenes.take(8).map(_scene),
         ],
@@ -181,8 +181,8 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
         child: Row(
           children: [
             SizedBox(width: 92, child: Text(x.date, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: dark))),
-            Expanded(child: Text(x.temperature == null ? 'Temperature unavailable' : x.temperature!.toStringAsFixed(1) + '°C', style: const TextStyle(fontSize: 12, color: muted))),
-            Text(x.precipitation == null ? 'Rain unavailable' : x.precipitation!.toStringAsFixed(1) + ' mm', style: const TextStyle(fontSize: 12, color: muted)),
+            Expanded(child: Text(x.temperature == null ? 'Temperature unavailable' : '${x.temperature!.toStringAsFixed(1)}°C', style: const TextStyle(fontSize: 12, color: muted))),
+            Text(x.precipitation == null ? 'Rain unavailable' : '${x.precipitation!.toStringAsFixed(1)} mm', style: const TextStyle(fontSize: 12, color: muted)),
           ],
         ),
       )).toList(),
@@ -204,7 +204,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
             Text(x.id ?? 'Scene ID unavailable', style: const TextStyle(fontSize: 10, color: muted)),
           ]),
         ),
-        Text(x.cloudCover == null ? 'Cloud unavailable' : x.cloudCover!.toStringAsFixed(1) + '%', style: const TextStyle(fontSize: 11, color: muted)),
+        Text(x.cloudCover == null ? 'Cloud unavailable' : '${x.cloudCover!.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 11, color: muted)),
       ],
     ),
   ).animate().fadeIn(duration: 350.ms).slideX(begin: .02, end: 0);
@@ -238,7 +238,7 @@ class _HistoricalIntelligencePageState extends State<HistoricalIntelligencePage>
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               SizedBox(height: 220, child: CustomPaint(painter: _NdviChartPainter(n.observations), child: const SizedBox.expand())),
               const SizedBox(height: 8),
-              Text(n.count.toString() + ' usable observations • ' + n.source, style: const TextStyle(fontSize: 10, color: muted)),
+              Text('${n.count} usable observations • ${n.source}', style: const TextStyle(fontSize: 10, color: muted)),
             ]),
           ),
       ],

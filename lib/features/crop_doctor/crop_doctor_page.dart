@@ -176,7 +176,7 @@ class _CropDoctorPageState extends State<CropDoctorPage> with SingleTickerProvid
 
   Widget _result() => Container(
     width: double.infinity, padding: const EdgeInsets.all(22),
-    decoration: BoxDecoration(color: dark, borderRadius: BorderRadius.zero, boxShadow: const [BoxShadow(color: Color(0x33102D1B), blurRadius: 30, offset: Offset(0, 14))]),
+    decoration: const BoxDecoration(color: dark, borderRadius: BorderRadius.zero, boxShadow: [BoxShadow(color: Color(0x33102D1B), blurRadius: 30, offset: Offset(0, 14))]),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Row(children: [
         Icon(Icons.health_and_safety_outlined, color: Colors.white),
@@ -185,9 +185,9 @@ class _CropDoctorPageState extends State<CropDoctorPage> with SingleTickerProvid
       ]),
       const SizedBox(height: 14),
       Row(children: [
-        _evidenceBadge('IMAGE '+result!.imageQuality.toUpperCase()),
+        _evidenceBadge('IMAGE ${result!.imageQuality.toUpperCase()}'),
         const SizedBox(width: 8),
-        _evidenceBadge('EVIDENCE '+result!.evidenceStrength.toUpperCase()),
+        _evidenceBadge('EVIDENCE ${result!.evidenceStrength.toUpperCase()}'),
       ]),
       if (result!.imageQualityReason.isNotEmpty) ...[
         const SizedBox(height: 8),
@@ -208,7 +208,7 @@ class _CropDoctorPageState extends State<CropDoctorPage> with SingleTickerProvid
         const SizedBox(height: 8),
         ...result!.actions.map((a) => Padding(
           padding: const EdgeInsets.only(bottom: 10),
-          child: Text(a.title + ': ' + a.reason + ' (Priority: ' + a.priority + ')',
+          child: Text('${a.title}: ${a.reason} (Priority: ${a.priority})',
             style: const TextStyle(color: Color(0xFFD4DDD7), fontSize: 12, height: 1.4)),
         )),
       ],
@@ -219,11 +219,11 @@ class _CropDoctorPageState extends State<CropDoctorPage> with SingleTickerProvid
         ...result!.followUpQuestions.map(_bullet),
       ],      if (result!.limitations.isNotEmpty) ...[
         const SizedBox(height: 12),
-        Text('Limits: ' + result!.limitations.join(' • '),
+        Text('Limits: ${result!.limitations.join(' • ')}',
           style: const TextStyle(color: Color(0xFF9FB0A4), fontSize: 10, height: 1.4)),
       ],
       const SizedBox(height: 12),
-      Text(result!.source + ' • ' + result!.model,
+      Text('${result!.source} • ${result!.model}',
         style: const TextStyle(color: Color(0xFF9FB0A4), fontSize: 10)),
     ]),
   ).animate().fadeIn(duration: 600.ms).slideY(begin: .06, end: 0, curve: Curves.easeOutCubic);
@@ -244,7 +244,7 @@ class _CropDoctorPageState extends State<CropDoctorPage> with SingleTickerProvid
   InputDecoration _dec(String label, IconData icon) => InputDecoration(
     labelText: label, prefixIcon: Icon(icon, color: green), filled: true,
     fillColor: const Color(0xFFF7F9F5),
-    border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide.none),
+    border: const OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide.none),
   );
 
   Widget _error() => Container(

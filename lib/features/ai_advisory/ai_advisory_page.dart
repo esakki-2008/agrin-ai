@@ -80,7 +80,7 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
           onTap: pickDate,
           child: InputDecorator(
             decoration: dec('Sowing date', Icons.calendar_month_outlined),
-            child: Text(sowingDate == null ? 'Select sowing date' : sowingDate!.day.toString().padLeft(2, '0') + '/' + sowingDate!.month.toString().padLeft(2, '0') + '/' + sowingDate!.year.toString()),
+            child: Text(sowingDate == null ? 'Select sowing date' : '${sowingDate!.day.toString().padLeft(2, '0')}/${sowingDate!.month.toString().padLeft(2, '0')}/${sowingDate!.year}'),
           ),
         ),
         const SizedBox(height: 18),
@@ -98,7 +98,7 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
   }
   Widget _crop() {
     return DropdownButtonFormField<String>(
-      value: crop,
+      initialValue: crop,
       decoration: dec('Crop', Icons.grass_rounded),
       items: const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
       onChanged: (x) => setState(() => crop = x ?? crop),
@@ -139,7 +139,7 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
               const Text('Observed signals', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
               ...a.observations.asMap().entries.map((entry) =>
-                Text('• ' + entry.value, style: const TextStyle(color: Color(0xFFD4DDD7), fontSize: 12, height: 1.5))
+                Text('• ${entry.value}', style: const TextStyle(color: Color(0xFFD4DDD7), fontSize: 12, height: 1.5))
                     .animate()
                     .fadeIn(delay: Duration(milliseconds: 180 + entry.key * 45), duration: 350.ms)
                     .slideX(begin: .02, end: 0)),
@@ -163,7 +163,7 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
                       const SizedBox(height: 5),
                       Text(x.reason, style: const TextStyle(color: Color(0xFFD4DDD7), fontSize: 12, height: 1.45)),
                       const SizedBox(height: 6),
-                      Text('Priority: ' + x.priority + ' • Confidence: ' + x.confidence,
+                      Text('Priority: ${x.priority} • Confidence: ${x.confidence}',
                           style: const TextStyle(color: Color(0xFF9FB0A4), fontSize: 10)),
                     ],
                   ),
@@ -177,18 +177,18 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
               const Text('Watch next', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
               const SizedBox(height: 7),
               ...a.watchItems.asMap().entries.map((entry) =>
-                Text('• ' + entry.value, style: const TextStyle(color: Color(0xFFD4DDD7), fontSize: 12, height: 1.5))
+                Text('• ${entry.value}', style: const TextStyle(color: Color(0xFFD4DDD7), fontSize: 12, height: 1.5))
                     .animate()
                     .fadeIn(delay: Duration(milliseconds: 320 + entry.key * 50), duration: 350.ms)),
             ],
             if (a.dataLimits.isNotEmpty) ...[
               const SizedBox(height: 14),
-              Text('Data limits: ' + a.dataLimits.join(' • '),
+              Text('Data limits: ${a.dataLimits.join(' • ')}',
                   style: const TextStyle(color: Color(0xFF9FB0A4), fontSize: 10, height: 1.4))
                   .animate().fadeIn(delay: 450.ms, duration: 400.ms),
             ],
             const SizedBox(height: 14),
-            Text(a.source + ' • ' + a.model, style: const TextStyle(color: Color(0xFF9FB0A4), fontSize: 10))
+            Text('${a.source} • ${a.model}', style: const TextStyle(color: Color(0xFF9FB0A4), fontSize: 10))
                 .animate().fadeIn(delay: 500.ms, duration: 400.ms),
           ],
         ),

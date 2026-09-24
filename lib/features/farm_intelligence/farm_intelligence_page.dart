@@ -194,8 +194,8 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
 
   InputDecoration decoration(String label,IconData icon)=>InputDecoration(
     labelText:label,prefixIcon:Icon(icon,color:green),filled:true,fillColor:const Color(0xFFF7F9F5),
-    border:OutlineInputBorder(borderRadius:BorderRadius.zero,borderSide:BorderSide.none),
-    focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.zero,borderSide:const BorderSide(color:green,width:1.4)),
+    border:const OutlineInputBorder(borderRadius:BorderRadius.zero,borderSide:BorderSide.none),
+    focusedBorder:const OutlineInputBorder(borderRadius:BorderRadius.zero,borderSide:BorderSide(color:green,width:1.4)),
   );
 
   @override Widget build(BuildContext context){
@@ -332,8 +332,8 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
                 ),
               ),
               const SizedBox(height: 28),
-              Row(
-                children: const [
+              const Row(
+                children: [
                   _HeroTag('WEATHER'),
                   SizedBox(width: 7),
                   _HeroTag('SOIL'),
@@ -468,18 +468,18 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   Widget _form()=>_card('Farm profile',Column(children:[
     TextField(controller:location,decoration:decoration('Village / district / location',Icons.location_on_outlined)),
     const SizedBox(height:15),
-    DropdownButtonFormField<String>(value:crop,decoration:decoration('Primary crop',Icons.grass_rounded),
+    DropdownButtonFormField<String>(initialValue:crop,decoration:decoration('Primary crop',Icons.grass_rounded),
       items:const ['Rice','Wheat','Cotton','Sugarcane','Tomato','Other'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),
       onChanged:(x)=>setState(()=>crop=x??crop)),
     const SizedBox(height:15),
     TextField(controller:size,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:decoration('Farm size (acres)',Icons.straighten_rounded)),
     const SizedBox(height:15),
     InkWell(onTap:pickDate,child:InputDecorator(decoration:decoration('Sowing date',Icons.calendar_month_outlined),
-      child:Text(date==null?'Select sowing date':date!.day.toString().padLeft(2,'0')+'/'+date!.month.toString().padLeft(2,'0')+'/'+date!.year.toString()))),
+      child:Text(date==null?'Select sowing date':'${date!.day.toString().padLeft(2,'0')}/${date!.month.toString().padLeft(2,'0')}/${date!.year}'))),
     const SizedBox(height:20),
     SizedBox(width:double.infinity,child:ElevatedButton.icon(onPressed:analyzing?null:analyze,icon:analyzing?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.auto_awesome_rounded),
       label:Padding(padding:const EdgeInsets.symmetric(vertical:15),child:Text(analyzing?'Analyzing farm signals...':'Analyze my farm')),
-      style:ElevatedButton.styleFrom(backgroundColor:green,foregroundColor:Colors.white,shape:RoundedRectangleBorder(borderRadius:BorderRadius.zero)))),
+      style:ElevatedButton.styleFrom(backgroundColor:green,foregroundColor:Colors.white,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.zero)))),
   ])).animate().fadeIn(duration:550.ms).slideX(begin:-.04,end:0);
 
   Widget _preview()=>_card('Intelligence layers',const Column(children:[
@@ -492,7 +492,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   Widget _results(bool wide)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     Text('Farm intelligence',style:TextStyle(fontSize:wide?32:27,fontWeight:FontWeight.w800,color:dark)),
     const SizedBox(height:6),
-    Text(location.text+' • '+crop+' • '+size.text+' acres',style:const TextStyle(color:muted)),
+    Text('${location.text} • $crop • ${size.text} acres',style:const TextStyle(color:muted)),
     const SizedBox(height:20),
     GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:wide?4:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:1.5,
       children:[
@@ -517,24 +517,24 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   ]).animate().fadeIn(duration:650.ms).slideY(begin:.06,end:0);
 
   Widget _soilProfileSection(SoilProfileData data, bool wide) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text('Multi-depth soil intelligence', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: dark)),
+    const Text('Multi-depth soil intelligence', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: dark)),
     const SizedBox(height: 8),
-    Text(data.source + ' • ' + data.resolution.toString() + ' m model resolution', style: const TextStyle(fontSize: 11, color: muted)),
+    Text('${data.source} • ${data.resolution} m model resolution', style: const TextStyle(fontSize: 11, color: muted)),
     const SizedBox(height: 12),
     GridView.count(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisCount: wide ? 3 : 2, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.6,
       children: List.generate(data.profile.length, (i) {
         final row = data.profile[i];
-        final depth = row is Map ? row['depth']?.toString() ?? 'Depth ' + (i + 1).toString() : 'Depth ' + (i + 1).toString();
+        final depth = row is Map ? row['depth']?.toString() ?? 'Depth ${i + 1}' : 'Depth ${i + 1}';
         final ph = data.value(i, 'ph');
         final carbon = data.value(i, 'organic_carbon_g_kg');
-        return _metric((ph == null ? 'Unavailable' : ph.toStringAsFixed(2)) + ' pH\\n' + (carbon == null ? 'Unavailable' : carbon.toStringAsFixed(1)) + ' g/kg C', depth, Icons.layers_outlined);
+        return _metric('${ph == null ? 'Unavailable' : ph.toStringAsFixed(2)} pH\\n${carbon == null ? 'Unavailable' : carbon.toStringAsFixed(1)} g/kg C', depth, Icons.layers_outlined);
       }),
     ),
     const SizedBox(height: 20),
   ]);
 
   Widget _waterIntelligenceSection(WaterIntelligenceData data, bool wide) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text('Water & irrigation intelligence', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: dark)),
+    const Text('Water & irrigation intelligence', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: dark)),
     const SizedBox(height: 8),
     Text(data.source, style: const TextStyle(fontSize: 11, color: muted)),
     const SizedBox(height: 12),
@@ -545,7 +545,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       _metric(data.metric('max_rain_probability_percent'), 'Max rain probability', Icons.umbrella_outlined),
     ]),
     const SizedBox(height: 10),
-    if (data.signals.isNotEmpty) _signalCard('Water signals', data.signals.map((x) => '• ' + x.toString()).join('\\n'), Icons.water_drop_outlined),
+    if (data.signals.isNotEmpty) _signalCard('Water signals', data.signals.map((x) => '• $x').join('\\n'), Icons.water_drop_outlined),
     const SizedBox(height: 20),
   ]);
 
@@ -567,9 +567,9 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
   ]);
 
   Widget _satelliteSection(SatelliteData data, bool wide)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    Row(children:[
-      const Expanded(child:Text('Satellite vegetation',style:TextStyle(fontSize:21,fontWeight:FontWeight.w800,color:dark))),
-      const Icon(Icons.satellite_alt_rounded,color:green,size:22),
+    const Row(children:[
+      Expanded(child:Text('Satellite vegetation',style:TextStyle(fontSize:21,fontWeight:FontWeight.w800,color:dark))),
+      Icon(Icons.satellite_alt_rounded,color:green,size:22),
     ]),
     const SizedBox(height:8),
     Text(data.source,style:const TextStyle(fontSize:11,color:muted)),
@@ -600,9 +600,9 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     String fmt(double? value) => value==null ? 'Unavailable' : value.toStringAsFixed(3);
     String fmtChange(double? value) => value==null ? 'No paired observation' : (value>=0?'+':'')+value.toStringAsFixed(3);
     return Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Row(children:[
-        const Expanded(child:Text('Advanced satellite intelligence',style:TextStyle(fontSize:21,fontWeight:FontWeight.w800,color:dark))),
-        const Icon(Icons.satellite_alt_rounded,color:green,size:22),
+      const Row(children:[
+        Expanded(child:Text('Advanced satellite intelligence',style:TextStyle(fontSize:21,fontWeight:FontWeight.w800,color:dark))),
+        Icon(Icons.satellite_alt_rounded,color:green,size:22),
       ]),
       const SizedBox(height:8),
       const Text(
@@ -618,15 +618,15 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
         mainAxisSpacing:12,
         childAspectRatio:1.45,
         children:[
-          _metric(fmt(ndvi),'Latest NDVI • Δ '+fmtChange(ndviDelta),Icons.eco_rounded),
-          _metric(fmt(ndmi),'Latest NDMI • Δ '+fmtChange(ndmiDelta),Icons.water_drop_outlined),
-          _metric(fmt(evi),'Latest EVI • Δ '+fmtChange(eviDelta),Icons.grass_outlined),
+          _metric(fmt(ndvi),'Latest NDVI • Δ ${fmtChange(ndviDelta)}',Icons.eco_rounded),
+          _metric(fmt(ndmi),'Latest NDMI • Δ ${fmtChange(ndmiDelta)}',Icons.water_drop_outlined),
+          _metric(fmt(evi),'Latest EVI • Δ ${fmtChange(eviDelta)}',Icons.grass_outlined),
         ],
       ),
       const SizedBox(height:10),
       _signalCard(
         'Cloud-aware observation',
-        'Latest: '+(data.sceneDate('latest')?.substring(0,10) ?? 'Unavailable')+' • '+(data.sceneCloud('latest')?.toStringAsFixed(1) ?? 'Unavailable')+'% cloud',
+        'Latest: ${data.sceneDate('latest')?.substring(0,10) ?? 'Unavailable'} • ${data.sceneCloud('latest')?.toStringAsFixed(1) ?? 'Unavailable'}% cloud',
         Icons.filter_alt_outlined,
       ),
       const SizedBox(height:20),
@@ -640,9 +640,9 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     final maxWind=data.number('maximum_wind_kmh');
     String fmt(double? value,String unit) => value==null ? 'Unavailable' : value.toStringAsFixed(1)+unit;
     return Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Row(children:[
-        const Expanded(child:Text('Climate & weather intelligence',style:TextStyle(fontSize:21,fontWeight:FontWeight.w800,color:dark))),
-        const Icon(Icons.cloud_outlined,color:green,size:22),
+      const Row(children:[
+        Expanded(child:Text('Climate & weather intelligence',style:TextStyle(fontSize:21,fontWeight:FontWeight.w800,color:dark))),
+        Icon(Icons.cloud_outlined,color:green,size:22),
       ]),
       const SizedBox(height:8),
       const Text(
@@ -696,12 +696,12 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     return 'Variable conditions';
   }
 
-  Widget _errorCard()=>Container(width:double.infinity,padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:const Color(0xFFFFF3F0),borderRadius:BorderRadius.zero),child:Row(children:[const Icon(Icons.error_outline,color:Colors.deepOrange),const SizedBox(width:10),Expanded(child:Text(error??'Unable to fetch live data.',style:const TextStyle(color:dark)))]));
+  Widget _errorCard()=>Container(width:double.infinity,padding:const EdgeInsets.all(18),decoration:const BoxDecoration(color:Color(0xFFFFF3F0),borderRadius:BorderRadius.zero),child:Row(children:[const Icon(Icons.error_outline,color:Colors.deepOrange),const SizedBox(width:10),Expanded(child:Text(error??'Unable to fetch live data.',style:const TextStyle(color:dark)))]));
   Widget _aiAdvisory(AdvisoryData data) {
     return Container(
       width:double.infinity,
       padding:const EdgeInsets.all(22),
-      decoration:BoxDecoration(color:dark,borderRadius:BorderRadius.zero),
+      decoration:const BoxDecoration(color:dark,borderRadius:BorderRadius.zero),
       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         const Row(children:[
           Icon(Icons.auto_awesome_rounded,color:Colors.white),
@@ -715,7 +715,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
           ...data.actions.map((a)=>Container(
             margin:const EdgeInsets.only(bottom:10),
             padding:const EdgeInsets.all(14),
-            decoration:BoxDecoration(color:const Color(0xFF1C3325),borderRadius:BorderRadius.zero),
+            decoration:const BoxDecoration(color:Color(0xFF1C3325),borderRadius:BorderRadius.zero),
             child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
               Text(a.title,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w700)),
               const SizedBox(height:5),
@@ -746,7 +746,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(color: dark, borderRadius: BorderRadius.zero),
+        decoration: const BoxDecoration(color: dark, borderRadius: BorderRadius.zero),
         child: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -772,7 +772,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: dark,
         borderRadius: BorderRadius.zero,
       ),
