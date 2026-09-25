@@ -55,15 +55,45 @@ class _FarmDigitalTwinPageState extends State<FarmDigitalTwinPage>{
     Row(children:[const Expanded(child:Text('CURRENT FARM STATE',style:TextStyle(fontSize:11,letterSpacing:2,fontWeight:FontWeight.w800))),Text('Twin ${twin!.version}',style:const TextStyle(fontSize:10,color:muted))]),
     const SizedBox(height:12),
     GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:wide?3:1,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:2.0,children:[
-      _stateCard('WEATHER',twin!.state['weather']?.toString()??'Unavailable',Icons.cloud_outlined),
-      _stateCard('SOIL / SURFACE',twin!.state['soil_surface']?.toString()??'Unavailable',Icons.layers_outlined),
-      _stateCard('SATELLITE',twin!.state['satellite']?.toString()??'Unavailable',Icons.satellite_alt_outlined),
+      _stateCard('WEATHER',_weatherSummary(twin!.state['weather']),Icons.cloud_outlined),
+      _stateCard('SOIL / SURFACE',_soilSummary(twin!.state['soil_surface']),Icons.layers_outlined),
+      _stateCard('SATELLITE',_satelliteSummary(twin!.state['satellite']),Icons.satellite_alt_outlined),
     ]),
     const SizedBox(height:14),_box('TWIN SEMANTICS',twin!.semantics.entries.map((e)=>'${e.key}: ${e.value}').join('\n')),
     const SizedBox(height:14),_box('NEXT ACTIONS',twin!.actions.map((x)=>'• $x').join('\n')),
     const SizedBox(height:14),_box('LIMITATIONS',twin!.limitations.map((x)=>'• $x').join('\n')),
     const SizedBox(height:14),Text('Generated ${twin!.generatedAt}',style:const TextStyle(fontSize:10,color:muted)),
   ]);
+  String _weatherSummary(dynamic raw){
+    if(raw is! Map || raw.isEmpty) return 'Unavailable';
+    final t=raw['temperature_c']; final h=raw['humidity_percent']; final p=raw['precipitation_mm']; final w=raw['wind_speed_kmh'];
+    final parts=<String>[];
+    if(t!=null) parts.add('${t}°C');
+    if(h!=null) parts.add('${h}% humidity');
+    if(p!=null) parts.add('${p} mm rain');
+    if(w!=null) parts.add('${w} km/h wind');
+    return parts.isEmpty ? 'Available' : parts.join(' • ');
+  }
+  String _soilSummary(dynamic raw){
+    if(raw is! Map || raw.isEmpty) return 'Unavailable';
+    final parts=<String>[];
+    if(raw['ph']!=null) parts.add('pH ${raw['ph']}');
+    if(raw['organic_carbon_g_kg']!=null) parts.add('OC ${raw['organic_carbon_g_kg']} g/kg');
+    if(raw['nitrogen_g_kg']!=null) parts.add('N ${raw['nitrogen_g_kg']} g/kg');
+    if(raw['clay_percent']!=null) parts.add('Clay ${raw['clay_percent']}%');
+    return parts.isEmpty ? 'Available' : parts.join(' • ');
+  }
+  String _satelliteSummary(dynamic raw){
+    if(raw is! Map || raw.isEmpty) return 'Unavailable';
+    final indices=raw['indices'] is Map ? Map<String,dynamic>.from(raw['indices'] as Map) : <String,dynamic>{};
+    final parts=<String>[];
+    if(raw['observation_date']!=null) parts.add(raw['observation_date'].toString().split('T').first);
+    if(raw['cloud_cover_percent']!=null) parts.add('Cloud ${raw['cloud_cover_percent']}%');
+    if(indices['ndvi']!=null) parts.add('NDVI ${indices['ndvi']}');
+    if(indices['ndmi']!=null) parts.add('NDMI ${indices['ndmi']}');
+    if(indices['evi']!=null) parts.add('EVI ${indices['evi']}');
+    return parts.isEmpty ? 'Available' : parts.join(' • ');
+  }
   Widget _stateCard(String title,String value,IconData icon)=>Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:dark,border:Border.all(color:const Color(0x335B765F))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Icon(icon,color:const Color(0xFFAEC2B5),size:20),const SizedBox(height:8),Text(title,style:const TextStyle(color:Color(0xFF9EB6A5),fontSize:9,letterSpacing:1.4,fontWeight:FontWeight.w800)),const SizedBox(height:5),Expanded(child:Text(value,style:const TextStyle(color:Colors.white,fontSize:11,height:1.35),maxLines:5,overflow:TextOverflow.ellipsis))]));
   Widget _box(String title,String value)=>Container(width:double.infinity,padding:const EdgeInsets.all(20),decoration:BoxDecoration(color:Colors.white,border:Border.all(color:AgriNDesign.line)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(fontSize:10,letterSpacing:1.5,fontWeight:FontWeight.w800,color:green)),const SizedBox(height:10),Text(value,style:const TextStyle(fontSize:12,color:dark,height:1.55))]));
   Widget _error()=>Container(width:double.infinity,padding:const EdgeInsets.all(16),color:const Color(0xFFFFF1EC),child:Text(error!,style:const TextStyle(color:dark)));
