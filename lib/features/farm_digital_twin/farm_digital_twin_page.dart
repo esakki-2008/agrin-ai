@@ -88,10 +88,10 @@ class _FarmDigitalTwinPageState extends State<FarmDigitalTwinPage>{
     final indices=raw['indices'] is Map ? Map<String,dynamic>.from(raw['indices'] as Map) : <String,dynamic>{};
     final parts=<String>[];
     if(raw['observation_date']!=null) parts.add(raw['observation_date'].toString().split('T').first);
-    if(raw['cloud_cover_percent']!=null) parts.add('Cloud ${raw['cloud_cover_percent']}%');
-    if(indices['ndvi']!=null) parts.add('NDVI ${indices['ndvi']}');
-    if(indices['ndmi']!=null) parts.add('NDMI ${indices['ndmi']}');
-    if(indices['evi']!=null) parts.add('EVI ${indices['evi']}');
+    if(raw['cloud_cover_percent'] is num) parts.add('Cloud ' + (raw['cloud_cover_percent'] as num).toStringAsFixed(2) + '%');
+    if(indices['ndvi'] is num) parts.add('NDVI ' + (indices['ndvi'] as num).toStringAsFixed(3));
+    if(indices['ndmi'] is num) parts.add('NDMI ' + (indices['ndmi'] as num).toStringAsFixed(3));
+    if(indices['evi'] is num) parts.add('EVI ' + (indices['evi'] as num).toStringAsFixed(3));
     return parts.isEmpty ? 'Available' : parts.join(' • ');
   }
   Widget _stateCard(String title,String value,IconData icon)=>Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:dark,border:Border.all(color:const Color(0x335B765F))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Icon(icon,color:const Color(0xFFAEC2B5),size:20),const SizedBox(height:8),Text(title,style:const TextStyle(color:Color(0xFF9EB6A5),fontSize:9,letterSpacing:1.4,fontWeight:FontWeight.w800)),const SizedBox(height:5),Expanded(child:Text(value,style:const TextStyle(color:Colors.white,fontSize:11,height:1.35),maxLines:5,overflow:TextOverflow.ellipsis))]));
