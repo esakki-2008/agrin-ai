@@ -1,6 +1,5 @@
-import 'dart:convert';
 import '../config/api_config.dart';
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
 class InteroperabilityProfile {
   final String standard;
@@ -10,111 +9,52 @@ class InteroperabilityProfile {
   final List<String> observationGroups;
   final List<String> privacy;
 
-  const InteroperabilityProfile({
-    required this.standard,
-    required this.version,
-    required this.format,
-    required this.design,
-    required this.observationGroups,
-    required this.privacy,
-  });
+  const InteroperabilityProfile({required this.standard,required this.version,required this.format,required this.design,required this.observationGroups,required this.privacy});
 }
 
 class InteroperabilityService {
   static String get baseUrl => ApiConfig.baseUrl;
 
   Future<InteroperabilityProfile> profile() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/interoperability/profile'),
-    ).timeout(const Duration(seconds: 30));
-
-    if (response.statusCode != 200) {
-      throw Exception('Interoperability profile unavailable (${response.statusCode}).');
-    }
-
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final body=await const ApiClient().getJson('/interoperability/profile',timeout:const Duration(seconds:30));
     return InteroperabilityProfile(
-      standard: body['standard'].toString(),
-      version: body['version'].toString(),
-      format: body['format'].toString(),
-      design: (body['design'] as List).map((x) => x.toString()).toList(),
-      observationGroups: (body['observation_groups'] as List).map((x) => x.toString()).toList(),
-      privacy: (body['privacy'] as List).map((x) => x.toString()).toList(),
+      standard:body['standard'].toString(),
+      version:body['version'].toString(),
+      format:body['format'].toString(),
+      design:(body['design'] as List).map((x)=>x.toString()).toList(),
+      observationGroups:(body['observation_groups'] as List).map((x)=>x.toString()).toList(),
+      privacy:(body['privacy'] as List).map((x)=>x.toString()).toList(),
     );
   }
 
-  Future<Map<String, dynamic>> export({
-    required String countryCode,
-    required String locationName,
-    required double latitude,
-    required double longitude,
-    required String observedAt,
-    Map<String, dynamic>? weather,
-    Map<String, dynamic>? soil,
-    Map<String, dynamic>? satellite,
-    String? crop,
+  Future<Map<String,dynamic>> export({
+    required String countryCode,required String locationName,required double latitude,required double longitude,required String observedAt,
+    Map<String,dynamic>? weather,Map<String,dynamic>? soil,Map<String,dynamic>? satellite,String? crop,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/interoperability/export'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'country_code': countryCode,
-        'location_name': locationName,
-        'latitude': latitude,
-        'longitude': longitude,
-        'observed_at': observedAt,
-        'weather': weather,
-        'soil': soil,
-        'satellite': satellite,
-        'crop': crop,
-      }),
-    ).timeout(const Duration(seconds: 60));
-
-    if (response.statusCode != 200) {
-      throw Exception('Observation export failed (${response.statusCode}).');
-    }
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    return const ApiClient().postJson(
+      '/interoperability/export',
+      body:{
+        'country_code':countryCode,'location_name':locationName,'latitude':latitude,'longitude':longitude,
+        'observed_at':observedAt,'weather':weather,'soil':soil,'satellite':satellite,'crop':crop,
+      },
+      timeout:const Duration(seconds:60),
+    );
   }
 
-  Future<Map<String, dynamic>> validateObservation(Map<String, dynamic> observation) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/interoperability/validate'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(observation),
-    ).timeout(const Duration(seconds: 30));
-
-    if (response.statusCode != 200) {
-      final body = jsonDecode(response.body);
-      throw Exception(body['detail']?.toString() ?? 'Observation validation failed (${response.statusCode}).');
-    }
-    return jsonDecode(response.body) as Map<String, dynamic>;
+  Future<Map<String,dynamic>> validateObservation(Map<String,dynamic> observation) async {
+    return const ApiClient().postJson('/interoperability/validate',body:observation,timeout:const Duration(seconds:30));
   }
 
-  Future<Map<String, dynamic>> validate({
-    required String countryCode,
-    required String locationName,
-    required double latitude,
-    required double longitude,
-    required String observedAt,
-    String? crop,
+  Future<Map<String,dynamic>> validate({
+    required String countryCode,required String locationName,required double latitude,required double longitude,required String observedAt,String? crop,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/interoperability/validate'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'country_code': countryCode,
-        'location_name': locationName,
-        'latitude': latitude,
-        'longitude': longitude,
-        'observed_at': observedAt,
-        'crop': crop,
-      }),
-    ).timeout(const Duration(seconds: 30));
-
-    if (response.statusCode != 200) {
-      throw Exception('Observation validation failed (${response.statusCode}).');
-    }
-
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    return const ApiClient().postJson(
+      '/interoperability/validate',
+      body:{
+        'country_code':countryCode,'location_name':locationName,'latitude':latitude,'longitude':longitude,
+        'observed_at':observedAt,'crop':crop,
+      },
+      timeout:const Duration(seconds:30),
+    );
   }
 }
