@@ -1,6 +1,5 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
+import 'api_client.dart';
 
 class FarmTwinData {
   final bool available;
@@ -31,9 +30,11 @@ class FarmTwinService {
   FarmTwinService({String? baseUrl}):baseUrl=baseUrl??ApiConfig.baseUrl;
 
   Future<FarmTwinData> build({required String location,required String crop,double? farmSizeAcres}) async {
-    final r=await http.post(Uri.parse('$baseUrl/farm-twin/build'),headers:{'Content-Type':'application/json'},body:jsonEncode({'location':location,'crop':crop,'farm_size_acres':farmSizeAcres})).timeout(const Duration(seconds:120));
-    final j=jsonDecode(r.body) as Map<String,dynamic>;
-    if(r.statusCode!=200) throw Exception(j['detail']?.toString()??'Farm Digital Twin failed.');
+    final j = await ApiClient(baseUrl: baseUrl).postJson(
+      '/farm-twin/build',
+      body:{'location':location,'crop':crop,'farm_size_acres':farmSizeAcres},
+      timeout:const Duration(seconds:120),
+    );
     return FarmTwinData.fromJson(j);
   }
 }
