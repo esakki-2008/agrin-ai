@@ -74,8 +74,8 @@ async def soil_profile(request: SoilIntelligenceRequest):
             return label, values, None
         except HTTPException as exc:
             return label, None, exc.detail
-        except Exception as exc:
-            return label, None, str(exc)
+        except Exception:
+            return label, None, "Provider response could not be processed."
 
     results = await asyncio.gather(
         *(fetch_depth(label, depth) for label, depth in DEPTHS.items())
