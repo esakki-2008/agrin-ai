@@ -1,6 +1,5 @@
-import 'dart:convert';
 import '../config/api_config.dart';
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
 class HistoricalDay {
   final String date;
@@ -41,7 +40,6 @@ class HistoricalSatellite {
   const HistoricalSatellite({required this.source, required this.count, required this.scenes});
 }
 
-
 class HistoricalNdviObservation {
   final String sceneId;
   final String? date;
@@ -49,15 +47,7 @@ class HistoricalNdviObservation {
   final double redReflectance;
   final double nirReflectance;
   final double ndvi;
-
-  const HistoricalNdviObservation({
-    required this.sceneId,
-    required this.date,
-    required this.cloudCover,
-    required this.redReflectance,
-    required this.nirReflectance,
-    required this.ndvi,
-  });
+  const HistoricalNdviObservation({required this.sceneId,required this.date,required this.cloudCover,required this.redReflectance,required this.nirReflectance,required this.ndvi});
 }
 
 class HistoricalNdvi {
@@ -66,111 +56,80 @@ class HistoricalNdvi {
   final int count;
   final List<HistoricalNdviObservation> observations;
   final String? message;
-
-  const HistoricalNdvi({
-    required this.available,
-    required this.source,
-    required this.count,
-    required this.observations,
-    required this.message,
-  });
+  const HistoricalNdvi({required this.available,required this.source,required this.count,required this.observations,required this.message});
 }
 
 class HistoricalService {
   static String get baseUrl => ApiConfig.baseUrl;
 
   Future<HistoricalWeather> weather({required double latitude, required double longitude, int days = 30}) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/historical/weather'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'latitude': latitude, 'longitude': longitude, 'days': days}),
-    ).timeout(const Duration(seconds: 45));
-
-    if (response.statusCode != 200) throw Exception(_detail(response));
-
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    final summary = body['summary'] as Map<String, dynamic>;
-    final period = body['period'] as Map<String, dynamic>;
-    final daily = (body['daily'] as List).cast<Map<String, dynamic>>();
-
+    final body = await const ApiClient().postJson(
+      '/historical/weather',
+      body:{'latitude':latitude,'longitude':longitude,'days':days},
+      timeout:const Duration(seconds:45),
+    );
+    final summary = body['summary'] as Map<String,dynamic>;
+    final period = body['period'] as Map<String,dynamic>;
+    final daily = (body['daily'] as List).cast<Map<String,dynamic>>();
     return HistoricalWeather(
       source: body['source'].toString(),
       startDate: period['start'].toString(),
       endDate: period['end'].toString(),
       summary: HistoricalSummary(
-        averageTemperature: (summary['average_temperature_c'] as num?)?.toDouble(),
-        totalPrecipitation: (summary['total_precipitation_mm'] as num?)?.toDouble(),
-        averageEt0: (summary['average_daily_et0_mm'] as num?)?.toDouble(),
-        temperatureTrend: summary['temperature_trend'].toString(),
+        averageTemperature:(summary['average_temperature_c'] as num?)?.toDouble(),
+        totalPrecipitation:(summary['total_precipitation_mm'] as num?)?.toDouble(),
+        averageEt0:(summary['average_daily_et0_mm'] as num?)?.toDouble(),
+        temperatureTrend:summary['temperature_trend'].toString(),
       ),
-      daily: daily.map((x) => HistoricalDay(
-        date: x['date'].toString(),
-        temperature: (x['temperature_mean_c'] as num?)?.toDouble(),
-        precipitation: (x['precipitation_mm'] as num?)?.toDouble(),
-        et0: (x['et0_mm'] as num?)?.toDouble(),
+      daily:daily.map((x)=>HistoricalDay(
+        date:x['date'].toString(),
+        temperature:(x['temperature_mean_c'] as num?)?.toDouble(),
+        precipitation:(x['precipitation_mm'] as num?)?.toDouble(),
+        et0:(x['et0_mm'] as num?)?.toDouble(),
       )).toList(),
     );
   }
 
   Future<HistoricalSatellite> satelliteScenes({required double latitude, required double longitude, int days = 90}) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/historical/satellite-scenes'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'latitude': latitude, 'longitude': longitude, 'days': days}),
-    ).timeout(const Duration(seconds: 45));
-
-    if (response.statusCode != 200) throw Exception(_detail(response));
-
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    final scenes = (body['scenes'] as List).cast<Map<String, dynamic>>();
-
+    final body = await const ApiClient().postJson(
+      '/historical/satellite-scenes',
+      body:{'latitude':latitude,'longitude':longitude,'days':days},
+      timeout:const Duration(seconds:45),
+    );
+    final scenes=(body['scenes'] as List).cast<Map<String,dynamic>>();
     return HistoricalSatellite(
-      source: body['source'].toString(),
-      count: (body['count'] as num).toInt(),
-      scenes: scenes.map((x) => HistoricalScene(
-        id: x['id']?.toString(),
-        datetime: x['datetime']?.toString(),
-        cloudCover: (x['cloud_cover_percent'] as num?)?.toDouble(),
+      source:body['source'].toString(),
+      count:(body['count'] as num).toInt(),
+      scenes:scenes.map((x)=>HistoricalScene(
+        id:x['id']?.toString(),
+        datetime:x['datetime']?.toString(),
+        cloudCover:(x['cloud_cover_percent'] as num?)?.toDouble(),
       )).toList(),
     );
   }
 
   Future<HistoricalNdvi> satelliteNdvi({required double latitude, required double longitude, int days = 90}) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/historical/satellite-ndvi'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'latitude': latitude, 'longitude': longitude, 'days': days}),
-    ).timeout(const Duration(seconds: 120));
-
-    if (response.statusCode != 200) throw Exception(_detail(response));
-
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    final observations = (body['observations'] as List)
-        .cast<Map<String, dynamic>>()
-        .map((x) => HistoricalNdviObservation(
-              sceneId: x['scene_id'].toString(),
-              date: x['date']?.toString(),
-              cloudCover: (x['cloud_cover_percent'] as num).toDouble(),
-              redReflectance: (x['red_reflectance'] as num).toDouble(),
-              nirReflectance: (x['nir_reflectance'] as num).toDouble(),
-              ndvi: (x['ndvi'] as num).toDouble(),
-            ))
-        .toList();
-
-    return HistoricalNdvi(
-      available: body['available'] == true,
-      source: body['source'].toString(),
-      count: (body['count'] as num).toInt(),
-      observations: observations,
-      message: body['message']?.toString(),
+    final body = await const ApiClient().postJson(
+      '/historical/satellite-ndvi',
+      body:{'latitude':latitude,'longitude':longitude,'days':days},
+      timeout:const Duration(seconds:120),
     );
-  }
-
-  String _detail(http.Response response) {
-    try {
-      final body = jsonDecode(response.body);
-      if (body is Map<String, dynamic> && body['detail'] != null) return body['detail'].toString();
-    } catch (_) {}
-    return 'Historical intelligence request failed (${response.statusCode}).';
+    final observations=(body['observations'] as List)
+        .cast<Map<String,dynamic>>()
+        .map((x)=>HistoricalNdviObservation(
+          sceneId:x['scene_id'].toString(),
+          date:x['date']?.toString(),
+          cloudCover:(x['cloud_cover_percent'] as num).toDouble(),
+          redReflectance:(x['red_reflectance'] as num).toDouble(),
+          nirReflectance:(x['nir_reflectance'] as num).toDouble(),
+          ndvi:(x['ndvi'] as num).toDouble(),
+        )).toList();
+    return HistoricalNdvi(
+      available:body['available']==true,
+      source:body['source'].toString(),
+      count:(body['count'] as num).toInt(),
+      observations:observations,
+      message:body['message']?.toString(),
+    );
   }
 }
