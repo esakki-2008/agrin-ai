@@ -127,6 +127,7 @@ Every recommendation is required to be grounded in the supplied evidence.
 - Pydantic
 - HTTPX
 - Rasterio
+- python-dotenv
 
 ### Intelligence
 - Google Gemini API
@@ -176,7 +177,6 @@ python -m venv .venv
 # Windows
 .venv\Scripts\activate
 pip install -r requirements.txt
-pip install python-dotenv
 uvicorn main:app --reload
 ```
 
@@ -261,7 +261,7 @@ This creates a traceable path from **data → evidence → reasoning → action*
 ## Current status
 
 - ✅ Flutter multi-page application
-- ✅ Live weather integration
+- ✅ Live weather integration with provider fallback
 - ✅ SoilGrids integration
 - ✅ Sentinel-2 scene discovery
 - ✅ Real NDVI sampling
