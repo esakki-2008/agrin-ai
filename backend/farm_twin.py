@@ -201,7 +201,7 @@ async def build_farm_twin(request: FarmTwinRequest):
             "farm_size_acres":request.farm_size_acres,
         },
         "state":{
-            "weather":weather.get("current",{}) if weather else {},
+            "weather":weather if weather else {},
             "soil_surface":soil,
             "satellite":satellite,
         },
