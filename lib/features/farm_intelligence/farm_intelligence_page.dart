@@ -776,9 +776,11 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
     ]);
   }
 
+  String _displayText(String text) => text.replaceAll(r'\n', '\n');
+
   Widget _metric(String value,String label,IconData icon)=>Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(2),border:Border.all(color:AgriNDesign.line)),
     child:Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisAlignment:MainAxisAlignment.center,children:[
-      Icon(icon,color:green,size:22),const SizedBox(height:12),Text(value,style:const TextStyle(fontSize:22,fontWeight:FontWeight.w800,color:dark)),Text(label,style:const TextStyle(fontSize:11,color:muted)),
+      Icon(icon,color:green,size:22),const SizedBox(height:12),Text(_displayText(value),style:const TextStyle(fontSize:22,fontWeight:FontWeight.w800,color:dark)),Text(_displayText(label),style:const TextStyle(fontSize:11,color:muted)),
     ]));
 
   String _condition(int? code) {
@@ -924,7 +926,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(title, style: const TextStyle(fontWeight: FontWeight.w700, color: dark)),
               const SizedBox(height: 4),
-              Text(text, style: const TextStyle(fontSize: 12, color: muted)),
+              Text(_displayText(text), style: const TextStyle(fontSize: 12, color: muted)),
             ]),
           ),
         ],
