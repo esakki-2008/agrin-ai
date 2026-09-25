@@ -7,5 +7,13 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: GEMINI_API_KEY
+      - key: GEMINI_API_KEY_PRIMARY
         sync: false
+      - key: GEMINI_API_KEY_BACKUP
+        sync: false
+      - key: GEMINI_MODEL_PRIMARY
+        value: gemini-2.5-flash
+      - key: GEMINI_MODEL_BACKUP
+        value: gemini-3.5-flash-lite
+      - key: CORS_ORIGINS
+        value: https://esakki-2008.github.io
