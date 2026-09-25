@@ -301,9 +301,7 @@ async def satellite_ndvi(request: SatelliteRequest):
     except httpx.HTTPError as exc:
         raise HTTPException(
             status_code=502,
-            detail=(
-                f"Satellite catalog request failed: {exc}"
-            ),
+            detail="Satellite catalog request failed.",
         ) from exc
 
     if feature is None:
