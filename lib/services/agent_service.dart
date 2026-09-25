@@ -1,6 +1,6 @@
 import 'dart:convert';
 import '../config/api_config.dart';
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
 class AgentData {
   final String agent;
@@ -13,17 +13,10 @@ class AgentData {
   const AgentData({required this.agent,required this.version,required this.generatedAt,required this.evidence,required this.report,required this.sources});
 
   factory AgentData.fromJson(Map<String,dynamic> j) {
-    final rawReport = Map<String,dynamic>.from(
-      j['report'] as Map? ?? {},
-    );
-
-    // The backend wraps the Gemini payload as:
-    // report: { report: { summary, recommendations, ... }, provider: {...} }
-    // Unwrap the inner report so the UI can read the AI fields directly.
+    final rawReport = Map<String,dynamic>.from(j['report'] as Map? ?? {});
     final parsedReport = rawReport['report'] is Map
         ? Map<String,dynamic>.from(rawReport['report'] as Map)
         : rawReport;
-
     return AgentData(
       agent:j['agent']?.toString()??'AgriN Farm Intelligence Agent',
       version:j['version']?.toString()??'',
@@ -40,12 +33,11 @@ class AgentService {
   AgentService({String? baseUrl}) : baseUrl = baseUrl ?? ApiConfig.baseUrl;
 
   Future<AgentData> analyze({required String location,required String crop,double? farmSizeAcres,int historicalDays=30}) async {
-    final response=await http.post(Uri.parse('$baseUrl/agent/analyze'),
-      headers:{'Content-Type':'application/json'},
-      body:jsonEncode({'location':location,'crop':crop,'farm_size_acres':farmSizeAcres,'historical_days':historicalDays}),
-    ).timeout(const Duration(seconds:120));
-    final body=jsonDecode(response.body) as Map<String,dynamic>;
-    if(response.statusCode!=200) throw Exception(body['detail']?.toString()??'Farm Intelligence Agent failed.');
+    final body = await ApiClient(baseUrl: baseUrl).postJson(
+      '/agent/analyze',
+      body:{'location':location,'crop':crop,'farm_size_acres':farmSizeAcres,'historical_days':historicalDays},
+      timeout:const Duration(seconds:120),
+    );
     return AgentData.fromJson(body);
   }
 }
