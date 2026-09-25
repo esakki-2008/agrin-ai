@@ -1,5 +1,6 @@
-@"
 .env
+.env.*
+!.env.example
 .venv/
 backend/.venv/
 .dart_tool/
@@ -11,6 +12,4 @@ __pycache__/
 .flutter-plugins-dependencies
 *.backup
 test.png
-"@ | Add-Content .gitignore
-# Local Android SDK configuration
 android/local.properties
