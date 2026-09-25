@@ -1,5 +1,9 @@
 # AgriN AI 🌾
 
+**Live frontend:** https://esakki-2008.github.io/agrin-ai/  
+**Live API:** https://agrin-ai-api.onrender.com  
+**API docs:** https://agrin-ai-api.onrender.com/docs  
+
 **Evidence-grounded regenerative agricultural intelligence for India, with an open-data architecture designed for cross-border interoperability.**
 
 AgriN combines live weather, model-derived soil information, Sentinel-2 satellite observations, historical intelligence and Gemini reasoning into farmer-facing decision support.
@@ -26,7 +30,10 @@ Combines historical weather and Sentinel-2 observations to help inspect changes 
 ### 6. BRICS-ready Data Network
 Exports an open JSON observation contract using WGS84 coordinates, source attribution and country-neutral fields, with validation support.
 
-### 7. AgriN Intelligence Agent
+### 7. Farm Digital Twin
+Builds a refreshable observation snapshot from location, weather, soil and satellite signals. It is explicitly not a cadastral boundary or complete physical simulation.
+
+### 8. AgriN Intelligence Agent
 The central decision loop:
 
 ```text
@@ -55,7 +62,7 @@ Every recommendation is required to be grounded in the supplied evidence.
 
 | Signal | Source | Role |
 |---|---|---|
-| Weather | Open-Meteo | Current weather and precipitation probability |
+| Weather | Open-Meteo, with MET Norway fallback | Current weather and precipitation probability |
 | Soil | ISRIC SoilGrids 2.0 | Model-derived soil properties |
 | Satellite | Sentinel-2 Collection 1 L2A / AWS Open Data | Satellite scenes and NDVI |
 | Historical weather | Open-Meteo archive service | Historical weather context |
@@ -77,7 +84,8 @@ Every recommendation is required to be grounded in the supplied evidence.
 │                                             │
 │ Dashboard · Farm Intelligence · Advisory   │
 │ Crop Doctor · Regenerative · History       │
-│ BRICS Network · Intelligence Agent         │
+│ Farm Digital Twin · BRICS Network         │
+│ Intelligence Agent                          │
 └──────────────────┬──────────────────────────┘
                    │ HTTP / JSON
                    ▼
@@ -111,6 +119,7 @@ Every recommendation is required to be grounded in the supplied evidence.
 - GoRouter
 - HTTP
 - Image Picker
+- Speech-to-text / Text-to-speech
 
 ### Backend
 - Python 3.12
@@ -123,6 +132,7 @@ Every recommendation is required to be grounded in the supplied evidence.
 - Google Gemini API
 - Evidence-grounded prompts
 - Structured JSON responses
+- Primary/backup Gemini provider configuration
 
 ## Platforms
 
@@ -144,10 +154,18 @@ flutter run -d chrome
 
 ### Backend
 
-Create `backend/.env` with your Gemini credential:
+Create `backend/.env` with a Gemini credential:
 
 ```env
-GEMINI_API_KEY=your_key_here
+GEMINI_API_KEY_PRIMARY=your_key_here
+GEMINI_MODEL_PRIMARY=gemini-2.5-flash
+```
+
+Optional backup provider:
+
+```env
+GEMINI_API_KEY_BACKUP=your_backup_key_here
+GEMINI_MODEL_BACKUP=gemini-3.5-flash-lite
 ```
 
 Then:
@@ -205,6 +223,7 @@ agrin-ai/
 │   │   ├── crop_doctor/
 │   │   ├── regenerative_farming/
 │   │   ├── historical_intelligence/
+│   │   ├── farm_digital_twin/
 │   │   ├── brics_network/
 │   │   └── intelligence_agent/
 │   ├── services/
@@ -247,11 +266,14 @@ This creates a traceable path from **data → evidence → reasoning → action*
 - ✅ Sentinel-2 scene discovery
 - ✅ Real NDVI sampling
 - ✅ Historical intelligence
+- ✅ Farm Digital Twin
 - ✅ Crop image analysis
 - ✅ Regenerative farming guidance
 - ✅ BRICS-ready JSON interoperability
 - ✅ Intelligence Agent
 - ✅ Evidence-grounded Gemini reports
+- ✅ Gemini primary/backup failover
+- ✅ Production error handling and validation
 - ✅ Automated Flutter CI
 - ✅ Automated backend CI
 
