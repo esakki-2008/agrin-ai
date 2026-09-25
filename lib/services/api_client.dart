@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -21,13 +22,24 @@ class ApiClient {
     Map<String, dynamic>? body,
     Duration timeout = const Duration(seconds: 45),
   }) async {
-    final response = await http
-        .post(
-          endpoint(path),
-          headers: const {'Content-Type': 'application/json'},
-          body: jsonEncode(body ?? const <String, dynamic>{}),
-        )
-        .timeout(timeout);
+    late final http.Response response;
+    try {
+      response = await http
+          .post(
+            endpoint(path),
+            headers: const {'Content-Type': 'application/json'},
+            body: jsonEncode(body ?? const <String, dynamic>{}),
+          )
+          .timeout(timeout);
+    } on TimeoutException {
+      throw Exception(
+        'The request took too long. Please check your connection and try again.',
+      );
+    } on http.ClientException {
+      throw Exception(
+        'Unable to connect to AgriN services. Please check your internet connection and try again.',
+      );
+    }
 
     Map<String, dynamic> json;
     try {
@@ -60,7 +72,18 @@ class ApiClient {
         ? base
         : base.replace(queryParameters: queryParameters);
 
-    final response = await http.get(uri).timeout(timeout);
+    late final http.Response response;
+    try {
+      response = await http.get(uri).timeout(timeout);
+    } on TimeoutException {
+      throw Exception(
+        'The request took too long. Please check your connection and try again.',
+      );
+    } on http.ClientException {
+      throw Exception(
+        'Unable to connect to AgriN services. Please check your internet connection and try again.',
+      );
+    }
 
     Map<String, dynamic> json;
     try {
