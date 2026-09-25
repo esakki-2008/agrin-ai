@@ -626,7 +626,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
         final depth = row is Map ? row['depth']?.toString() ?? 'Depth ${i + 1}' : 'Depth ${i + 1}';
         final ph = data.value(i, 'ph');
         final carbon = data.value(i, 'organic_carbon_g_kg');
-        return _metric('${ph == null ? 'Unavailable' : ph.toStringAsFixed(2)} pH\\n${carbon == null ? 'Unavailable' : carbon.toStringAsFixed(1)} g/kg C', depth, Icons.layers_outlined);
+        return _metric('${ph == null ? 'Unavailable' : ph.toStringAsFixed(2)} pH\n${carbon == null ? 'Unavailable' : carbon.toStringAsFixed(1)} g/kg C', depth, Icons.layers_outlined);
       }),
     ),
     const SizedBox(height: 20),
@@ -644,7 +644,7 @@ class _FarmIntelligencePageState extends State<FarmIntelligencePage> {
       _metric(data.metric('max_rain_probability_percent'), 'Max rain probability', Icons.umbrella_outlined),
     ]),
     const SizedBox(height: 10),
-    if (data.signals.isNotEmpty) _signalCard('Water signals', data.signals.map((x) => '• $x').join('\\n'), Icons.water_drop_outlined),
+    if (data.signals.isNotEmpty) _signalCard('Water signals', data.signals.map((x) => '• $x').join('\n'), Icons.water_drop_outlined),
     const SizedBox(height: 20),
   ]);
 
