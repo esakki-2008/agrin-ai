@@ -154,7 +154,7 @@ flutter run -d chrome
 
 ### Backend
 
-Create `backend/.env` with a Gemini credential:
+Copy `backend/.env.example` to `backend/.env`, then replace the placeholder values with your Gemini credential:
 
 ```env
 GEMINI_API_KEY_PRIMARY=your_key_here
