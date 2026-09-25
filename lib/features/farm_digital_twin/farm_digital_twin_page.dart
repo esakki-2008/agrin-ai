@@ -68,10 +68,10 @@ class _FarmDigitalTwinPageState extends State<FarmDigitalTwinPage>{
     if(raw is! Map || raw.isEmpty) return 'Unavailable';
     final t=raw['temperature_c']; final h=raw['humidity_percent']; final p=raw['precipitation_mm']; final w=raw['wind_speed_kmh'];
     final parts=<String>[];
-    if(t!=null) parts.add('${t}°C');
-    if(h!=null) parts.add('${h}% humidity');
-    if(p!=null) parts.add('${p} mm rain');
-    if(w!=null) parts.add('${w} km/h wind');
+    if(t!=null) parts.add('$t°C');
+    if(h!=null) parts.add('$h% humidity');
+    if(p!=null) parts.add('$p mm rain');
+    if(w!=null) parts.add('$w km/h wind');
     return parts.isEmpty ? 'Available' : parts.join(' • ');
   }
   String _soilSummary(dynamic raw){
