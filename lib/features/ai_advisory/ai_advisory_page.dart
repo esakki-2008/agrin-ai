@@ -30,11 +30,35 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
     }
     setState(() { loading=true; advisory=null; error=null; });
     try {
+      // Resolve weather first because its coordinates are used by the other
+      // evidence services. Soil and satellite are independent, so fetch them
+      // in parallel to keep the end-to-end advisory flow responsive.
       final w=await WeatherService().fetch(location.text.trim());
-      final s=await SoilService().fetch(latitude:w.latitude,longitude:w.longitude);
-      SatelliteData? sat;
-      try { sat=await SatelliteService().fetch(latitude:w.latitude,longitude:w.longitude); } catch (_) {}
-      final a=await AdvisoryService().fetch(location:location.text.trim(),crop:crop,farmSizeAcres:size,sowingDate:sowingDate!,weather:w,soil:s,satellite:sat);
+      final soilFuture=SoilService().fetch(
+        latitude:w.latitude,
+        longitude:w.longitude,
+      );
+      final satelliteFuture=SatelliteService()
+          .fetch(latitude:w.latitude,longitude:w.longitude)
+          .then<SatelliteData?>((value)=>value)
+          .catchError((_)=>null);
+
+      final evidence=await Future.wait<Object?>([
+        soilFuture,
+        satelliteFuture,
+      ]);
+      final s=evidence[0] as SoilData;
+      final sat=evidence[1] as SatelliteData?;
+
+      final a=await AdvisoryService().fetch(
+        location:location.text.trim(),
+        crop:crop,
+        farmSizeAcres:size,
+        sowingDate:sowingDate!,
+        weather:w,
+        soil:s,
+        satellite:sat,
+      );
       if(mounted)setState(()=>advisory=a);
     } catch(e) { if(mounted)setState(()=>error=e.toString().replaceFirst('Exception: ','')); }
     if(mounted)setState(()=>loading=false);
