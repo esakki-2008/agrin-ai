@@ -39,7 +39,11 @@ class _AiAdvisoryPageState extends State<AiAdvisoryPage> {
         longitude:w.longitude,
       );
       final satelliteFuture=SatelliteService()
-          .fetch(latitude:w.latitude,longitude:w.longitude)
+          .fetch(
+            latitude:w.latitude,
+            longitude:w.longitude,
+            timeout: const Duration(seconds:30),
+          )
           .then<SatelliteData?>((value)=>value)
           .catchError((_)=>null);
 
