@@ -32,7 +32,7 @@ class RegenerativeService {
     final json=await ApiClient(baseUrl:baseUrl).postJson('/regenerative/plan',body:{
       'location':location,'crop':crop,'temperature_c':temperature,'humidity_percent':humidity,'rain_probability_percent':rainProbability,
       'soil_ph':ph,'organic_carbon_g_kg':organicCarbon,'nitrogen_g_kg':nitrogen,'clay_percent':clay,'soil_source':soilSource,
-    },timeout:const Duration(seconds:20));
+    },timeout:const Duration(seconds:60));
     return RegenerativePlan.fromJson(json);
   }
 }
