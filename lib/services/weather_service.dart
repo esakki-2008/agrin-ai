@@ -41,7 +41,7 @@ class WeatherService {
         'forecast_hours': '1',
         'timezone': 'auto',
       });
-      final weatherResponse = await http.get(weatherUri).timeout(const Duration(seconds:10));
+      final weatherResponse = await http.get(weatherUri).timeout(const Duration(seconds:20));
       if (weatherResponse.statusCode != 200) throw Exception('Weather service failed.');
       final data = WeatherData.fromJson(
         jsonDecode(weatherResponse.body) as Map<String,dynamic>,
@@ -62,7 +62,7 @@ class WeatherService {
       final geoUri=Uri.https('geocoding-api.open-meteo.com','/v1/search',{
         'name':query,'count':'5','language':'en','format':'json','countryCode':'IN'
       });
-      final geoResponse=await http.get(geoUri).timeout(const Duration(seconds:10));
+      final geoResponse=await http.get(geoUri).timeout(const Duration(seconds:20));
       if (geoResponse.statusCode != 200) continue;
       final geo=jsonDecode(geoResponse.body) as Map<String,dynamic>;
       final results=(geo['results'] as List?) ?? const [];
@@ -91,7 +91,7 @@ class WeatherService {
       'latitude':lat.toString(),'longitude':lon.toString(),
       'current':'temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m','hourly':'precipitation_probability','forecast_hours':'1','timezone':'auto'
     });
-    final weatherResponse=await http.get(weatherUri).timeout(const Duration(seconds:10));
+    final weatherResponse=await http.get(weatherUri).timeout(const Duration(seconds:20));
     if(weatherResponse.statusCode!=200) throw Exception('Weather service failed.');
     final data = WeatherData.fromJson(
       jsonDecode(weatherResponse.body) as Map<String,dynamic>,
