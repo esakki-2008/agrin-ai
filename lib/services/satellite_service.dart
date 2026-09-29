@@ -93,6 +93,7 @@ class SatelliteService {
     required double longitude,
     int days = 90,
     double maxCloudCover = 50,
+    Duration timeout = const Duration(seconds: 90),
   }) async {
     final json = await const ApiClient().postJson(
       '/satellite/ndvi',
@@ -102,7 +103,7 @@ class SatelliteService {
         'days': days,
         'max_cloud_cover': maxCloudCover,
       },
-      timeout: const Duration(seconds: 90),
+      timeout: timeout,
     );
     return SatelliteData.fromJson(json);
   }
